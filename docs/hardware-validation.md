@@ -207,3 +207,9 @@ Captured six Trigger × Retrigger cases (NRPN 0:105 and 0:110), then 34 Fixed Su
 Trigger uses byte 62 bits 2–3 (wire Multi=0, Single=1, Autoglide=2); Retrigger uses byte 115 bit 5; Fixed Sustain uses byte 120 bit 0; Count uses byte 122 bits 0–2 followed by byte 123 bits 5–6. Existing Retrigger decoding matched. Trigger, Fixed Sustain, and Count were missing from decoding and editor application; added these mappings, with Trigger converted to editor choice order. The 40-capture regression failed before the additions.
 
 Results: `mod-options.csv`; captures: `tests/fixtures/mod-options.syx`; sampler: `tools/ModOptionsSampler.swift`. This validates settings transport/storage and decoding, not acoustic envelope behavior.
+
+## LFO waveforms and speeds
+
+Sent all four waveform selections for LFO 1 (CC88) and LFO 2 (CC89), then all 256 speed values for LFO 1 (paired CC18/50) and LFO 2 (paired CC19/51): 520 captures, zero mismatches/timeouts. Existing decoder mappings matched every capture: LFO 1 Wave byte 63 mask 0x06, LFO 2 Wave byte 70 mask 0x0C, LFO 1 Speed byte 66 mask 0x3F / byte 67 mask 0x60, LFO 2 Speed byte 73 mask 0x7F / byte 74 mask 0x40. No app mapping changes were needed.
+
+The complete starting patch was restored and verified byte-for-byte after each sweep (waveforms 0, speeds 75 and 52). Results: `lfo{1,2}-{wave,speed}-sweep.csv`; corresponding captures in `tests/fixtures/` are replayed through the actual C++ decoder. The sampler now restores the complete saved edit-buffer patch, rather than depending on the tested field's original decoded value. This validates MIDI transport/storage and decoding, not measured frequency or waveform shape. Delay, Slew, and sync options remain separately untested.

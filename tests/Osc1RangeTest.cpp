@@ -287,5 +287,53 @@ int main(int argc, char** argv) {
         std::cout << (ok ? "PASS" : "FAIL") << " 40 captured Mod Envelope option cases\n";
         passed &= ok;
     }
+    {
+        std::ifstream input(std::string(argv[1]) + "/lfo1-wave-sweep.syx", std::ios::binary);
+        const std::string bytes((std::istreambuf_iterator<char>(input)), {});
+        bool ok = bytes.size() == 4 * 154;
+        if (ok)
+            for (int raw = 0; raw < 4; ++raw) {
+                const auto d = bsii::decodePatchFields(juce::MemoryBlock(bytes.data() + raw * 154, 154));
+                ok &= d.valid && d.lfo1Wave == raw;
+            }
+        std::cout << (ok ? "PASS" : "FAIL") << " all 4 captured lfo1-wave values\n";
+        passed &= ok;
+    }
+    {
+        std::ifstream input(std::string(argv[1]) + "/lfo2-wave-sweep.syx", std::ios::binary);
+        const std::string bytes((std::istreambuf_iterator<char>(input)), {});
+        bool ok = bytes.size() == 4 * 154;
+        if (ok)
+            for (int raw = 0; raw < 4; ++raw) {
+                const auto d = bsii::decodePatchFields(juce::MemoryBlock(bytes.data() + raw * 154, 154));
+                ok &= d.valid && d.lfo2Wave == raw;
+            }
+        std::cout << (ok ? "PASS" : "FAIL") << " all 4 captured lfo2-wave values\n";
+        passed &= ok;
+    }
+    {
+        std::ifstream input(std::string(argv[1]) + "/lfo1-speed-sweep.syx", std::ios::binary);
+        const std::string bytes((std::istreambuf_iterator<char>(input)), {});
+        bool ok = bytes.size() == 256 * 154;
+        if (ok)
+            for (int raw = 0; raw < 256; ++raw) {
+                const auto d = bsii::decodePatchFields(juce::MemoryBlock(bytes.data() + raw * 154, 154));
+                ok &= d.valid && d.lfo1Speed == raw;
+            }
+        std::cout << (ok ? "PASS" : "FAIL") << " all 256 captured lfo1-speed values\n";
+        passed &= ok;
+    }
+    {
+        std::ifstream input(std::string(argv[1]) + "/lfo2-speed-sweep.syx", std::ios::binary);
+        const std::string bytes((std::istreambuf_iterator<char>(input)), {});
+        bool ok = bytes.size() == 256 * 154;
+        if (ok)
+            for (int raw = 0; raw < 256; ++raw) {
+                const auto d = bsii::decodePatchFields(juce::MemoryBlock(bytes.data() + raw * 154, 154));
+                ok &= d.valid && d.lfo2Speed == raw;
+            }
+        std::cout << (ok ? "PASS" : "FAIL") << " all 256 captured lfo2-speed values\n";
+        passed &= ok;
+    }
     return passed ? 0 : 1;
 }
