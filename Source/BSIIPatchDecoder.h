@@ -127,7 +127,8 @@ namespace bsii
         acceptCandidate (extractField (b, 22, 0x03, 0x7E), 0, 255, out.osc1Fine, out);
 
         acceptCandidate (extractField (b, 25, 0x3F, 0x40), 0, 127, out.osc2ManualPW, out);
-        acceptCandidate (extractField (b, 26, 0x1F, 0x60), 0, 3, out.osc2Range, out);
+        // Controlled Osc 2 dumps use the same 63–66 range encoding as Osc 1.
+        acceptVerified (extractField (b, 26, 0x1F, 0x60) - 63, 0, 3, out.osc2Range, out);
         acceptCandidate (extractField (b, 27, 0x1F, 0x70), 0, 255, out.osc2Coarse, out);
         acceptCandidate (extractField (b, 28, 0x0F, 0x78), 0, 255, out.osc2Fine, out);
 

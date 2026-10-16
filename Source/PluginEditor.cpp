@@ -729,7 +729,7 @@ bool BSIIControlAudioProcessorEditor::decodeSysExIntoEditor (const juce::MemoryB
     set ("osc2Fine", decoded.osc2Fine);
     set ("osc2Coarse", decoded.osc2Coarse);
     set ("osc2ManualPW", decoded.osc2ManualPW);
-    // Osc 2 Range SysEx mapping is not verified on current firmware; leave editor state untouched.
+    set ("osc2Range", decoded.osc2Range);
     set ("osc2ModEnvPitch", decoded.osc2ModEnvPitch);
     set ("osc2Lfo1Pitch", decoded.osc2Lfo1Pitch);
     set ("osc2ModEnvPW", decoded.osc2ModEnvPW);

@@ -15,5 +15,14 @@ int main(int argc, char** argv) {
         std::cout << (ok ? "PASS " : "FAIL ") << names[i] << " feet: choice " << decoded.osc1Range << " expected " << i << "\n";
         passed &= ok;
     }
+    for (int i = 0; i < 4; ++i) {
+        const auto path = std::string(argv[1]) + "/osc2-" + names[i] + ".syx";
+        std::ifstream input(path, std::ios::binary);
+        const std::string bytes((std::istreambuf_iterator<char>(input)), {});
+        const auto decoded = bsii::decodePatchFields(juce::MemoryBlock(bytes.data(), bytes.size()));
+        const bool ok = decoded.valid && decoded.osc2Range == i;
+        std::cout << (ok ? "PASS Osc 2 " : "FAIL Osc 2 ") << names[i] << " feet: choice " << decoded.osc2Range << " expected " << i << "\n";
+        passed &= ok;
+    }
     return passed ? 0 : 1;
 }
