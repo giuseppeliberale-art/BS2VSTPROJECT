@@ -175,3 +175,9 @@ Sent all 128 raw values on single CC91 and fetched a patch after each. Existing 
 ## Amp Envelope Sustain automated sweep
 
 Sent all 128 raw values on single CC92 and fetched a patch after each. Existing candidate Sustain decoding (byte 52 mask 0x07 / byte 53 mask 0x78) matched every value, with zero mismatches/timeouts. Original Sustain 127 and the entire starting patch were restored byte-for-byte. Results: `amp-sustain-sweep.csv`; captures: `tests/fixtures/amp-sustain-sweep.syx`. All 128 messages are replayed through the C++ decoder. No mapping change was needed. This validates parameter transport/storage and decoding, not acoustic sustain level calibration.
+
+## Amp Envelope Release automated sweep
+
+Sent all 128 raw values on single CC93 and fetched a patch after each. Existing candidate Release decoding (byte 53 mask 0x03 / byte 54 mask 0x7C) matched every value, with zero mismatches/timeouts. Original Release 0 and the entire starting patch were restored byte-for-byte. Results: `amp-release-sweep.csv`; captures: `tests/fixtures/amp-release-sweep.syx`. All 128 messages are replayed through the C++ decoder. No mapping change was needed. This validates parameter transport/storage and decoding, not envelope timing in milliseconds or acoustic response.
+
+Amp ADSR transport/decoder sweeps now cover 512 cases across Attack, Decay, Sustain, and Release. Trigger/retrigger and other envelope options remain separately untested.

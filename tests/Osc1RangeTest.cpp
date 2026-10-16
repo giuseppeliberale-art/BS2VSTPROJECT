@@ -180,5 +180,16 @@ int main(int argc, char** argv) {
     }
     std::cout << (sustainOK ? "PASS" : "FAIL") << " all 128 captured Amp Sustain values\n";
     passed &= sustainOK;
+    std::ifstream releaseInput(std::string(argv[1]) + "/amp-release-sweep.syx", std::ios::binary);
+    const std::string releaseBytes((std::istreambuf_iterator<char>(releaseInput)), {});
+    bool releaseOK = releaseBytes.size() == 128 * 154;
+    if (releaseOK) {
+        for (int raw = 0; raw < 128; ++raw) {
+            const auto decoded = bsii::decodePatchFields(juce::MemoryBlock(releaseBytes.data() + raw * 154, 154));
+            releaseOK &= decoded.valid && decoded.ampRelease == raw;
+        }
+    }
+    std::cout << (releaseOK ? "PASS" : "FAIL") << " all 128 captured Amp Release values\n";
+    passed &= releaseOK;
     return passed ? 0 : 1;
 }
