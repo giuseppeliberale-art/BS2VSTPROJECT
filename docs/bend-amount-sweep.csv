@@ -1,0 +1,13 @@
+sent_raw,msb_value,lsb_value,sysex_raw,match
+1,65,,1,true
+2,66,,2,true
+3,67,,3,true
+4,68,,4,true
+5,69,,5,true
+6,70,,6,true
+7,71,,7,true
+8,72,,8,true
+9,73,,9,true
+10,74,,10,true
+11,75,,11,true
+12,76,,12,true

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "BSIIPerformanceEncoding.h"
 
 namespace bsii
 {
@@ -133,7 +134,7 @@ namespace bsii
         // Each field is range-checked independently. Nothing here can invalidate
         // the verified fields above.
         acceptCandidate (extractField (b, 13, 0x03, 0x7C), 0, 127, out.portamento, out);
-        acceptCandidate (extractField (b, 16, 0x7F), 1, 12, out.bendAmount, out);
+        acceptVerified (bendAmountFromWire (extractField (b, 16, 0x7F)), 1, 12, out.bendAmount, out);
 
         acceptCandidate (extractField (b, 19, 0x0F, 0x70), 0, 127, out.osc1ManualPW, out);
         // Controlled hardware dumps: 16'/8'/4'/2' encode as 63/64/65/66.

@@ -165,9 +165,16 @@ void BSIIControlAudioProcessor::parseIncomingMidi (const juce::MidiBuffer& midiM
             if (spec.protocol == bsii::Protocol::cc7)
             {
                 if (controller == spec.numberMSB)
+                {
+                    const auto decoded = juce::String (spec.id) == "bendAmount"
+                        ? bsii::bendAmountFromWire (value) : value;
+                    if (juce::String (spec.id) == "bendAmount"
+                        && (decoded < spec.minimum || decoded > spec.maximum))
+                        continue;
                     pendingHardwareValues[i].store (
-                        juce::jlimit (spec.minimum, spec.maximum, value),
+                        juce::jlimit (spec.minimum, spec.maximum, decoded),
                         std::memory_order_release);
+                }
                 continue;
             }
 

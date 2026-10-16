@@ -2,6 +2,7 @@
 
 #include <JuceHeader.h>
 #include "BSIIPairedCC.h"
+#include "BSIIPerformanceEncoding.h"
 #include <cmath>
 #include <vector>
 
@@ -106,7 +107,7 @@ namespace bsii
             { "distortion",        "Distortion",            "FX / Perf",   Protocol::cc7,       94, -1, 0, 127,   0 },
             { "oscSyncRaw",         "Osc Sync (raw CC)",     "FX / Perf",   Protocol::cc7,      110, -1, 0, 127,   0 },
             { "oscFilterMod",      "Osc Filter Mod",        "FX / Perf",   Protocol::cc7,      115, -1, 0, 127,   0 },
-            { "arpSwing",          "Arp Swing",             "FX / Perf",   Protocol::cc7,      116, -1, 0, 127,  64 },
+            { "arpSwing",          "Arp Swing",             "FX / Perf",   Protocol::cc7,      116, -1, 3,  97,  64 },
             { "bendAmount",        "Bend Amount",           "FX / Perf",   Protocol::cc7,      107, -1, 1,  12,  12 },
             { "velocityAmp",       "Velocity -> Amp",       "FX / Perf",   Protocol::cc7,      112, -1, 0, 127,  64 },
             { "velocityMod",       "Velocity -> Mod",       "FX / Perf",   Protocol::cc7,      113, -1, 0, 127,  64 },
@@ -198,7 +199,8 @@ namespace bsii
         const auto clamped = juce::jlimit (spec.minimum, spec.maximum, value);
         switch (spec.protocol)
         {
-            case Protocol::cc7:       sendCC (out, channel, spec.numberMSB, clamped); break;
+            case Protocol::cc7:       sendCC (out, channel, spec.numberMSB,
+                                            juce::String (spec.id) == "bendAmount" ? bendAmountToWire (clamped) : clamped); break;
             case Protocol::pairedCC8: sendPairedCC8 (out, channel, spec.numberMSB, spec.numberLSB, clamped); break;
             case Protocol::nrpn7:     sendNRPN7 (out, channel, spec.numberMSB, spec.numberLSB, clamped); break;
         }

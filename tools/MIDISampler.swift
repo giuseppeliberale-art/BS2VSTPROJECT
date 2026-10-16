@@ -1,17 +1,18 @@
 import Foundation
 import CoreMIDI
 
-guard (2...3).contains(CommandLine.arguments.count) else { fatalError("Usage: swift tools/MIDISampler.swift OUTPUT_DIRECTORY [osc2-coarse|mix-osc1|mix-osc2|mix-sub|mix-noise|mix-ring|mix-external|filter-cutoff|filter-resonance|filter-overdrive|filter-modenv|filter-lfo2|filter-tracking|amp-attack|amp-decay|amp-sustain|amp-release|mod-attack|mod-decay|mod-sustain|mod-release|lfo1-speed|lfo2-speed|lfo1-wave|lfo2-wave|lfo1-delay|lfo2-delay|lfo1-slew|lfo2-slew|lfo1-keysync|lfo2-keysync|distortion|osc-filter-mod|vca-limit|modwheel-lfo1-pitch|modwheel-osc2-pitch|aftertouch-filter|aftertouch-lfo1|aftertouch-lfo2-speed]. Use routing-fixed BSII Control or close older app versions.") }
+guard (2...3).contains(CommandLine.arguments.count) else { fatalError("Usage: swift tools/MIDISampler.swift OUTPUT_DIRECTORY [osc2-coarse|mix-osc1|mix-osc2|mix-sub|mix-noise|mix-ring|mix-external|filter-cutoff|filter-resonance|filter-overdrive|filter-modenv|filter-lfo2|filter-tracking|amp-attack|amp-decay|amp-sustain|amp-release|mod-attack|mod-decay|mod-sustain|mod-release|lfo1-speed|lfo2-speed|lfo1-wave|lfo2-wave|lfo1-delay|lfo2-delay|lfo1-slew|lfo2-slew|lfo1-keysync|lfo2-keysync|distortion|osc-filter-mod|vca-limit|modwheel-lfo1-pitch|modwheel-osc2-pitch|aftertouch-filter|aftertouch-lfo1|aftertouch-lfo2-speed|portamento|bend-amount|arp-swing]. Use routing-fixed BSII Control or close older app versions.") }
 let outputDirectory = URL(fileURLWithPath: CommandLine.arguments[1], isDirectory: true)
 try FileManager.default.createDirectory(at: outputDirectory, withIntermediateDirectories: true)
 let control = CommandLine.arguments.count == 3 ? CommandLine.arguments[2] : "osc2-coarse"
-guard ["osc2-coarse", "mix-osc1", "mix-osc2", "mix-sub", "mix-noise", "mix-ring", "mix-external", "filter-cutoff", "filter-resonance", "filter-overdrive", "filter-modenv", "filter-lfo2", "filter-tracking", "amp-attack", "amp-decay", "amp-sustain", "amp-release", "mod-attack", "mod-decay", "mod-sustain", "mod-release", "lfo1-speed", "lfo2-speed", "lfo1-wave", "lfo2-wave", "lfo1-delay", "lfo2-delay", "lfo1-slew", "lfo2-slew", "lfo1-keysync", "lfo2-keysync", "distortion", "osc-filter-mod", "vca-limit", "modwheel-lfo1-pitch", "modwheel-osc2-pitch", "aftertouch-filter", "aftertouch-lfo1", "aftertouch-lfo2-speed"].contains(control) else { fatalError("Unknown control") }
-let msbCC: UInt8 = control == "mix-osc1" ? 20 : control == "mix-osc2" ? 21 : control == "mix-sub" ? 22 : control == "mix-noise" ? 23 : control == "mix-ring" ? 24 : control == "mix-external" ? 25 : control == "filter-cutoff" ? 16 : control == "filter-resonance" ? 82 : control == "filter-overdrive" ? 114 : control == "filter-modenv" ? 85 : control == "filter-lfo2" ? 17 : control == "amp-attack" ? 90 : control == "amp-decay" ? 91 : control == "amp-sustain" ? 92 : control == "amp-release" ? 93 : control == "mod-attack" ? 102 : control == "mod-decay" ? 103 : control == "mod-sustain" ? 104 : control == "mod-release" ? 105 : control == "lfo1-speed" ? 18 : control == "lfo2-speed" ? 19 : control == "lfo1-wave" ? 88 : control == "lfo2-wave" ? 89 : control == "lfo1-delay" ? 86 : control == "lfo2-delay" ? 87 : control == "distortion" ? 94 : control == "osc-filter-mod" ? 115 : control == "vca-limit" ? 95 : 30
+guard ["osc2-coarse", "mix-osc1", "mix-osc2", "mix-sub", "mix-noise", "mix-ring", "mix-external", "filter-cutoff", "filter-resonance", "filter-overdrive", "filter-modenv", "filter-lfo2", "filter-tracking", "amp-attack", "amp-decay", "amp-sustain", "amp-release", "mod-attack", "mod-decay", "mod-sustain", "mod-release", "lfo1-speed", "lfo2-speed", "lfo1-wave", "lfo2-wave", "lfo1-delay", "lfo2-delay", "lfo1-slew", "lfo2-slew", "lfo1-keysync", "lfo2-keysync", "distortion", "osc-filter-mod", "vca-limit", "modwheel-lfo1-pitch", "modwheel-osc2-pitch", "aftertouch-filter", "aftertouch-lfo1", "aftertouch-lfo2-speed", "portamento", "bend-amount", "arp-swing"].contains(control) else { fatalError("Unknown control") }
+let msbCC: UInt8 = control == "mix-osc1" ? 20 : control == "mix-osc2" ? 21 : control == "mix-sub" ? 22 : control == "mix-noise" ? 23 : control == "mix-ring" ? 24 : control == "mix-external" ? 25 : control == "filter-cutoff" ? 16 : control == "filter-resonance" ? 82 : control == "filter-overdrive" ? 114 : control == "filter-modenv" ? 85 : control == "filter-lfo2" ? 17 : control == "amp-attack" ? 90 : control == "amp-decay" ? 91 : control == "amp-sustain" ? 92 : control == "amp-release" ? 93 : control == "mod-attack" ? 102 : control == "mod-decay" ? 103 : control == "mod-sustain" ? 104 : control == "mod-release" ? 105 : control == "lfo1-speed" ? 18 : control == "lfo2-speed" ? 19 : control == "lfo1-wave" ? 88 : control == "lfo2-wave" ? 89 : control == "lfo1-delay" ? 86 : control == "lfo2-delay" ? 87 : control == "distortion" ? 94 : control == "osc-filter-mod" ? 115 : control == "vca-limit" ? 95 : control == "portamento" ? 5 : control == "bend-amount" ? 107 : control == "arp-swing" ? 116 : 30
 let lsbCC: UInt8 = control == "mix-osc1" ? 52 : control == "mix-osc2" ? 53 : control == "mix-sub" ? 54 : control == "mix-noise" ? 55 : control == "mix-ring" ? 56 : control == "mix-external" ? 57 : control == "filter-cutoff" ? 48 : control == "filter-lfo2" ? 49 : control == "lfo1-speed" ? 50 : control == "lfo2-speed" ? 51 : 62
-let singleCC = ["filter-resonance", "filter-overdrive", "filter-modenv", "amp-attack", "amp-decay", "amp-sustain", "amp-release", "mod-attack", "mod-decay", "mod-sustain", "mod-release", "lfo1-wave", "lfo2-wave", "lfo1-delay", "lfo2-delay", "distortion", "osc-filter-mod", "vca-limit"].contains(control)
+let singleCC = ["filter-resonance", "filter-overdrive", "filter-modenv", "amp-attack", "amp-decay", "amp-sustain", "amp-release", "mod-attack", "mod-decay", "mod-sustain", "mod-release", "lfo1-wave", "lfo2-wave", "lfo1-delay", "lfo2-delay", "distortion", "osc-filter-mod", "vca-limit", "portamento", "bend-amount", "arp-swing"].contains(control)
 let nrpnNumber: UInt8? = control == "filter-tracking" ? 108 : control == "lfo1-slew" ? 86 : control == "lfo2-slew" ? 90 : control == "lfo1-keysync" ? 89 : control == "lfo2-keysync" ? 93 : control == "modwheel-lfo1-pitch" ? 70 : control == "modwheel-osc2-pitch" ? 78 : control == "aftertouch-filter" ? 74 : control == "aftertouch-lfo1" ? 75 : control == "aftertouch-lfo2-speed" ? 76 : nil
 let nrpn = nrpnNumber != nil
-let maximumRaw = control.hasSuffix("-keysync") ? 1 : control.hasSuffix("-wave") ? 3 : control == "filter-tracking" ? 7 : (singleCC || nrpn) ? 127 : 255
+let minimumRaw = control == "bend-amount" ? 1 : 0
+let maximumRaw = control == "bend-amount" ? 12 : control.hasSuffix("-keysync") ? 1 : control.hasSuffix("-wave") ? 3 : control == "filter-tracking" ? 7 : (singleCC || nrpn) ? 127 : 255
 var client = MIDIClientRef(), input = MIDIPortRef(), output = MIDIPortRef()
 var destination = MIDIEndpointRef()
 let lock = NSLock()
@@ -115,6 +116,9 @@ func readValue(_ b: [UInt8]) -> Int {
     if control == "aftertouch-filter" { return ((Int(b[86]) & 1) << 6) | ((Int(b[87]) & 126) >> 1) }
     if control == "aftertouch-lfo1" { return Int(b[88]) & 127 }
     if control == "aftertouch-lfo2-speed" { return ((Int(b[89]) & 63) << 1) | ((Int(b[90]) & 64) >> 6) }
+    if control == "portamento" { return ((Int(b[13]) & 3) << 5) | ((Int(b[14]) & 124) >> 2) }
+    if control == "bend-amount" { return (Int(b[16]) & 127) - 64 }
+    if control == "arp-swing" { return ((Int(b[81]) & 63) << 1) | ((Int(b[82]) & 64) >> 6) }
     return ((Int(b[27]) & 31) << 3) | ((Int(b[28]) & 112) >> 4)
 }
 func setValue(_ raw: Int) {
@@ -125,7 +129,7 @@ func setValue(_ raw: Int) {
         return
     }
     if singleCC {
-        send([0xB0,msbCC,UInt8(raw)])
+        send([0xB0,msbCC,UInt8(control == "bend-amount" ? raw + 64 : raw)])
         Thread.sleep(forTimeInterval: 0.08)
         return
     }
@@ -137,15 +141,16 @@ func setValue(_ raw: Int) {
 guard let baseline = patch() else { fatalError("No baseline patch response; no parameters changed") }
 try Data(baseline).write(to: outputDirectory.appendingPathComponent("before.syx"))
 let original = readValue(baseline)
-print("Baseline \(control) raw: \(original). Sampling \(maximumRaw + 1) values."); fflush(stdout)
+print("Baseline \(control) raw: \(original). Sampling \(maximumRaw - minimumRaw + 1) values."); fflush(stdout)
 var rows = ["sent_raw,msb_value,lsb_value,sysex_raw,match"]
 var failures = 0
-for raw in 0...maximumRaw {
+for raw in minimumRaw...maximumRaw {
     setValue(raw)
     guard let result = patch() else { print("Timeout at \(raw); stopping sweep"); failures += 1; break }
     let actual = readValue(result)
-    if actual != raw { failures += 1 }
-    rows.append("\(raw),\((singleCC || nrpn) ? raw : raw >> 1),\((singleCC || nrpn) ? "" : String((raw & 1) << 6)),\(actual),\(actual == raw)")
+    let expected = control == "arp-swing" ? min(97, max(3, raw)) : raw
+    if actual != expected { failures += 1 }
+    rows.append("\(raw),\(control == "bend-amount" ? raw + 64 : (singleCC || nrpn) ? raw : raw >> 1),\((singleCC || nrpn) ? "" : String((raw & 1) << 6)),\(actual),\(actual == expected)")
     try Data(result).write(to: outputDirectory.appendingPathComponent(String(format: "raw-%03d.syx", raw)))
     if raw % 32 == 0 { print("Sample \(raw): received \(actual)"); fflush(stdout) }
 }
@@ -159,4 +164,4 @@ let summary = "Samples: \(rows.count-1)\nMismatches/timeouts: \(failures)\nOrigi
 try summary.write(to: outputDirectory.appendingPathComponent("summary.txt"), atomically:true, encoding:.utf8)
 print(summary)
 MIDIPortDispose(input); MIDIPortDispose(output); MIDIClientDispose(client)
-exit(failures == 0 && restoreOK && rows.count == maximumRaw + 2 ? 0 : 1)
+exit(failures == 0 && restoreOK && rows.count == maximumRaw - minimumRaw + 2 ? 0 : 1)

@@ -465,5 +465,29 @@ int main(int argc, char** argv) {
             passed &= ok;
         }
     }
+    {
+        struct PerformanceCapture { const char* name; int bsii::DecodedPatchFields::* field; int first; int last; };
+        const PerformanceCapture captures[] = {
+            {"portamento", &bsii::DecodedPatchFields::portamento, 0, 127},
+            {"bend-amount", &bsii::DecodedPatchFields::bendAmount, 1, 12},
+            {"arp-swing", &bsii::DecodedPatchFields::arpSwing, 0, 127}
+        };
+        for (const auto& capture : captures) {
+            std::ifstream input(std::string(argv[1]) + "/" + capture.name + "-sweep.syx", std::ios::binary);
+            const std::string bytes((std::istreambuf_iterator<char>(input)), {});
+            bool ok = bytes.size() == (capture.last - capture.first + 1) * 154;
+            if (ok)
+                for (int raw = capture.first; raw <= capture.last; ++raw) {
+                    const auto d = bsii::decodePatchFields(juce::MemoryBlock(bytes.data() + (raw - capture.first) * 154, 154));
+                    ok &= d.valid && d.*(capture.field) == (std::string(capture.name) == "arp-swing" ? juce::jlimit(3, 97, raw) : raw);
+                }
+            std::cout << (ok ? "PASS" : "FAIL") << " captured " << capture.name << " sweep\n";
+            passed &= ok;
+        }
+    }
+    for (int semitones = 1; semitones <= 12; ++semitones) {
+        const auto wire = bsii::bendAmountToWire(semitones);
+        passed &= wire == semitones + 64 && bsii::bendAmountFromWire(wire) == semitones;
+    }
     return passed ? 0 : 1;
 }
