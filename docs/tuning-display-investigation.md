@@ -46,3 +46,11 @@ Novation’s official MIDI table confirms Fine −100 to +100 and Coarse −12 t
 [Novation MIDI parameter table](https://userguides.novationmusic.com/hc/en-gb/articles/25494271270930-Bass-Station-II-appendix)
 
 Keep display formatting separate from raw parameter storage, patch decoding, snapshot values, and MIDI output. Fine can be prototyped against the inferred centre-deadband rule, but should not be presented as an exact firmware match without broader evidence. Coarse requires an authoritative conversion table or a controlled raw-value/LCD sweep. No further manual knob sampling is needed to replay or compare the captures already saved.
+
+## Implemented presentation
+
+At the user’s request, both oscillators now format Fine as −100…+100 using the captured-point candidate above. Display values outside that observed musical range are clamped, but stored raw values are preserved. Entered Fine text is constrained to that musical range and converted back to a raw code; zero selects raw 128.
+
+Coarse uses an explicitly approximate centred scale: raw below 127 maps as `(raw − 127) × 12 / 127`; raw 127 and 128 both display zero; raw above 128 maps as `(raw − 128) × 12 / 127`. Text is shown to one decimal and parsed back through the inverse scale, constrained to −12…+12. This guarantees requested endpoints and centre but is not an exact reproduction of the hardware LCD at intermediate positions. The control tooltip describes the approximation.
+
+Parameter ranges, defaults, snapshot storage, SysEx decoding, and MIDI mapping remain raw and unchanged. Tests replay all Fine captures, check endpoints and both zero codes, and check conversion round trips over every raw code (allowing the shared zero).

@@ -113,7 +113,7 @@ private:
     juce::Label titleLabel, subtitleLabel, statusLabel, rxLabel, nrpnLabel, sysexLabel, midiLabel, channelLabel, stateHintLabel, diagnosticLabel;
     juce::ComboBox midiOutputBox, channelBox;
     juce::TextButton refreshButton { "Refresh MIDI" };
-    juce::ToggleButton pauseLiveRxButton { "Pause Live RX" };
+    juce::ToggleButton pauseLiveRxButton { "Live RX is running" };
     juce::TextButton saveButton { "Save Snapshot…" };
     juce::TextButton loadButton { "Load Snapshot…" };
     juce::TextButton sendAllButton { "Send All → BSII" };

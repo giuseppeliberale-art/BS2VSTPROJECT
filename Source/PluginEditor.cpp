@@ -1,6 +1,7 @@
 #include "PluginEditor.h"
 #include "BSIIMidi.h"
 #include "BSIIPatchDecoder.h"
+#include "BSIITuningDisplay.h"
 
 ParameterControl::ParameterControl (juce::AudioProcessorValueTreeState& state,
                                     const bsii::ParameterSpec& parameterSpec,
@@ -20,6 +21,27 @@ ParameterControl::ParameterControl (juce::AudioProcessorValueTreeState& state,
     addAndMakeVisible (slider);
 
     attachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment> (state, spec.id, slider);
+    const juce::String parameterId (spec.id);
+    const bool fine = parameterId == "osc1Fine" || parameterId == "osc2Fine";
+    const bool coarse = parameterId == "osc1Coarse" || parameterId == "osc2Coarse";
+    if (fine || coarse)
+    {
+        // Set after attachment construction, which installs its own raw formatter.
+        slider.textFromValueFunction = [fine] (double raw)
+        {
+            const auto value = fine ? bsii::fineDisplay (juce::roundToInt (raw))
+                                    : bsii::coarseDisplay (juce::roundToInt (raw));
+            return (value > 0 ? "+" : "") + juce::String (value, fine ? 0 : 1);
+        };
+        slider.valueFromTextFunction = [fine] (const juce::String& text)
+        {
+            return static_cast<double> (fine ? bsii::fineRaw (text.getDoubleValue())
+                                            : bsii::coarseRaw (text.getDoubleValue()));
+        };
+        slider.setTooltip (fine ? "Fine tuning in cents (-100 to +100)."
+                               : "Approximate coarse tuning in semitones (-12.0 to +12.0). Hardware display rounding may differ.");
+        slider.updateText();
+    }
     slider.onValueChange = [this]
     {
         if (! applyingHardware && callback)
@@ -319,7 +341,7 @@ void BSIIControlAudioProcessorEditor::resized()
     deviceRow.removeFromLeft (10);
     refreshButton.setBounds (deviceRow.removeFromLeft (120));
     deviceRow.removeFromLeft (10);
-    pauseLiveRxButton.setBounds (deviceRow.removeFromLeft (150));
+    pauseLiveRxButton.setBounds (deviceRow.removeFromLeft (190));
 
     area.removeFromTop (8);
     auto stateRow = area.removeFromTop (32);
@@ -832,7 +854,7 @@ void BSIIControlAudioProcessorEditor::setLiveRxPaused (bool paused)
 {
     liveRxPaused = paused;
     processor.setLiveMidiRxEnabled (! paused);
-    pauseLiveRxButton.setButtonText (paused ? "Resume Live RX" : "Pause Live RX");
+    pauseLiveRxButton.setButtonText (paused ? "Live RX is paused" : "Live RX is running");
     rxLabel.setText (paused ? "CC RX: paused (SysEx still active)" : "CC RX: waiting...", juce::dontSendNotification);
     nrpnLabel.setText (paused ? "NRPN RX: paused (SysEx still active)" : "NRPN RX: waiting...", juce::dontSendNotification);
     statusLabel.setText (paused
