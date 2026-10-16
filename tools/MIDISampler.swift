@@ -1,7 +1,7 @@
 import Foundation
 import CoreMIDI
 
-guard CommandLine.arguments.count == 2 else { fatalError("Usage: swift tools/MIDISampler.swift OUTPUT_DIRECTORY. Close BSII Control first.") }
+guard CommandLine.arguments.count == 2 else { fatalError("Usage: swift tools/MIDISampler.swift OUTPUT_DIRECTORY. Use routing-fixed BSII Control or close older app versions.") }
 let outputDirectory = URL(fileURLWithPath: CommandLine.arguments[1], isDirectory: true)
 try FileManager.default.createDirectory(at: outputDirectory, withIntermediateDirectories: true)
 var client = MIDIClientRef(), input = MIDIPortRef(), output = MIDIPortRef()

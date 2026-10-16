@@ -1,4 +1,5 @@
 #include "BSIIPairedCC.h"
+#include "BSIIMidiRouting.h"
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 #include <cmath>
@@ -58,6 +59,7 @@ void BSIIControlAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     juce::ScopedNoDenormals noDenormals;
     juce::ignoreUnused (buffer);
     parseIncomingMidi (midiMessages);
+    bsii::finishIncomingMidi (midiMessages, wrapperType == wrapperType_Standalone);
 }
 
 void BSIIControlAudioProcessor::publishNRPN (int channel, int nrpnMSB, int nrpnLSB, int value)

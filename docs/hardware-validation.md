@@ -87,3 +87,9 @@ swift tools/MIDISampler.swift /tmp/bsii-sampling-results
 ```
 
 The sampler changes the current edit buffer, restores its starting Coarse value and verifies it, and never sends a patch-save command. It uses MIDI channel 1 and requires exactly one Bass Station II input and output.
+
+## Standalone MIDI echo fix and concurrent sweep
+
+The processor parsed incoming MIDI but left it in the outgoing buffer. The standalone wrapper could therefore send incoming patch replies back to the synth. It now consumes incoming MIDI after parsing in standalone mode; explicit editor sends remain on their existing output path, and plugin-mode pass-through is preserved. A routing regression test failed before the change and passed afterward.
+
+With the rebuilt standalone app open and Live RX running, the same automated 256-value Osc 2 Coarse sweep returned 256 exact matches and zero timeouts. The starting Coarse value 255 was restored, and the complete before/after patches were byte-identical. This reproduces the previously failing concurrent setup and verifies its correction. Results: `osc2-coarse-app-open-sweep.csv`. Hardware-knob-to-app confirmation remains a separate manual check.
