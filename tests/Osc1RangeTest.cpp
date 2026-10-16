@@ -205,5 +205,18 @@ int main(int argc, char** argv) {
     }
     std::cout << (ampSwitchOK ? "PASS" : "FAIL") << " six captured Amp trigger/retrigger combinations\n";
     passed &= ampSwitchOK;
+    std::ifstream optionsInput(std::string(argv[1]) + "/amp-options.syx", std::ios::binary);
+    const std::string optionsBytes((std::istreambuf_iterator<char>(optionsInput)), {});
+    bool optionsOK = optionsBytes.size() == 34 * 154;
+    if (optionsOK) {
+        int index = 0;
+        for (int fixed = 0; fixed < 2; ++fixed)
+            for (int count = 0; count <= 16; ++count) {
+                const auto decoded = bsii::decodePatchFields(juce::MemoryBlock(optionsBytes.data() + index++ * 154, 154));
+                optionsOK &= decoded.valid && decoded.ampFixed == fixed && decoded.ampRetriggerCount == count;
+            }
+    }
+    std::cout << (optionsOK ? "PASS" : "FAIL") << " 34 captured Amp Fixed Sustain/Retrigger Count combinations\n";
+    passed &= optionsOK;
     return passed ? 0 : 1;
 }

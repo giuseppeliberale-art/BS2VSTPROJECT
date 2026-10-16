@@ -187,3 +187,9 @@ Amp ADSR transport/decoder sweeps now cover 512 cases across Attack, Decay, Sust
 Tested all six combinations of Trigger (Multi, Single, Autoglide; NRPN 0:73) and Retrigger (Off/On; NRPN 0:109). Trigger occupies byte 55 bits 1–2 with wire values 0, 1, 2 respectively. Retrigger occupies byte 114 bit 6; its existing mapping matched all captures. The entire starting patch was restored byte-for-byte.
 
 Trigger was missing from patch decoding and editor application. Added its captured mapping, converting wire order to editor choice order (Single, Multi, Autoglide). The six-capture regression failed before that fix. Results: `amp-switches.csv`; captures: `tests/fixtures/amp-switches.syx`; sampler: `tools/AmpSwitchSampler.swift`. This validates settings transport/storage and decoding, not acoustic envelope behavior. Other envelope options remain separately untested.
+
+## Amp Envelope Fixed Sustain and Retrigger Count
+
+Tested all 34 combinations of Fixed Sustain (Off/On; NRPN 0:114) and Retrigger Count (0–16; NRPN 0:117). Fixed Sustain occupies byte 119 bit 1. Count occupies byte 121 bits 0–3 followed by byte 122 bit 6. Each returned patch matched the sent settings. The entire starting patch was restored byte-for-byte.
+
+Both fields were missing from patch decoding and editor application. Added the captured mappings and a regression replay of all 34 messages; this test failed before the mappings were added. Results: `amp-options.csv`; captures: `tests/fixtures/amp-options.syx`; sampler: `tools/AmpOptionsSampler.swift`. This validates parameter transport/storage and decoding, not acoustic envelope behavior.

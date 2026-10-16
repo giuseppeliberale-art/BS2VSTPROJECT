@@ -781,6 +781,8 @@ bool BSIIControlAudioProcessorEditor::decodeSysExIntoEditor (const juce::MemoryB
     set ("ampSustain", decoded.ampSustain);
     set ("ampRelease", decoded.ampRelease);
     set ("ampRetrigger", decoded.ampRetrigger);
+    set ("ampFixed", decoded.ampFixed);
+    set ("ampRetriggerCount", decoded.ampRetriggerCount);
 
     set ("velocityMod", decoded.velocityMod);
     set ("modAttack", decoded.modAttack);
