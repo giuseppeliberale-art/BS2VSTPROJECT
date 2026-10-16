@@ -812,6 +812,7 @@ bool BSIIControlAudioProcessorEditor::decodeSysExIntoEditor (const juce::MemoryB
     set ("aftertouchLfo1", decoded.aftertouchLfo1);
     set ("aftertouchLfo2Spd", decoded.aftertouchLfo2Spd);
     set ("oscFilterMod", decoded.oscFilterMod);
+    set ("oscSyncRaw", decoded.oscSyncRaw);
     set ("distortion", decoded.distortion);
     set ("vcaLimit", decoded.vcaLimit);
 

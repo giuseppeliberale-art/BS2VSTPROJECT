@@ -27,6 +27,7 @@ namespace bsii
         int lfo1Wave=-1, lfo1Delay=-1, lfo1Slew=-1, lfo1Speed=-1, lfo1KeySync=-1;
         int lfo2Wave=-1, lfo2Delay=-1, lfo2Slew=-1, lfo2Speed=-1, lfo2KeySync=-1;
         int arpSwing=-1, modWhLfo1Pitch=-1, modWhOsc2Pitch=-1, aftertouchFilter=-1, aftertouchLfo1=-1, aftertouchLfo2Spd=-1;
+        int oscSyncRaw=-1;
         int oscFilterMod=-1, distortion=-1, vcaLimit=-1;
     };
 
@@ -117,6 +118,8 @@ namespace bsii
         acceptVerified (((b[50] & 0x1F) << 2) | ((b[51] >> 5) & 0x03), 0, 127, out.ampAttack, out);
         // Hardware wire order is Multi, Single, Autoglide; the editor lists Single first.
         const int ampTriggerWire = extractField (b, 55, 0x06);
+        // CC110 accepts any nonzero value as On; the raw editor uses 127 for On.
+        acceptVerified (extractField (b, 18, 0x40) == 0 ? 0 : 127, 0, 127, out.oscSyncRaw, out);
         const int modTriggerWire = extractField (b, 62, 0x0C);
         if (modTriggerWire <= 2)
             acceptVerified (modTriggerWire == 0 ? 1 : modTriggerWire == 1 ? 0 : 2,

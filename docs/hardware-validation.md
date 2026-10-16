@@ -243,3 +243,11 @@ Novation's [MIDI appendix](https://userguides.novationmusic.com/hc/en-gb/article
 All starting patches were restored and verified byte-for-byte after every sweep/probe (Glide 0, bend wire 76, Swing 50). Committed fixtures cover 128 Glide settings, 12 corrected bend settings, and all 128 Swing inputs: 268 cases. Results: `{portamento,bend-amount,arp-swing}-sweep.csv`; fixtures: corresponding files under `tests/fixtures/`. Swing CSV includes expected clamping and bend CSV records actual wire values.
 
 Rebuilt-app check: setting Bend Amount to 6 sent wire 70 (patch byte 16 = 0x46); fetching the patch retained app value 6. Restored original bend wire 76, verified the complete original patch byte-for-byte, and fetched it back into the app as 12. The shared conversion has a 1–12 round-trip regression; physical hardware-origin live CC reception was not manually exercised during this check.
+
+## Velocity assignments and oscillator sync
+
+Swept all 128 CC inputs for Velocity → Amp (CC112), Velocity → Mod (CC113), and Oscillator Sync (CC110): 384 captures. Both velocity fields clamp input 0 to 1; all 1–127 values match directly. Their existing packed mappings are correct (Amp: byte 49 mask 0x3F / byte 50 mask 0x40; Mod: byte 56 mask 0x7F). Limited both editor controls to the measured 1–127 range.
+
+Sync stores byte 18 bit 6: input 0 is Off; all inputs 1–127 are On. Added missing patch decoding and editor application, using canonical 0/127 for the existing raw control. The 128-capture decoder regression failed before the mapping was added. The raw slider remains a raw MIDI control; a labeled Off/On selector would be a separate UI change.
+
+Every sweep restored the complete starting patch byte-for-byte (both velocity assignments 64, sync Off). Results: `{velocity-amp,velocity-mod,osc-sync}-sweep.csv`; fixtures: matching files in `tests/fixtures/`. CSV expected values account for velocity clamping and sync normalization. This validates MIDI settings transport/storage and patch decoding, not measured acoustic velocity response or oscillator synchronization.

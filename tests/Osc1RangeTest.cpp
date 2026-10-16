@@ -489,5 +489,26 @@ int main(int argc, char** argv) {
         const auto wire = bsii::bendAmountToWire(semitones);
         passed &= wire == semitones + 64 && bsii::bendAmountFromWire(wire) == semitones;
     }
+    {
+        struct Capture { const char* name; int bsii::DecodedPatchFields::* field; };
+        const Capture captures[] = {
+            {"velocity-amp", &bsii::DecodedPatchFields::velocityAmp},
+            {"velocity-mod", &bsii::DecodedPatchFields::velocityMod},
+            {"osc-sync", &bsii::DecodedPatchFields::oscSyncRaw}
+        };
+        for (const auto& capture : captures) {
+            std::ifstream input(std::string(argv[1]) + "/" + capture.name + "-sweep.syx", std::ios::binary);
+            const std::string bytes((std::istreambuf_iterator<char>(input)), {});
+            bool ok = bytes.size() == 128 * 154;
+            if (ok)
+                for (int raw = 0; raw < 128; ++raw) {
+                    const auto d = bsii::decodePatchFields(juce::MemoryBlock(bytes.data() + raw * 154, 154));
+                    const int expected = std::string(capture.name).find("velocity-") == 0 ? juce::jmax(1, raw) : (raw == 0 ? 0 : 127);
+                    ok &= d.valid && d.*(capture.field) == expected;
+                }
+            std::cout << (ok ? "PASS" : "FAIL") << " captured " << capture.name << " sweep\n";
+            passed &= ok;
+        }
+    }
     return passed ? 0 : 1;
 }
