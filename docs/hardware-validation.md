@@ -171,3 +171,7 @@ Sent all 128 raw values on single CC90 and fetched a patch after each. Existing 
 ## Amp Envelope Decay automated sweep
 
 Sent all 128 raw values on single CC91 and fetched a patch after each. Existing candidate Decay decoding (byte 51 mask 0x0F / byte 52 mask 0x70) matched every value, with zero mismatches/timeouts. Original Decay 0 and the entire starting patch were restored byte-for-byte. Results: `amp-decay-sweep.csv`; captures: `tests/fixtures/amp-decay-sweep.syx`. All 128 messages are replayed through the C++ decoder. No mapping change was needed. This validates parameter transport/storage and decoding, not envelope timing in milliseconds or acoustic response.
+
+## Amp Envelope Sustain automated sweep
+
+Sent all 128 raw values on single CC92 and fetched a patch after each. Existing candidate Sustain decoding (byte 52 mask 0x07 / byte 53 mask 0x78) matched every value, with zero mismatches/timeouts. Original Sustain 127 and the entire starting patch were restored byte-for-byte. Results: `amp-sustain-sweep.csv`; captures: `tests/fixtures/amp-sustain-sweep.syx`. All 128 messages are replayed through the C++ decoder. No mapping change was needed. This validates parameter transport/storage and decoding, not acoustic sustain level calibration.

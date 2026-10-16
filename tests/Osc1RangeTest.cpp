@@ -169,5 +169,16 @@ int main(int argc, char** argv) {
     }
     std::cout << (decayOK ? "PASS" : "FAIL") << " all 128 captured Amp Decay values\n";
     passed &= decayOK;
+    std::ifstream sustainInput(std::string(argv[1]) + "/amp-sustain-sweep.syx", std::ios::binary);
+    const std::string sustainBytes((std::istreambuf_iterator<char>(sustainInput)), {});
+    bool sustainOK = sustainBytes.size() == 128 * 154;
+    if (sustainOK) {
+        for (int raw = 0; raw < 128; ++raw) {
+            const auto decoded = bsii::decodePatchFields(juce::MemoryBlock(sustainBytes.data() + raw * 154, 154));
+            sustainOK &= decoded.valid && decoded.ampSustain == raw;
+        }
+    }
+    std::cout << (sustainOK ? "PASS" : "FAIL") << " all 128 captured Amp Sustain values\n";
+    passed &= sustainOK;
     return passed ? 0 : 1;
 }
