@@ -163,3 +163,7 @@ Results: `filter-switches.csv`; captures: `tests/fixtures/filter-switches.syx`. 
 Sent all eight raw settings (0–7) via NRPN 0:108 and fetched a patch after each. Existing candidate Tracking decoding (byte 112 mask 0x07) matched every setting, with zero mismatches/timeouts. Original setting 0 and the entire starting patch were restored byte-for-byte. Results: `filter-tracking-sweep.csv`; captures: `tests/fixtures/filter-tracking-sweep.syx`. All eight messages are replayed through the C++ decoder. No mapping change was needed. This validates settings transport/storage and decoding, not measured acoustic tracking ratios.
 
 Filter transport/decoder coverage now includes Cutoff, Resonance, Overdrive, Mod Env amount, LFO 2 amount, Type/Shape/Slope combinations, and Keyboard Tracking: 916 captured cases.
+
+## Amp Envelope Attack automated sweep
+
+Sent all 128 raw values on single CC90 and fetched a patch after each. Existing verified Attack decoding (byte 50 mask 0x1F / byte 51 bits 5–6) matched every value, with zero mismatches/timeouts. Original Attack 0 and the entire starting patch were restored byte-for-byte. Results: `amp-attack-sweep.csv`; captures: `tests/fixtures/amp-attack-sweep.syx`. All 128 messages are replayed through the C++ decoder. No mapping change was needed. This validates parameter transport/storage and decoding, not envelope timing in milliseconds or its acoustic response.

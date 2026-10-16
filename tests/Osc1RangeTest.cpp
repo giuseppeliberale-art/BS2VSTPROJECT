@@ -147,5 +147,16 @@ int main(int argc, char** argv) {
     }
     std::cout << (trackingOK ? "PASS" : "FAIL") << " all eight captured Filter Tracking values\n";
     passed &= trackingOK;
+    std::ifstream attackInput(std::string(argv[1]) + "/amp-attack-sweep.syx", std::ios::binary);
+    const std::string attackBytes((std::istreambuf_iterator<char>(attackInput)), {});
+    bool attackOK = attackBytes.size() == 128 * 154;
+    if (attackOK) {
+        for (int raw = 0; raw < 128; ++raw) {
+            const auto decoded = bsii::decodePatchFields(juce::MemoryBlock(attackBytes.data() + raw * 154, 154));
+            attackOK &= decoded.valid && decoded.ampAttack == raw;
+        }
+    }
+    std::cout << (attackOK ? "PASS" : "FAIL") << " all 128 captured Amp Attack values\n";
+    passed &= attackOK;
     return passed ? 0 : 1;
 }
