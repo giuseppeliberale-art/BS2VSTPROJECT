@@ -62,3 +62,18 @@ suite. It prints a short result and saves full logs under `validation-results/`
 This checks the build and existing regressions; hardware testing and app signing
 remain separate. See [current project handover](docs/project-status.md) for the
 working app location, priorities, known limits and links to detailed evidence.
+
+## Local MIDI Lab
+
+Use `python3 tools/midi-lab/lab.py` for passive recording with automatic control
+identification and short reports. Explicit backup, restoration, controlled sampling
+and offline actual-decoder comparison are documented in [MIDI Lab](docs/midi-lab.md).
+The validation suite also requires Python3.10+. See the [local reference index](docs/local-reference.md)
+for cached manual pages and the next preset/Arp/Seq discovery routes.
+
+Preset selection is available above the snapshot buttons. Selecting a number loads
+that hardware preset and automatically reads its current patch into the editor.
+Previous/Next step through presets; Load Preset reloads the selected number.
+Hardware preset changes are followed when Live RX is running on the selected channel.
+Loading a preset replaces the temporary sound; save a snapshot or raw patch first
+if you want to keep edits. No stored preset is overwritten by this selector.

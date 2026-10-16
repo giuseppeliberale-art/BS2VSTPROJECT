@@ -47,3 +47,18 @@ snapshot storage change. Osc Sync now uses highlighted Off/On buttons with
 canonical raw0/127; all nonzero received values show On. Sub Octave remains -1/-2.
 Portamento label now reads Portamento / Glide Time. Checklist hardware instructions
 now use overlay labels and the confirmed first-C Filter Tracking shortcut.
+
+### Preset selection and refresh
+
+- Preset selector 0–127, Previous/Next and reload. Selecting sends Program Change
+  on the selected MIDI channel; does not write any stored preset.
+- Hardware Program Change follows the selected channel and Live RX setting.
+- Waits 200 ms after the latest selection before requesting the edit-buffer patch.
+  Requests are serialized; a reply belonging to a superseded selection is discarded.
+- Starts with unknown preset identity. Snapshot load, SysEx import/send and MIDI
+  output/channel changes clear it. An edit-buffer dump alone cannot identify a
+  stored preset slot.
+- Hardware display preset 1 was captured sending raw Program Change 1 on channel 1.
+  Remaining slot numbering follows the documented 0–127 range.
+- Automated checks cover settling, rapid changes, stale response rejection,
+  unknown state, bounds and millisecond counter wrap.

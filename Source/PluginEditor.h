@@ -5,6 +5,7 @@
 #include <memory>
 #include <vector>
 #include "PluginProcessor.h"
+#include "BSIIPresetSync.h"
 
 class ParameterControl : public juce::Component
 {
@@ -93,6 +94,8 @@ private:
     void selectMidiOutput (int comboBoxId);
     bool reopenSelectedMidiOutput (bool forceReopen = false);
     void requestPatchFromHardware();
+    void selectPreset (int program, bool sendToHardware);
+    void forgetPreset();
     void sendParameterValue (int specIndex, int value);
     void sendChoiceValue (int choiceIndex, int selectedChoiceIndex);
     void sendAllStateToHardware();
@@ -118,7 +121,10 @@ private:
     BSIIControlAudioProcessor& processor;
 
     juce::Label titleLabel, subtitleLabel, statusLabel, rxLabel, nrpnLabel, sysexLabel, midiLabel, channelLabel, stateHintLabel, diagnosticLabel;
-    juce::ComboBox midiOutputBox, channelBox;
+    juce::ComboBox midiOutputBox, channelBox, presetBox;
+    juce::Label presetLabel, presetHint;
+    juce::TextButton previousPresetButton { "Previous" }, nextPresetButton { "Next" }, loadPresetButton { "Load Preset" };
+    bsii::PresetSync presetSync;
     juce::TextButton refreshButton { "Refresh MIDI" };
     juce::ToggleButton pauseLiveRxButton { "Live RX is running" };
     juce::TextButton saveButton { "Save Snapshot…" };

@@ -120,6 +120,15 @@ void BSIIControlAudioProcessor::parseIncomingMidi (const juce::MidiBuffer& midiM
         if (! liveMidiRxEnabled.load (std::memory_order_relaxed))
             continue;
 
+        if (message.isProgramChange() && message.getChannel() == wantedChannel)
+        {
+            for (auto& value : pendingHardwareValues) value.store (bsii::noHardwareValue);
+            for (auto& value : pendingChoiceWireValues) value.store (-1);
+            for (auto& value : pairedMSB) value.store (-1);
+            pendingHardwareProgram.store (message.getProgramChangeNumber(), std::memory_order_release);
+            continue;
+        }
+
         if (! message.isController())
             continue;
 
@@ -203,6 +212,7 @@ void BSIIControlAudioProcessor::parseIncomingMidi (const juce::MidiBuffer& midiM
 void BSIIControlAudioProcessor::setHardwareMidiChannel (int channel)
 {
     hardwareMidiChannel.store (juce::jlimit (1, 16, channel), std::memory_order_relaxed);
+    pendingHardwareProgram.store (-1);
 }
 
 int BSIIControlAudioProcessor::consumeHardwareValue (int specIndex)

@@ -40,6 +40,7 @@ public:
     void setLiveMidiRxEnabled (bool enabled) { liveMidiRxEnabled.store (enabled, std::memory_order_relaxed); }
     bool isLiveMidiRxEnabled() const { return liveMidiRxEnabled.load (std::memory_order_relaxed); }
     // Returns bsii::noHardwareValue when no update is pending (negative bend is valid).
+    int consumeHardwareProgram() { return pendingHardwareProgram.exchange (-1, std::memory_order_acq_rel); }
     int consumeHardwareValue (int specIndex);
     int consumeChoiceWireValue (int choiceIndex);
 
@@ -72,6 +73,7 @@ private:
 
     juce::AudioProcessorValueTreeState apvts;
     std::atomic<int> hardwareMidiChannel { 1 };
+    std::atomic<int> pendingHardwareProgram { -1 };
     std::atomic<bool> liveMidiRxEnabled { true };
 
     static constexpr size_t maxSpecs = 96;

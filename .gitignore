@@ -27,3 +27,8 @@ xcuserdata/
 
 # Local validation summaries and full logs
 /validation-results/
+
+# Local MIDI recordings, generated reports and vendor document cache
+/midi-lab-results/
+/docs/vendor-cache/
+__pycache__/

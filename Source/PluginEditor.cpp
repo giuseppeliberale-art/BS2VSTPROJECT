@@ -268,7 +268,7 @@ BSIIControlAudioProcessorEditor::BSIIControlAudioProcessorEditor (BSIIControlAud
 {
     setResizable (true, true);
     setResizeLimits (760, 600, 1600, 1200);
-    setSize (900, 760);
+    setSize (900, 800);
     titleLabel.setText ("Bass Station II Control — Waveforms + SysEx Validation v0.8.2", juce::dontSendNotification);
     titleLabel.setFont (juce::FontOptions (23.0f).withStyle ("Bold"));
     addAndMakeVisible (titleLabel);
@@ -294,6 +294,7 @@ BSIIControlAudioProcessorEditor::BSIIControlAudioProcessorEditor (BSIIControlAud
     {
         midiChannel = juce::jmax (1, channelBox.getSelectedId());
         processor.setHardwareMidiChannel (midiChannel);
+        forgetPreset();
         std::fill (lastSentValues.begin(), lastSentValues.end(), bsii::noHardwareValue);
         std::fill (lastSentChoiceIndices.begin(), lastSentChoiceIndices.end(), -1);
     };
@@ -301,6 +302,21 @@ BSIIControlAudioProcessorEditor::BSIIControlAudioProcessorEditor (BSIIControlAud
     refreshButton.onClick = [this] { refreshMidiOutputs(); autoSelectBassStation(); };
     pauseLiveRxButton.onClick = [this] { setLiveRxPaused (pauseLiveRxButton.getToggleState()); };
     midiOutputBox.onChange = [this] { selectMidiOutput (midiOutputBox.getSelectedId()); };
+
+    presetLabel.setText ("Preset", juce::dontSendNotification);
+    presetBox.setTextWhenNothingSelected ("Unknown / edit buffer");
+    presetBox.setTooltip ("Selecting a preset loads it on the Bass Station II, replacing the temporary sound. Presets are numbered 0 to 127.");
+    for (int program = 0; program < 128; ++program)
+        presetBox.addItem (juce::String (program), program + 1);
+    presetHint.setText ("Replaces temporary sound.", juce::dontSendNotification);
+    for (auto* component : std::initializer_list<juce::Component*> { &presetLabel, &presetBox,
+             &previousPresetButton, &nextPresetButton, &loadPresetButton, &presetHint })
+        addAndMakeVisible (component);
+    presetBox.onChange = [this] { selectPreset (presetBox.getSelectedId() - 1, true); };
+    previousPresetButton.onClick = [this] { selectPreset (presetSync.selected() - 1, true); };
+    nextPresetButton.onClick = [this] { selectPreset (presetSync.selected() + 1, true); };
+    loadPresetButton.onClick = [this] { selectPreset (presetBox.getSelectedId() - 1, true); };
+    forgetPreset();
 
     saveButton.onClick = [this] { saveSnapshot(); };
     loadButton.onClick = [this] { loadSnapshot(); };
@@ -434,6 +450,18 @@ void BSIIControlAudioProcessorEditor::resized()
     pauseLiveRxButton.setBounds (deviceRow.removeFromLeft (190));
 
     area.removeFromTop (8);
+    auto presetRow = area.removeFromTop (32);
+    presetLabel.setBounds (presetRow.removeFromLeft (82));
+    presetBox.setBounds (presetRow.removeFromLeft (170));
+    presetRow.removeFromLeft (8);
+    previousPresetButton.setBounds (presetRow.removeFromLeft (85));
+    presetRow.removeFromLeft (6);
+    nextPresetButton.setBounds (presetRow.removeFromLeft (65));
+    presetRow.removeFromLeft (6);
+    loadPresetButton.setBounds (presetRow.removeFromLeft (110));
+    presetRow.removeFromLeft (8);
+    presetHint.setBounds (presetRow);
+    area.removeFromTop (8);
     auto stateRow = area.removeFromTop (32);
     saveButton.setBounds (stateRow.removeFromLeft (150));
     stateRow.removeFromLeft (8);
@@ -498,10 +526,14 @@ void BSIIControlAudioProcessorEditor::timerCallback()
                              juce::dontSendNotification);
     }
 
+    const auto program = processor.consumeHardwareProgram();
+    if (program >= 0) selectPreset (program, false);
     applyHardwareUpdates();
     updateRxDisplay();
     updateSysExDisplay();
     updateFilterModeUi();
+    if (presetSync.ready (juce::Time::getMillisecondCounter()) && ! patchRequestPending && midiOutput != nullptr)
+        requestPatchFromHardware();
 }
 
 void BSIIControlAudioProcessorEditor::refreshMidiOutputs()
@@ -532,12 +564,14 @@ void BSIIControlAudioProcessorEditor::selectMidiOutput (int comboBoxId)
     const int index = comboBoxId - 1;
     if (! juce::isPositiveAndBelow (index, midiOutputs.size()))
     {
+        forgetPreset();
         midiOutput.reset();
         selectedDeviceIdentifier.clear();
         statusLabel.setText ("No MIDI output selected.", juce::dontSendNotification);
         return;
     }
 
+    if (selectedDeviceIdentifier != midiOutputs[index].identifier) forgetPreset();
     selectedDeviceIdentifier = midiOutputs[index].identifier;
     reopenSelectedMidiOutput (true);
 }
@@ -584,8 +618,34 @@ bool BSIIControlAudioProcessorEditor::reopenSelectedMidiOutput (bool forceReopen
     return false;
 }
 
+void BSIIControlAudioProcessorEditor::forgetPreset()
+{
+    presetSync.forget();
+    presetBox.setSelectedId (0, juce::dontSendNotification);
+    previousPresetButton.setEnabled (false);
+    nextPresetButton.setEnabled (false);
+    loadPresetButton.setEnabled (false);
+}
+
+void BSIIControlAudioProcessorEditor::selectPreset (int program, bool sendToHardware)
+{
+    if (program < 0 || program > 127) return;
+    if (sendToHardware)
+    {
+        if (! reopenSelectedMidiOutput()) return;
+        midiOutput->sendMessageNow (juce::MidiMessage::programChange (midiChannel, program));
+    }
+    presetSync.select (program, juce::Time::getMillisecondCounter());
+    presetBox.setSelectedId (program + 1, juce::dontSendNotification);
+    previousPresetButton.setEnabled (program > 0);
+    nextPresetButton.setEnabled (program < 127);
+    loadPresetButton.setEnabled (true);
+    statusLabel.setText ("Preset " + juce::String (program) + ": waiting to refresh patch…", juce::dontSendNotification);
+}
+
 void BSIIControlAudioProcessorEditor::requestPatchFromHardware()
 {
+    if (patchRequestPending) return;
     if (! reopenSelectedMidiOutput (true))
     {
         statusLabel.setText ("Cannot request patch: Bass Station II MIDI output is not open.", juce::dontSendNotification);
@@ -594,6 +654,7 @@ void BSIIControlAudioProcessorEditor::requestPatchFromHardware()
 
     const auto latest = processor.getLatestSysEx();
     patchRequestStartSerial = latest.serial;
+    presetSync.requestStarted();
     patchRequestPending = true;
     patchRequestStartedMs = juce::Time::getMillisecondCounter();
 
@@ -725,6 +786,7 @@ void BSIIControlAudioProcessorEditor::updateSysExDisplay()
     if (patchRequestPending && latest.serial > patchRequestStartSerial)
     {
         patchRequestPending = false;
+        if (! presetSync.responseCurrent()) return;
         if (decodeSysExIntoEditor (latest.data, "live Bass Station II patch"))
             statusLabel.setText ("Live patch received and decoded from Bass Station II (" + juce::String (size) + " bytes).",
                                  juce::dontSendNotification);
@@ -806,6 +868,7 @@ void BSIIControlAudioProcessorEditor::sendSysExFileToHardware()
             }
 
             juce::MidiMessage message (data.getData(), static_cast<int> (data.getSize()), 0.0);
+            forgetPreset();
             midiOutput->sendMessageNow (message);
             statusLabel.setText ("Sent " + juce::String (static_cast<int> (data.getSize())) + "-byte SysEx message to Bass Station II edit buffer.",
                                  juce::dontSendNotification);
@@ -974,7 +1037,10 @@ void BSIIControlAudioProcessorEditor::importSysExToEditor()
             if (! file.loadFileAsData (data))
                 statusLabel.setText ("Could not read " + file.getFileName() + ".", juce::dontSendNotification);
             else
+            {
+                forgetPreset();
                 decodeSysExIntoEditor (data, file.getFileName());
+            }
         }
         fileChooser.reset();
     });
@@ -1039,6 +1105,7 @@ bool BSIIControlAudioProcessorEditor::loadStateFromFile (const juce::File& file)
         return false;
 
     juce::ScopedValueSetter<bool> guard (suppressMidiSends, true);
+    forgetPreset();
     processor.getParameters().replaceState (state);
     std::fill (lastSentValues.begin(), lastSentValues.end(), bsii::noHardwareValue);
     std::fill (lastSentChoiceIndices.begin(), lastSentChoiceIndices.end(), -1);
