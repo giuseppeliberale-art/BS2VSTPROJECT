@@ -125,3 +125,9 @@ Sent all 256 raw values on paired CC23/55 and fetched a patch after each. Noise 
 ## Ring Mod Mixer level automated sweep
 
 Sent all 256 raw values on paired CC24/56 and fetched a patch after each. Ring Mod Mixer decoding (byte 42 mask 0x3F / byte 43 mask 0x60) matched every value, with zero mismatches/timeouts. Original level 0 and the entire starting patch were restored byte-for-byte. Results: `mix-ring-sweep.csv`; captures: `tests/fixtures/mix-ring-sweep.syx`. All 256 messages are replayed through the actual C++ decoder alongside the other Mixer sweeps. No mapping change was needed.
+
+## External Input Mixer level automated sweep
+
+Sent all 256 raw values on paired CC25/57 and fetched a patch after each. External Input Mixer decoding (byte 43 mask 0x1F / byte 44 mask 0x70) matched every value, with zero mismatches/timeouts. Original level 0 and the entire starting patch were restored byte-for-byte. Results: `mix-external-sweep.csv`; captures: `tests/fixtures/mix-external-sweep.syx`. All 256 messages are replayed through the actual C++ decoder. No mapping change was needed. This checks parameter transport/storage and decoding, not external audio gain or signal quality.
+
+All six Mixer controls now have exhaustive 256-value MIDI-to-SysEx sweeps and C++ decoder replays: 1,536 captured cases in total.
