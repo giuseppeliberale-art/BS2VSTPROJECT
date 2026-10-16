@@ -1,0 +1,120 @@
+# Validation coverage audit — 17 October 2026
+
+Audited application source and committed captures at `d436925`. This is a coverage inventory, not a new hardware test or a declaration that every UI path works. No synth settings were changed during this audit. The `v0.8.2` baseline tag remains on `91d1ffc`.
+
+## Current result
+
+- **76 exposed controls:** 58 numeric parameters and 18 choices (`Source/BSIIMidi.h`).
+- **74 controls have patch fields applied to the editor.** Oscillator 1 and 2 Waveform are the two omissions from both `DecodedPatchFields` and `decodeSysExIntoEditor`.
+- **70 controls have setting/value captures replayed through their decoder fields.** Coverage includes expected hardware clamping and normalization, not necessarily a unique result for every MIDI input.
+- **Two Fine controls have selected manual-position regression captures**, not exhaustive transport sweeps.
+- **Two Coarse controls have captured observations but no direct decoder assertions in the current regression.** Oscillator 2 also has two documented full 256-value MIDI/SysEx sweeps as CSVs; neither full sweep is committed as a replay fixture.
+- **Two main oscillator waveform controls have manually confirmed bidirectional live MIDI only.** Their patch-fetch/import behavior remains missing. Sub Wave has since gained captured SysEx coverage.
+
+The fixture directory contains **89 files / 8,091 patch messages**. The current captured-patch test traverses **79 files / 8,081 messages**: 57 sweep files (7,971 messages), four option-combination files (92 messages), eight range messages, and ten Fine messages. The ten saved Coarse observation files are not opened by that test. These are fixture-message counts, not independent acoustic tests or assertions of end-to-end UI coverage.
+
+`ctest --test-dir build -C Release --output-on-failure` passed both registered tests during this audit: StandaloneMidiRouting and Osc1RangeCapturedPatches. The latter's historical name now covers most controls; the name does not imply that only Oscillator 1 Range is tested.
+
+## Next work, in order
+
+1. **Main oscillator waveform SysEx:** capture all four waveform settings for each oscillator; add decoder fields and editor application; reproduce the missing-update failure, then verify import and fresh Get Patch with Live RX paused.
+2. **Coarse regression:** replay the ten existing Coarse captures through the actual decoder, then preserve/replay full sweeps. Oscillator 1 still needs an exhaustive transport sweep; Oscillator 2's documented sweeps should be retained as raw fixtures or repeated with restoration checks.
+3. **Fine coverage:** decide whether the selected musical-position captures are sufficient; otherwise sweep the supported hardware range and check clamping and center behavior. Current display conversion tests do not substitute for such a transport sweep.
+4. **Application integration:** hardware-origin live reception, actual app sends, Send All, snapshot save/load, and plugin-host smoke tests. Most automated sweeps use the standalone CoreMIDI sampler, not the app's sending function or hardware knobs.
+
+## Evidence limits
+
+- Firmware version was not recorded. Results describe this connected synth and the saved captures.
+- The tests establish MIDI transport, returned patch storage, and decoding. They do not measure acoustic modulation, frequency, envelope timing, output level, waveform shape, or physical-pot resolution.
+- Coarse's decimal display remains approximate; the LCD does not update from received MIDI, so automated sweeps do not calibrate its exact rounding.
+- Envelope options were tested as Trigger × Retrigger and Fixed Sustain × Count pairs. Filter switches cover all 12 combinations. There is no exhaustive interaction test of every control together.
+- “MIDI verified” UI badges describe the historical live MIDI checks. Decoder “verified” versus “candidate” counters are historical classification, not a current coverage score; many candidate fields now have exhaustive captures.
+- Only selected fixes received visual import/fetch checks. Decoder replay success does not prove that every editor attachment or live receive route is correct.
+- Current changes were built for Standalone and the regression targets. A fresh AU/VST3 build and host/session recall test of this head are not recorded.
+- Malformed/truncated SysEx, device disconnect/reconnect, wrong-channel behavior, and simultaneous UI/host/hardware edits do not have dedicated captured-path regression coverage.
+- Bend's editor supports only +1 to +12 despite the captured wider signed hardware wire range. Live bend conversion was changed, but physical hardware-origin live CC reception was not manually checked afterward.
+- Raw Sync and Sub Octave controls retain numeric UI values; patch decoding uses canonical 0/127. Acoustic octave direction was not established by the sub-octave transport sweep.
+- Hardware functions not exposed in the app (for example additional arp or LFO sync modes) are outside this 76-control inventory.
+
+## Complete exposed-control inventory
+
+The table maps every current parameter/choice ID to its available evidence. “Captured sweep” refers to committed files under `tests/fixtures/`, replayed by `tests/Osc1RangeTest.cpp`; CSVs and methodology are described in [hardware-validation.md](hardware-validation.md). Read historical notes chronologically; this audit summarizes the current coverage.
+
+| Section | Control ID | MIDI route | Current patch/decoder coverage |
+| --- | --- | --- | --- |
+| Master | `patchVolume` | CC 7 | Captured setting/value sweep + decoder replay |
+| Osc 1 | `osc1Fine` | CC 26/58 | Five manual Fine positions + display tests; no full transport sweep |
+| Osc 1 | `osc1Coarse` | CC 27/59 | Manual captures; field not asserted by decoder regression; no full sweep |
+| Osc 1 | `osc1ModEnvPitch` | CC 71 | Captured setting/value sweep + decoder replay |
+| Osc 1 | `osc1Lfo1Pitch` | CC 28/60 | Captured setting/value sweep + decoder replay |
+| Osc 1 | `osc1ModEnvPW` | CC 72 | Captured setting/value sweep + decoder replay |
+| Osc 1 | `osc1Lfo2PW` | CC 73 | Captured setting/value sweep + decoder replay |
+| Osc 1 | `osc1ManualPW` | CC 74 | Captured setting/value sweep + decoder replay |
+| Osc 2 | `osc2Fine` | CC 29/61 | Five manual Fine positions + display tests; no full transport sweep |
+| Osc 2 | `osc2Coarse` | CC 30/62 | Manual captures + two 256-value CSV sweeps; field not asserted by decoder regression |
+| Osc 2 | `osc2ModEnvPitch` | CC 76 | Captured setting/value sweep + decoder replay |
+| Osc 2 | `osc2Lfo1Pitch` | CC 31/63 | Captured setting/value sweep + decoder replay |
+| Osc 2 | `osc2ModEnvPW` | CC 77 | Captured setting/value sweep + decoder replay |
+| Osc 2 | `osc2Lfo2PW` | CC 78 | Captured setting/value sweep + decoder replay |
+| Osc 2 | `osc2ManualPW` | CC 79 | Captured setting/value sweep + decoder replay |
+| Mixer | `mixOsc1` | CC 20/52 | Captured setting/value sweep + decoder replay |
+| Mixer | `mixOsc2` | CC 21/53 | Captured setting/value sweep + decoder replay |
+| Mixer | `mixSub` | CC 22/54 | Captured setting/value sweep + decoder replay |
+| Mixer | `mixNoise` | CC 23/55 | Captured setting/value sweep + decoder replay |
+| Mixer | `mixRing` | CC 24/56 | Captured setting/value sweep + decoder replay |
+| Mixer | `mixExternal` | CC 25/57 | Captured setting/value sweep + decoder replay |
+| Osc 1 | `subOctaveRaw` | CC 81 | Captured setting/value sweep + decoder replay |
+| Filter | `filterCutoff` | CC 16/48 | Captured setting/value sweep + decoder replay |
+| Filter | `filterResonance` | CC 82 | Captured setting/value sweep + decoder replay |
+| Filter | `filterModEnv` | CC 85 | Captured setting/value sweep + decoder replay |
+| Filter | `filterLfo2` | CC 17/49 | Captured setting/value sweep + decoder replay |
+| Filter | `filterOverdrive` | CC 114 | Captured setting/value sweep + decoder replay |
+| LFO / Glide | `portamento` | CC 5 | Captured setting/value sweep + decoder replay |
+| LFO / Glide | `lfo1Speed` | CC 18/50 | Captured setting/value sweep + decoder replay |
+| LFO / Glide | `lfo1Delay` | CC 86 | Captured setting/value sweep + decoder replay |
+| LFO / Glide | `lfo2Speed` | CC 19/51 | Captured setting/value sweep + decoder replay |
+| LFO / Glide | `lfo2Delay` | CC 87 | Captured setting/value sweep + decoder replay |
+| LFO / Glide | `lfo1Slew` | NRPN 0:86 | Captured setting/value sweep + decoder replay |
+| LFO / Glide | `lfo2Slew` | NRPN 0:90 | Captured setting/value sweep + decoder replay |
+| Filter | `filterTracking` | NRPN 0:108 | Captured setting/value sweep + decoder replay |
+| Amp Env | `ampAttack` | CC 90 | Captured setting/value sweep + decoder replay |
+| Amp Env | `ampDecay` | CC 91 | Captured setting/value sweep + decoder replay |
+| Amp Env | `ampSustain` | CC 92 | Captured setting/value sweep + decoder replay |
+| Amp Env | `ampRelease` | CC 93 | Captured setting/value sweep + decoder replay |
+| Amp Env | `ampRetriggerCount` | NRPN 0:117 | Captured option combinations + decoder replay (see limits below) |
+| Mod Env | `modAttack` | CC 102 | Captured setting/value sweep + decoder replay |
+| Mod Env | `modDecay` | CC 103 | Captured setting/value sweep + decoder replay |
+| Mod Env | `modSustain` | CC 104 | Captured setting/value sweep + decoder replay |
+| Mod Env | `modRelease` | CC 105 | Captured setting/value sweep + decoder replay |
+| Mod Env | `modRetriggerCount` | NRPN 0:118 | Captured option combinations + decoder replay (see limits below) |
+| FX / Perf | `distortion` | CC 94 | Captured setting/value sweep + decoder replay |
+| FX / Perf | `oscSyncRaw` | CC 110 | Captured setting/value sweep + decoder replay |
+| FX / Perf | `oscFilterMod` | CC 115 | Captured setting/value sweep + decoder replay |
+| FX / Perf | `arpSwing` | CC 116 | Captured setting/value sweep + decoder replay |
+| FX / Perf | `bendAmount` | CC 107 | Captured setting/value sweep + decoder replay |
+| FX / Perf | `velocityAmp` | CC 112 | Captured setting/value sweep + decoder replay |
+| FX / Perf | `velocityMod` | CC 113 | Captured setting/value sweep + decoder replay |
+| FX / Perf | `vcaLimit` | CC 95 | Captured setting/value sweep + decoder replay |
+| FX / Perf | `modWhLfo1Pitch` | NRPN 0:70 | Captured setting/value sweep + decoder replay |
+| FX / Perf | `modWhOsc2Pitch` | NRPN 0:78 | Captured setting/value sweep + decoder replay |
+| FX / Perf | `aftertouchFilter` | NRPN 0:74 | Captured setting/value sweep + decoder replay |
+| FX / Perf | `aftertouchLfo1` | NRPN 0:75 | Captured setting/value sweep + decoder replay |
+| FX / Perf | `aftertouchLfo2Spd` | NRPN 0:76 | Captured setting/value sweep + decoder replay |
+| Osc 1 | `osc1Wave` | NRPN 0:72 | Missing SysEx field/application; live MIDI manually confirmed |
+| Osc 1 | `subWave` | CC 80 | Captured setting/value sweep + decoder replay |
+| Osc 1 | `osc1Range` | CC 70 | Captured setting/value sweep + decoder replay |
+| Osc 2 | `osc2Wave` | NRPN 0:82 | Missing SysEx field/application; live MIDI manually confirmed |
+| Osc 2 | `osc2Range` | CC 75 | Captured setting/value sweep + decoder replay |
+| Filter | `filterType` | CC 83 | Captured option combinations + decoder replay (see limits below) |
+| Filter | `filterShape` | CC 84 | Captured option combinations + decoder replay (see limits below) |
+| Filter | `filterSlope` | CC 106 | Captured option combinations + decoder replay (see limits below) |
+| LFO / Glide | `lfo1Wave` | CC 88 | Captured setting/value sweep + decoder replay |
+| LFO / Glide | `lfo2Wave` | CC 89 | Captured setting/value sweep + decoder replay |
+| Amp Env | `ampTrigger` | NRPN 0:73 | Captured option combinations + decoder replay (see limits below) |
+| Mod Env | `modTrigger` | NRPN 0:105 | Captured option combinations + decoder replay (see limits below) |
+| Amp Env | `ampRetrigger` | NRPN 0:109 | Captured option combinations + decoder replay (see limits below) |
+| Mod Env | `modRetrigger` | NRPN 0:110 | Captured option combinations + decoder replay (see limits below) |
+| Amp Env | `ampFixed` | NRPN 0:114 | Captured option combinations + decoder replay (see limits below) |
+| Mod Env | `modFixed` | NRPN 0:115 | Captured option combinations + decoder replay (see limits below) |
+| LFO / Glide | `lfo1KeySync` | NRPN 0:89 | Captured setting/value sweep + decoder replay |
+| LFO / Glide | `lfo2KeySync` | NRPN 0:93 | Captured setting/value sweep + decoder replay |

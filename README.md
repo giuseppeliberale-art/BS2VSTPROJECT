@@ -15,7 +15,7 @@ Bass Station II hardware editor / VST3 / AU / Standalone built with JUCE.
 - Choice badges now say **MIDI verified** / **MIDI test** so they are not confused with SysEx-patch verification.
 - Existing v0.8.1 **Pause Live RX**, **Get Patch from BSII**, snapshots, SysEx capture/import, and decoder diagnostics remain intact.
 
-The three waveform selectors are now marked **MIDI verified** following physical-unit testing. This confirms their live MIDI mappings only; their SysEx patch positions remain separately unverified. See [hardware validation](docs/hardware-validation.md) for the results.
+The three waveform selectors are now marked **MIDI verified** following physical-unit testing. The two main oscillator waveform selectors still have live MIDI coverage only; Sub Wave now also has captured SysEx decoding coverage. See [hardware validation](docs/hardware-validation.md) for the results and the [current coverage audit](docs/validation-coverage.md) for remaining gaps.
 
 ## Build on macOS
 
@@ -40,7 +40,7 @@ With Live RX enabled and Bass Station II selected as MIDI output:
 3. Repeat for **Osc 2 Waveform**.
 4. Repeat for **Sub Wave**.
 
-Do not use `Get Patch from BSII` to validate these live MIDI mappings yet; SysEx decoding is a separate validation path.
+Live MIDI and SysEx decoding are separate validation paths. `Get Patch from BSII` currently applies Sub Wave, but does not yet apply Osc 1 or Osc 2 Waveform; see the coverage audit.
 
 ## Repository baseline
 
