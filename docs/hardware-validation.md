@@ -131,3 +131,7 @@ Sent all 256 raw values on paired CC24/56 and fetched a patch after each. Ring M
 Sent all 256 raw values on paired CC25/57 and fetched a patch after each. External Input Mixer decoding (byte 43 mask 0x1F / byte 44 mask 0x70) matched every value, with zero mismatches/timeouts. Original level 0 and the entire starting patch were restored byte-for-byte. Results: `mix-external-sweep.csv`; captures: `tests/fixtures/mix-external-sweep.syx`. All 256 messages are replayed through the actual C++ decoder. No mapping change was needed. This checks parameter transport/storage and decoding, not external audio gain or signal quality.
 
 All six Mixer controls now have exhaustive 256-value MIDI-to-SysEx sweeps and C++ decoder replays: 1,536 captured cases in total.
+
+## Filter Cutoff automated sweep
+
+Sent all 256 raw values on paired CC16/48 and fetched a patch after each. The existing verified Cutoff formula (byte 44 low nibble / byte 45 bits 3–6) matched every value, with zero mismatches/timeouts. Original cutoff 38 and the entire starting patch were restored byte-for-byte. Results: `filter-cutoff-sweep.csv`; captures: `tests/fixtures/filter-cutoff-sweep.syx`. All 256 messages are replayed through the C++ decoder. No mapping change was needed. This validates parameter transport/storage and decoding, not a cutoff-frequency calibration in Hz or audio response.

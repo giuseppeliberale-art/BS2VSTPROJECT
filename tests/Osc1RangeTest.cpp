@@ -65,5 +65,16 @@ int main(int argc, char** argv) {
         std::cout << (mixerOK ? "PASS" : "FAIL") << " all 256 captured " << mixerNames[mixer] << " Mixer levels\n";
         passed &= mixerOK;
     }
+    std::ifstream cutoffInput(std::string(argv[1]) + "/filter-cutoff-sweep.syx", std::ios::binary);
+    const std::string cutoffBytes((std::istreambuf_iterator<char>(cutoffInput)), {});
+    bool cutoffOK = cutoffBytes.size() == 256 * 154;
+    if (cutoffOK) {
+        for (int raw = 0; raw < 256; ++raw) {
+            const auto decoded = bsii::decodePatchFields(juce::MemoryBlock(cutoffBytes.data() + raw * 154, 154));
+            cutoffOK &= decoded.valid && decoded.filterCutoff == raw;
+        }
+    }
+    std::cout << (cutoffOK ? "PASS" : "FAIL") << " all 256 captured Filter Cutoff values\n";
+    passed &= cutoffOK;
     return passed ? 0 : 1;
 }
