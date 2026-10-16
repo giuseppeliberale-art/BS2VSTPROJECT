@@ -225,3 +225,9 @@ The entire starting patch was restored and verified byte-for-byte after every sw
 Sent all 128 values for Distortion (CC94), Osc Filter Mod (CC115), and VCA Limit (CC95): 384 captures with zero mismatches/timeouts. Existing decoder mappings matched all captures. Osc Filter Mod uses byte 106 mask 0x1F / byte 107 mask 0x60; Distortion uses byte 107 mask 0x0F / byte 108 mask 0x70; VCA Limit uses byte 108 mask 0x07 / byte 109 mask 0x78. No app mapping changes were needed.
 
 The complete starting patch was restored and verified byte-for-byte after each sweep; all three starting values were 0. Results: `{distortion,osc-filter-mod,vca-limit}-sweep.csv`; corresponding fixtures replay all 384 messages through the actual C++ decoder. This validates MIDI transport/storage and decoding, not measured acoustic distortion, modulation response, or limiting behavior. Other performance controls remain separately untested.
+
+## Modulation wheel and aftertouch assignments
+
+Swept all 128 values for ModWh → LFO1 Pitch (NRPN 0:70), ModWh → Osc2 Pitch (0:78), Aftertouch → Filter (0:74), Aftertouch → LFO1 (0:75), and Aftertouch → LFO2 Speed (0:76): 640 captures, zero mismatches/timeouts. Existing decoder mappings matched every capture. Fields respectively occupy byte 83 mask 0x0F / byte 84 mask 0x70; byte 85 mask 0x03 / byte 86 mask 0x7C; byte 86 mask 0x01 / byte 87 mask 0x7E; byte 88 mask 0x7F; byte 89 mask 0x3F / byte 90 mask 0x40. No app mapping changes were needed.
+
+The entire starting patch was restored and verified byte-for-byte after every sweep. Original values in the above order were 74, 64, 74, 64, 64. Results: `{modwheel-lfo1-pitch,modwheel-osc2-pitch,aftertouch-filter,aftertouch-lfo1,aftertouch-lfo2-speed}-sweep.csv`; corresponding fixtures replay all 640 messages through the actual C++ decoder. This validates assignment transport/storage and decoding, not physical wheel/pressure response or acoustic modulation depth.

@@ -443,5 +443,27 @@ int main(int argc, char** argv) {
         std::cout << (ok ? "PASS" : "FAIL") << " all 128 captured vca-limit values\n";
         passed &= ok;
     }
+    {
+        struct AssignmentCapture { const char* name; int bsii::DecodedPatchFields::* field; };
+        const AssignmentCapture assignments[] = {
+            {"modwheel-lfo1-pitch", &bsii::DecodedPatchFields::modWhLfo1Pitch},
+            {"modwheel-osc2-pitch", &bsii::DecodedPatchFields::modWhOsc2Pitch},
+            {"aftertouch-filter", &bsii::DecodedPatchFields::aftertouchFilter},
+            {"aftertouch-lfo1", &bsii::DecodedPatchFields::aftertouchLfo1},
+            {"aftertouch-lfo2-speed", &bsii::DecodedPatchFields::aftertouchLfo2Spd}
+        };
+        for (const auto& assignment : assignments) {
+            std::ifstream input(std::string(argv[1]) + "/" + assignment.name + "-sweep.syx", std::ios::binary);
+            const std::string bytes((std::istreambuf_iterator<char>(input)), {});
+            bool ok = bytes.size() == 128 * 154;
+            if (ok)
+                for (int raw = 0; raw < 128; ++raw) {
+                    const auto d = bsii::decodePatchFields(juce::MemoryBlock(bytes.data() + raw * 154, 154));
+                    ok &= d.valid && d.*(assignment.field) == raw;
+                }
+            std::cout << (ok ? "PASS" : "FAIL") << " all 128 captured " << assignment.name << " values\n";
+            passed &= ok;
+        }
+    }
     return passed ? 0 : 1;
 }
