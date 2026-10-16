@@ -98,5 +98,16 @@ int main(int argc, char** argv) {
     }
     std::cout << (overdriveOK ? "PASS" : "FAIL") << " all 128 captured Filter Overdrive values\n";
     passed &= overdriveOK;
+    std::ifstream modenvInput(std::string(argv[1]) + "/filter-modenv-sweep.syx", std::ios::binary);
+    const std::string modenvBytes((std::istreambuf_iterator<char>(modenvInput)), {});
+    bool modenvOK = modenvBytes.size() == 128 * 154;
+    if (modenvOK) {
+        for (int raw = 0; raw < 128; ++raw) {
+            const auto decoded = bsii::decodePatchFields(juce::MemoryBlock(modenvBytes.data() + raw * 154, 154));
+            modenvOK &= decoded.valid && decoded.filterModEnv == raw;
+        }
+    }
+    std::cout << (modenvOK ? "PASS" : "FAIL") << " all 128 captured Filter Mod Env values\n";
+    passed &= modenvOK;
     return passed ? 0 : 1;
 }

@@ -143,3 +143,7 @@ Sent all 128 raw values on single CC82 and fetched a patch after each. Existing 
 ## Filter Overdrive automated sweep
 
 Sent all 128 raw values on single CC114 and fetched a patch after each. Existing verified Overdrive decoding (byte 46 mask 0x01 / byte 47 bits 1–6) matched every value, with zero mismatches/timeouts. Original Overdrive 0 and the entire starting patch were restored byte-for-byte. Results: `filter-overdrive-sweep.csv`; captures: `tests/fixtures/filter-overdrive-sweep.syx`. All 128 messages are replayed through the C++ decoder. No mapping change was needed. This validates parameter transport/storage and decoding, not the acoustic distortion response.
+
+## Filter Mod Env amount automated sweep
+
+Sent all 128 raw values on single CC85 and fetched a patch after each. Existing candidate Mod Env decoding (byte 105 mask 0x3F / byte 106 mask 0x40) matched every value, with zero mismatches/timeouts. Original amount 64 and the entire starting patch were restored byte-for-byte. Results: `filter-modenv-sweep.csv`; captures: `tests/fixtures/filter-modenv-sweep.syx`. All 128 messages are replayed through the C++ decoder. No mapping change was needed. These are raw control values; bipolar display calibration and acoustic modulation response were not tested.

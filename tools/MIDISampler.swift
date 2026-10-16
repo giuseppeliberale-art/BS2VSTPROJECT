@@ -1,14 +1,14 @@
 import Foundation
 import CoreMIDI
 
-guard (2...3).contains(CommandLine.arguments.count) else { fatalError("Usage: swift tools/MIDISampler.swift OUTPUT_DIRECTORY [osc2-coarse|mix-osc1|mix-osc2|mix-sub|mix-noise|mix-ring|mix-external|filter-cutoff|filter-resonance|filter-overdrive]. Use routing-fixed BSII Control or close older app versions.") }
+guard (2...3).contains(CommandLine.arguments.count) else { fatalError("Usage: swift tools/MIDISampler.swift OUTPUT_DIRECTORY [osc2-coarse|mix-osc1|mix-osc2|mix-sub|mix-noise|mix-ring|mix-external|filter-cutoff|filter-resonance|filter-overdrive|filter-modenv]. Use routing-fixed BSII Control or close older app versions.") }
 let outputDirectory = URL(fileURLWithPath: CommandLine.arguments[1], isDirectory: true)
 try FileManager.default.createDirectory(at: outputDirectory, withIntermediateDirectories: true)
 let control = CommandLine.arguments.count == 3 ? CommandLine.arguments[2] : "osc2-coarse"
-guard ["osc2-coarse", "mix-osc1", "mix-osc2", "mix-sub", "mix-noise", "mix-ring", "mix-external", "filter-cutoff", "filter-resonance", "filter-overdrive"].contains(control) else { fatalError("Unknown control") }
-let msbCC: UInt8 = control == "mix-osc1" ? 20 : control == "mix-osc2" ? 21 : control == "mix-sub" ? 22 : control == "mix-noise" ? 23 : control == "mix-ring" ? 24 : control == "mix-external" ? 25 : control == "filter-cutoff" ? 16 : control == "filter-resonance" ? 82 : control == "filter-overdrive" ? 114 : 30
+guard ["osc2-coarse", "mix-osc1", "mix-osc2", "mix-sub", "mix-noise", "mix-ring", "mix-external", "filter-cutoff", "filter-resonance", "filter-overdrive", "filter-modenv"].contains(control) else { fatalError("Unknown control") }
+let msbCC: UInt8 = control == "mix-osc1" ? 20 : control == "mix-osc2" ? 21 : control == "mix-sub" ? 22 : control == "mix-noise" ? 23 : control == "mix-ring" ? 24 : control == "mix-external" ? 25 : control == "filter-cutoff" ? 16 : control == "filter-resonance" ? 82 : control == "filter-overdrive" ? 114 : control == "filter-modenv" ? 85 : 30
 let lsbCC: UInt8 = control == "mix-osc1" ? 52 : control == "mix-osc2" ? 53 : control == "mix-sub" ? 54 : control == "mix-noise" ? 55 : control == "mix-ring" ? 56 : control == "mix-external" ? 57 : control == "filter-cutoff" ? 48 : 62
-let singleCC = ["filter-resonance", "filter-overdrive"].contains(control)
+let singleCC = ["filter-resonance", "filter-overdrive", "filter-modenv"].contains(control)
 let maximumRaw = singleCC ? 127 : 255
 var client = MIDIClientRef(), input = MIDIPortRef(), output = MIDIPortRef()
 var destination = MIDIEndpointRef()
@@ -84,6 +84,7 @@ func readValue(_ b: [UInt8]) -> Int {
     if control == "filter-cutoff" { return ((Int(b[44]) & 15) << 4) | ((Int(b[45]) >> 3) & 15) }
     if control == "filter-resonance" { return ((Int(b[45]) & 3) << 5) | ((Int(b[46]) >> 2) & 31) }
     if control == "filter-overdrive" { return ((Int(b[46]) & 1) << 6) | ((Int(b[47]) >> 1) & 63) }
+    if control == "filter-modenv" { return ((Int(b[105]) & 63) << 1) | ((Int(b[106]) & 64) >> 6) }
     return ((Int(b[27]) & 31) << 3) | ((Int(b[28]) & 112) >> 4)
 }
 func setValue(_ raw: Int) {
