@@ -76,5 +76,16 @@ int main(int argc, char** argv) {
     }
     std::cout << (cutoffOK ? "PASS" : "FAIL") << " all 256 captured Filter Cutoff values\n";
     passed &= cutoffOK;
+    std::ifstream resonanceInput(std::string(argv[1]) + "/filter-resonance-sweep.syx", std::ios::binary);
+    const std::string resonanceBytes((std::istreambuf_iterator<char>(resonanceInput)), {});
+    bool resonanceOK = resonanceBytes.size() == 128 * 154;
+    if (resonanceOK) {
+        for (int raw = 0; raw < 128; ++raw) {
+            const auto decoded = bsii::decodePatchFields(juce::MemoryBlock(resonanceBytes.data() + raw * 154, 154));
+            resonanceOK &= decoded.valid && decoded.filterResonance == raw;
+        }
+    }
+    std::cout << (resonanceOK ? "PASS" : "FAIL") << " all 128 captured Filter Resonance values\n";
+    passed &= resonanceOK;
     return passed ? 0 : 1;
 }

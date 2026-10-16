@@ -1,13 +1,14 @@
 import Foundation
 import CoreMIDI
 
-guard (2...3).contains(CommandLine.arguments.count) else { fatalError("Usage: swift tools/MIDISampler.swift OUTPUT_DIRECTORY [osc2-coarse|mix-osc1|mix-osc2|mix-sub|mix-noise|mix-ring|mix-external|filter-cutoff]. Use routing-fixed BSII Control or close older app versions.") }
+guard (2...3).contains(CommandLine.arguments.count) else { fatalError("Usage: swift tools/MIDISampler.swift OUTPUT_DIRECTORY [osc2-coarse|mix-osc1|mix-osc2|mix-sub|mix-noise|mix-ring|mix-external|filter-cutoff|filter-resonance]. Use routing-fixed BSII Control or close older app versions.") }
 let outputDirectory = URL(fileURLWithPath: CommandLine.arguments[1], isDirectory: true)
 try FileManager.default.createDirectory(at: outputDirectory, withIntermediateDirectories: true)
 let control = CommandLine.arguments.count == 3 ? CommandLine.arguments[2] : "osc2-coarse"
-guard ["osc2-coarse", "mix-osc1", "mix-osc2", "mix-sub", "mix-noise", "mix-ring", "mix-external", "filter-cutoff"].contains(control) else { fatalError("Unknown control") }
-let msbCC: UInt8 = control == "mix-osc1" ? 20 : control == "mix-osc2" ? 21 : control == "mix-sub" ? 22 : control == "mix-noise" ? 23 : control == "mix-ring" ? 24 : control == "mix-external" ? 25 : control == "filter-cutoff" ? 16 : 30
+guard ["osc2-coarse", "mix-osc1", "mix-osc2", "mix-sub", "mix-noise", "mix-ring", "mix-external", "filter-cutoff", "filter-resonance"].contains(control) else { fatalError("Unknown control") }
+let msbCC: UInt8 = control == "mix-osc1" ? 20 : control == "mix-osc2" ? 21 : control == "mix-sub" ? 22 : control == "mix-noise" ? 23 : control == "mix-ring" ? 24 : control == "mix-external" ? 25 : control == "filter-cutoff" ? 16 : control == "filter-resonance" ? 82 : 30
 let lsbCC: UInt8 = control == "mix-osc1" ? 52 : control == "mix-osc2" ? 53 : control == "mix-sub" ? 54 : control == "mix-noise" ? 55 : control == "mix-ring" ? 56 : control == "mix-external" ? 57 : control == "filter-cutoff" ? 48 : 62
+let maximumRaw = control == "filter-resonance" ? 127 : 255
 var client = MIDIClientRef(), input = MIDIPortRef(), output = MIDIPortRef()
 var destination = MIDIEndpointRef()
 let lock = NSLock()
@@ -80,9 +81,15 @@ func readValue(_ b: [UInt8]) -> Int {
     if control == "mix-ring" { return ((Int(b[42]) & 63) << 2) | ((Int(b[43]) & 96) >> 5) }
     if control == "mix-external" { return ((Int(b[43]) & 31) << 3) | ((Int(b[44]) & 112) >> 4) }
     if control == "filter-cutoff" { return ((Int(b[44]) & 15) << 4) | ((Int(b[45]) >> 3) & 15) }
+    if control == "filter-resonance" { return ((Int(b[45]) & 3) << 5) | ((Int(b[46]) >> 2) & 31) }
     return ((Int(b[27]) & 31) << 3) | ((Int(b[28]) & 112) >> 4)
 }
 func setValue(_ raw: Int) {
+    if control == "filter-resonance" {
+        send([0xB0,msbCC,UInt8(raw)])
+        Thread.sleep(forTimeInterval: 0.08)
+        return
+    }
     send([0xB0,msbCC,UInt8(raw >> 1)])
     Thread.sleep(forTimeInterval: 0.005)
     send([0xB0,lsbCC,UInt8((raw & 1) << 6)])
@@ -91,15 +98,15 @@ func setValue(_ raw: Int) {
 guard let baseline = patch() else { fatalError("No baseline patch response; no parameters changed") }
 try Data(baseline).write(to: outputDirectory.appendingPathComponent("before.syx"))
 let original = readValue(baseline)
-print("Baseline \(control) raw: \(original). Sampling 256 values."); fflush(stdout)
+print("Baseline \(control) raw: \(original). Sampling \(maximumRaw + 1) values."); fflush(stdout)
 var rows = ["sent_raw,msb_value,lsb_value,sysex_raw,match"]
 var failures = 0
-for raw in 0...255 {
+for raw in 0...maximumRaw {
     setValue(raw)
     guard let result = patch() else { print("Timeout at \(raw); stopping sweep"); failures += 1; break }
     let actual = readValue(result)
     if actual != raw { failures += 1 }
-    rows.append("\(raw),\(raw >> 1),\((raw & 1) << 6),\(actual),\(actual == raw)")
+    rows.append("\(raw),\(control == "filter-resonance" ? raw : raw >> 1),\(control == "filter-resonance" ? "" : String((raw & 1) << 6)),\(actual),\(actual == raw)")
     try Data(result).write(to: outputDirectory.appendingPathComponent(String(format: "raw-%03d.syx", raw)))
     if raw % 32 == 0 { print("Sample \(raw): received \(actual)"); fflush(stdout) }
 }
@@ -112,4 +119,4 @@ let summary = "Samples: \(rows.count-1)\nMismatches/timeouts: \(failures)\nOrigi
 try summary.write(to: outputDirectory.appendingPathComponent("summary.txt"), atomically:true, encoding:.utf8)
 print(summary)
 MIDIPortDispose(input); MIDIPortDispose(output); MIDIClientDispose(client)
-exit(failures == 0 && restoreOK && rows.count == 257 ? 0 : 1)
+exit(failures == 0 && restoreOK && rows.count == maximumRaw + 2 ? 0 : 1)

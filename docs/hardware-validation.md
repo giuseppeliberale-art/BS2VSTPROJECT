@@ -135,3 +135,7 @@ All six Mixer controls now have exhaustive 256-value MIDI-to-SysEx sweeps and C+
 ## Filter Cutoff automated sweep
 
 Sent all 256 raw values on paired CC16/48 and fetched a patch after each. The existing verified Cutoff formula (byte 44 low nibble / byte 45 bits 3–6) matched every value, with zero mismatches/timeouts. Original cutoff 38 and the entire starting patch were restored byte-for-byte. Results: `filter-cutoff-sweep.csv`; captures: `tests/fixtures/filter-cutoff-sweep.syx`. All 256 messages are replayed through the C++ decoder. No mapping change was needed. This validates parameter transport/storage and decoding, not a cutoff-frequency calibration in Hz or audio response.
+
+## Filter Resonance automated sweep
+
+Sent all 128 raw values on single CC82 and fetched a patch after each. Existing verified Resonance decoding (byte 45 mask 0x03 / byte 46 bits 2–6) matched every value, with zero mismatches/timeouts. Original Resonance 0 and the entire starting patch were restored byte-for-byte. Results: `filter-resonance-sweep.csv`; captures: `tests/fixtures/filter-resonance-sweep.syx`. All 128 messages are replayed through the C++ decoder. No mapping change was needed. This validates parameter transport/storage and decoding, not resonance’s acoustic response.
