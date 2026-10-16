@@ -219,3 +219,9 @@ The complete starting patch was restored and verified byte-for-byte after each s
 Swept all 128 values for both Delays (CC86/87) and Slews (NRPN 0:86 / 0:90), plus both Off/On settings for each Key Sync (NRPN 0:89 / 0:93): 516 captures with zero mismatches/timeouts. Existing decoder mappings matched all captures. Delay mappings: LFO 1 byte 64 mask 0x7F; LFO 2 byte 70 mask 0x01 / byte 71 mask 0x7E. Slew mappings: LFO 1 byte 65 mask 0x3F / byte 66 mask 0x40; LFO 2 byte 72 mask 0x7F. Key Sync mappings: LFO 1 byte 69 mask 0x10; LFO 2 byte 76 mask 0x20. No app mapping changes were needed.
 
 The entire starting patch was restored and verified byte-for-byte after every sweep (Delays/Slews 0, LFO 1 Key Sync Off, LFO 2 Key Sync On). Results: `lfo{1,2}-{delay,slew,keysync}-sweep.csv`; corresponding fixtures replay all 516 messages through the actual C++ decoder. This validates MIDI transport/storage and decoding, not measured delay/slew times or acoustic key synchronization. These tests cover the Key Sync controls exposed in the app; other hardware sync modes were not tested.
+
+## Distortion, Osc Filter Mod, and VCA Limit
+
+Sent all 128 values for Distortion (CC94), Osc Filter Mod (CC115), and VCA Limit (CC95): 384 captures with zero mismatches/timeouts. Existing decoder mappings matched all captures. Osc Filter Mod uses byte 106 mask 0x1F / byte 107 mask 0x60; Distortion uses byte 107 mask 0x0F / byte 108 mask 0x70; VCA Limit uses byte 108 mask 0x07 / byte 109 mask 0x78. No app mapping changes were needed.
+
+The complete starting patch was restored and verified byte-for-byte after each sweep; all three starting values were 0. Results: `{distortion,osc-filter-mod,vca-limit}-sweep.csv`; corresponding fixtures replay all 384 messages through the actual C++ decoder. This validates MIDI transport/storage and decoding, not measured acoustic distortion, modulation response, or limiting behavior. Other performance controls remain separately untested.

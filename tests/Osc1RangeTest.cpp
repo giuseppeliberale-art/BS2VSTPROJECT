@@ -407,5 +407,41 @@ int main(int argc, char** argv) {
         std::cout << (ok ? "PASS" : "FAIL") << " all 2 captured lfo2-keysync values\n";
         passed &= ok;
     }
+    {
+        std::ifstream input(std::string(argv[1]) + "/distortion-sweep.syx", std::ios::binary);
+        const std::string bytes((std::istreambuf_iterator<char>(input)), {});
+        bool ok = bytes.size() == 128 * 154;
+        if (ok)
+            for (int raw = 0; raw < 128; ++raw) {
+                const auto d = bsii::decodePatchFields(juce::MemoryBlock(bytes.data() + raw * 154, 154));
+                ok &= d.valid && d.distortion == raw;
+            }
+        std::cout << (ok ? "PASS" : "FAIL") << " all 128 captured distortion values\n";
+        passed &= ok;
+    }
+    {
+        std::ifstream input(std::string(argv[1]) + "/osc-filter-mod-sweep.syx", std::ios::binary);
+        const std::string bytes((std::istreambuf_iterator<char>(input)), {});
+        bool ok = bytes.size() == 128 * 154;
+        if (ok)
+            for (int raw = 0; raw < 128; ++raw) {
+                const auto d = bsii::decodePatchFields(juce::MemoryBlock(bytes.data() + raw * 154, 154));
+                ok &= d.valid && d.oscFilterMod == raw;
+            }
+        std::cout << (ok ? "PASS" : "FAIL") << " all 128 captured osc-filter-mod values\n";
+        passed &= ok;
+    }
+    {
+        std::ifstream input(std::string(argv[1]) + "/vca-limit-sweep.syx", std::ios::binary);
+        const std::string bytes((std::istreambuf_iterator<char>(input)), {});
+        bool ok = bytes.size() == 128 * 154;
+        if (ok)
+            for (int raw = 0; raw < 128; ++raw) {
+                const auto d = bsii::decodePatchFields(juce::MemoryBlock(bytes.data() + raw * 154, 154));
+                ok &= d.valid && d.vcaLimit == raw;
+            }
+        std::cout << (ok ? "PASS" : "FAIL") << " all 128 captured vca-limit values\n";
+        passed &= ok;
+    }
     return passed ? 0 : 1;
 }
