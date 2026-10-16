@@ -157,3 +157,9 @@ Sent all 256 raw values on paired CC17/49 and fetched a patch after each. Existi
 Tested all 12 combinations: Classic/Acid × LP/BP/HP × 12/24 dB. Each case sets Classic, sets Shape via CC84 and Slope via CC106, then sets Type via CC83 before requesting a patch. All returned raw fields matched the sent selections. Acid patches retained the Shape/Slope selections in their raw bytes; the existing decoder normalizes their effective display to LP/24 dB. The sweep verifies storage and the existing normalization, not the acoustic Acid response. Entire starting patch restored byte-for-byte.
 
 Results: `filter-switches.csv`; captures: `tests/fixtures/filter-switches.syx`. All 12 captured cases are replayed through the actual C++ decoder. No mapping change was needed.
+
+## Filter Keyboard Tracking automated sweep
+
+Sent all eight raw settings (0–7) via NRPN 0:108 and fetched a patch after each. Existing candidate Tracking decoding (byte 112 mask 0x07) matched every setting, with zero mismatches/timeouts. Original setting 0 and the entire starting patch were restored byte-for-byte. Results: `filter-tracking-sweep.csv`; captures: `tests/fixtures/filter-tracking-sweep.syx`. All eight messages are replayed through the C++ decoder. No mapping change was needed. This validates settings transport/storage and decoding, not measured acoustic tracking ratios.
+
+Filter transport/decoder coverage now includes Cutoff, Resonance, Overdrive, Mod Env amount, LFO 2 amount, Type/Shape/Slope combinations, and Keyboard Tracking: 916 captured cases.

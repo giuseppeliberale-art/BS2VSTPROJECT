@@ -136,5 +136,16 @@ int main(int argc, char** argv) {
     }
     std::cout << (switchesOK ? "PASS" : "FAIL") << " all 12 captured Filter switch cases\n";
     passed &= switchesOK;
+    std::ifstream trackingInput(std::string(argv[1]) + "/filter-tracking-sweep.syx", std::ios::binary);
+    const std::string trackingBytes((std::istreambuf_iterator<char>(trackingInput)), {});
+    bool trackingOK = trackingBytes.size() == 8 * 154;
+    if (trackingOK) {
+        for (int raw = 0; raw < 8; ++raw) {
+            const auto decoded = bsii::decodePatchFields(juce::MemoryBlock(trackingBytes.data() + raw * 154, 154));
+            trackingOK &= decoded.valid && decoded.filterTracking == raw;
+        }
+    }
+    std::cout << (trackingOK ? "PASS" : "FAIL") << " all eight captured Filter Tracking values\n";
+    passed &= trackingOK;
     return passed ? 0 : 1;
 }

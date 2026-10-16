@@ -1,15 +1,16 @@
 import Foundation
 import CoreMIDI
 
-guard (2...3).contains(CommandLine.arguments.count) else { fatalError("Usage: swift tools/MIDISampler.swift OUTPUT_DIRECTORY [osc2-coarse|mix-osc1|mix-osc2|mix-sub|mix-noise|mix-ring|mix-external|filter-cutoff|filter-resonance|filter-overdrive|filter-modenv|filter-lfo2]. Use routing-fixed BSII Control or close older app versions.") }
+guard (2...3).contains(CommandLine.arguments.count) else { fatalError("Usage: swift tools/MIDISampler.swift OUTPUT_DIRECTORY [osc2-coarse|mix-osc1|mix-osc2|mix-sub|mix-noise|mix-ring|mix-external|filter-cutoff|filter-resonance|filter-overdrive|filter-modenv|filter-lfo2|filter-tracking]. Use routing-fixed BSII Control or close older app versions.") }
 let outputDirectory = URL(fileURLWithPath: CommandLine.arguments[1], isDirectory: true)
 try FileManager.default.createDirectory(at: outputDirectory, withIntermediateDirectories: true)
 let control = CommandLine.arguments.count == 3 ? CommandLine.arguments[2] : "osc2-coarse"
-guard ["osc2-coarse", "mix-osc1", "mix-osc2", "mix-sub", "mix-noise", "mix-ring", "mix-external", "filter-cutoff", "filter-resonance", "filter-overdrive", "filter-modenv", "filter-lfo2"].contains(control) else { fatalError("Unknown control") }
+guard ["osc2-coarse", "mix-osc1", "mix-osc2", "mix-sub", "mix-noise", "mix-ring", "mix-external", "filter-cutoff", "filter-resonance", "filter-overdrive", "filter-modenv", "filter-lfo2", "filter-tracking"].contains(control) else { fatalError("Unknown control") }
 let msbCC: UInt8 = control == "mix-osc1" ? 20 : control == "mix-osc2" ? 21 : control == "mix-sub" ? 22 : control == "mix-noise" ? 23 : control == "mix-ring" ? 24 : control == "mix-external" ? 25 : control == "filter-cutoff" ? 16 : control == "filter-resonance" ? 82 : control == "filter-overdrive" ? 114 : control == "filter-modenv" ? 85 : control == "filter-lfo2" ? 17 : 30
 let lsbCC: UInt8 = control == "mix-osc1" ? 52 : control == "mix-osc2" ? 53 : control == "mix-sub" ? 54 : control == "mix-noise" ? 55 : control == "mix-ring" ? 56 : control == "mix-external" ? 57 : control == "filter-cutoff" ? 48 : control == "filter-lfo2" ? 49 : 62
 let singleCC = ["filter-resonance", "filter-overdrive", "filter-modenv"].contains(control)
-let maximumRaw = singleCC ? 127 : 255
+let nrpn = control == "filter-tracking"
+let maximumRaw = nrpn ? 7 : singleCC ? 127 : 255
 var client = MIDIClientRef(), input = MIDIPortRef(), output = MIDIPortRef()
 var destination = MIDIEndpointRef()
 let lock = NSLock()
@@ -86,9 +87,16 @@ func readValue(_ b: [UInt8]) -> Int {
     if control == "filter-overdrive" { return ((Int(b[46]) & 1) << 6) | ((Int(b[47]) >> 1) & 63) }
     if control == "filter-modenv" { return ((Int(b[105]) & 63) << 1) | ((Int(b[106]) & 64) >> 6) }
     if control == "filter-lfo2" { return ((Int(b[97]) & 127) << 1) | ((Int(b[98]) & 64) >> 6) }
+    if control == "filter-tracking" { return Int(b[112]) & 7 }
     return ((Int(b[27]) & 31) << 3) | ((Int(b[28]) & 112) >> 4)
 }
 func setValue(_ raw: Int) {
+    if nrpn {
+        send([0xB0,99,0]); Thread.sleep(forTimeInterval: 0.005)
+        send([0xB0,98,108]); Thread.sleep(forTimeInterval: 0.005)
+        send([0xB0,6,UInt8(raw)]); Thread.sleep(forTimeInterval: 0.08)
+        return
+    }
     if singleCC {
         send([0xB0,msbCC,UInt8(raw)])
         Thread.sleep(forTimeInterval: 0.08)
@@ -110,7 +118,7 @@ for raw in 0...maximumRaw {
     guard let result = patch() else { print("Timeout at \(raw); stopping sweep"); failures += 1; break }
     let actual = readValue(result)
     if actual != raw { failures += 1 }
-    rows.append("\(raw),\(singleCC ? raw : raw >> 1),\(singleCC ? "" : String((raw & 1) << 6)),\(actual),\(actual == raw)")
+    rows.append("\(raw),\((singleCC || nrpn) ? raw : raw >> 1),\((singleCC || nrpn) ? "" : String((raw & 1) << 6)),\(actual),\(actual == raw)")
     try Data(result).write(to: outputDirectory.appendingPathComponent(String(format: "raw-%03d.syx", raw)))
     if raw % 32 == 0 { print("Sample \(raw): received \(actual)"); fflush(stdout) }
 }
