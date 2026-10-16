@@ -510,5 +510,32 @@ int main(int argc, char** argv) {
             passed &= ok;
         }
     }
+    {
+        struct OscCapture { const char* name; int bsii::DecodedPatchFields::* field; int count; };
+        const OscCapture captures[] = {
+            {"osc1-modenv-pitch", &bsii::DecodedPatchFields::osc1ModEnvPitch, 128},
+            {"osc2-modenv-pitch", &bsii::DecodedPatchFields::osc2ModEnvPitch, 128},
+            {"osc1-lfo1-pitch", &bsii::DecodedPatchFields::osc1Lfo1Pitch, 256},
+            {"osc2-lfo1-pitch", &bsii::DecodedPatchFields::osc2Lfo1Pitch, 256},
+            {"osc1-modenv-pw", &bsii::DecodedPatchFields::osc1ModEnvPW, 128},
+            {"osc2-modenv-pw", &bsii::DecodedPatchFields::osc2ModEnvPW, 128},
+            {"osc1-lfo2-pw", &bsii::DecodedPatchFields::osc1Lfo2PW, 128},
+            {"osc2-lfo2-pw", &bsii::DecodedPatchFields::osc2Lfo2PW, 128},
+            {"osc1-manual-pw", &bsii::DecodedPatchFields::osc1ManualPW, 128},
+            {"osc2-manual-pw", &bsii::DecodedPatchFields::osc2ManualPW, 128}
+        };
+        for (const auto& capture : captures) {
+            std::ifstream input(std::string(argv[1]) + "/" + capture.name + "-sweep.syx", std::ios::binary);
+            const std::string bytes((std::istreambuf_iterator<char>(input)), {});
+            bool ok = bytes.size() == capture.count * 154;
+            if (ok)
+                for (int raw = 0; raw < capture.count; ++raw) {
+                    const auto d = bsii::decodePatchFields(juce::MemoryBlock(bytes.data() + raw * 154, 154));
+                    ok &= d.valid && d.*(capture.field) == raw;
+                }
+            std::cout << (ok ? "PASS" : "FAIL") << " captured " << capture.name << " sweep\n";
+            passed &= ok;
+        }
+    }
     return passed ? 0 : 1;
 }

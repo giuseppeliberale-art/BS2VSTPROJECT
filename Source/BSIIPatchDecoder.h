@@ -15,6 +15,7 @@ namespace bsii
         juce::String patchName;
 
         int portamento=-1, bendAmount=-1;
+        int osc1ModEnvPW=-1;
         int osc1Fine=-1, osc1Coarse=-1, osc1ManualPW=-1, osc1Range=-1, osc1ModEnvPitch=-1, osc1Lfo1Pitch=-1, osc1Lfo2PW=-1;
         int osc2Fine=-1, osc2Coarse=-1, osc2ManualPW=-1, osc2Range=-1, osc2ModEnvPitch=-1, osc2Lfo1Pitch=-1, osc2ModEnvPW=-1, osc2Lfo2PW=-1;
         int mixOsc1=-1, mixOsc2=-1, mixSub=-1, mixNoise=-1, mixRing=-1, mixExternal=-1;
@@ -132,6 +133,7 @@ namespace bsii
             acceptVerified (ampTriggerWire == 0 ? 1 : ampTriggerWire == 1 ? 0 : 2,
                             0, 2, out.ampTrigger, out);
         acceptVerified (((b[98] & 0x1F) << 2) | ((b[99] >> 5) & 0x03), 0, 127, out.osc1ModEnvPitch, out);
+        acceptVerified (extractField (b, 101, 0x03, 0x7C), 0, 127, out.osc1ModEnvPW, out);
 
         // ---- Candidate fields from the historical packed-patch map ----
         // Each field is range-checked independently. Nothing here can invalidate

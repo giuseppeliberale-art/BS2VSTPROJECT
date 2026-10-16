@@ -251,3 +251,11 @@ Swept all 128 CC inputs for Velocity → Amp (CC112), Velocity → Mod (CC113), 
 Sync stores byte 18 bit 6: input 0 is Off; all inputs 1–127 are On. Added missing patch decoding and editor application, using canonical 0/127 for the existing raw control. The 128-capture decoder regression failed before the mapping was added. The raw slider remains a raw MIDI control; a labeled Off/On selector would be a separate UI change.
 
 Every sweep restored the complete starting patch byte-for-byte (both velocity assignments 64, sync Off). Results: `{velocity-amp,velocity-mod,osc-sync}-sweep.csv`; fixtures: matching files in `tests/fixtures/`. CSV expected values account for velocity clamping and sync normalization. This validates MIDI settings transport/storage and patch decoding, not measured acoustic velocity response or oscillator synchronization.
+
+## Oscillator pitch modulation and pulse-width controls
+
+Swept both oscillators' Mod Envelope → Pitch (CC71/76), LFO 1 → Pitch (paired CC28/60 and CC31/63), Mod Envelope → PW (CC72/77), LFO 2 → PW (CC73/78), and Manual PW (CC74/79). Both LFO pitch controls cover 256 values; the other eight controls cover 128 each: 1,536 captured cases. All existing mappings matched; Oscillator 1 Mod Envelope → PW was missing from patch decoding and editor application.
+
+The missing field occupies byte 101 mask 0x03 / byte 102 mask 0x7C. Added that verified mapping and editor application; the full captured-patch regression failed only for this field before the fix. The exploratory sampler initially reported unknown values for this field; its committed CSV was decoded from all 128 captures after locating the field. Every value matches. Other sweep CSVs report zero mismatches/timeouts.
+
+The complete starting patch was restored and verified byte-for-byte after every sweep. Initial values: Mod Envelope Pitch 64/49, LFO 1 Pitch 128/128, Mod Envelope PW 64/64, LFO 2 PW 64/64, Manual PW 64/64 (Oscillator 1/2). CSVs and fixtures use `osc{1,2}-{modenv-pitch,lfo1-pitch,modenv-pw,lfo2-pw,manual-pw}-sweep` names under `docs/` and `tests/fixtures/`. All 1,536 messages replay through the actual C++ decoder. This validates control transport/storage and decoding, not acoustic pitch depth, pulse width, or waveform response.
