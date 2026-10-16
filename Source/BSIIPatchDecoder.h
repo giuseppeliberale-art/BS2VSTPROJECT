@@ -18,6 +18,7 @@ namespace bsii
         int osc2Fine=-1, osc2Coarse=-1, osc2ManualPW=-1, osc2Range=-1, osc2ModEnvPitch=-1, osc2Lfo1Pitch=-1, osc2ModEnvPW=-1, osc2Lfo2PW=-1;
         int mixOsc1=-1, mixOsc2=-1, mixSub=-1, mixNoise=-1, mixRing=-1, mixExternal=-1;
         int filterCutoff=-1, filterResonance=-1, filterOverdrive=-1, filterType=-1, filterShape=-1, filterSlope=-1, filterModEnv=-1, filterLfo2=-1, filterTracking=-1;
+        int ampTrigger=-1; // Editor choice index: Single=0, Multi=1, Autoglide=2.
         int velocityAmp=-1, ampAttack=-1, ampDecay=-1, ampSustain=-1, ampRelease=-1, ampRetrigger=-1;
         int velocityMod=-1, modAttack=-1, modDecay=-1, modSustain=-1, modRelease=-1, modRetrigger=-1;
         int lfo1Wave=-1, lfo1Delay=-1, lfo1Slew=-1, lfo1Speed=-1, lfo1KeySync=-1;
@@ -111,6 +112,11 @@ namespace bsii
         acceptVerified (((b[46] & 0x01) << 6) | ((b[47] >> 1) & 0x3F), 0, 127, out.filterOverdrive, out);
         acceptVerified (b[48] & 0x03, 0, 2, out.filterShape, out);
         acceptVerified (((b[50] & 0x1F) << 2) | ((b[51] >> 5) & 0x03), 0, 127, out.ampAttack, out);
+        // Hardware wire order is Multi, Single, Autoglide; the editor lists Single first.
+        const int ampTriggerWire = extractField (b, 55, 0x06);
+        if (ampTriggerWire <= 2)
+            acceptVerified (ampTriggerWire == 0 ? 1 : ampTriggerWire == 1 ? 0 : 2,
+                            0, 2, out.ampTrigger, out);
         acceptVerified (((b[98] & 0x1F) << 2) | ((b[99] >> 5) & 0x03), 0, 127, out.osc1ModEnvPitch, out);
 
         // ---- Candidate fields from the historical packed-patch map ----

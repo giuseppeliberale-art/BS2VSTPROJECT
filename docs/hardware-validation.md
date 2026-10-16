@@ -180,4 +180,10 @@ Sent all 128 raw values on single CC92 and fetched a patch after each. Existing 
 
 Sent all 128 raw values on single CC93 and fetched a patch after each. Existing candidate Release decoding (byte 53 mask 0x03 / byte 54 mask 0x7C) matched every value, with zero mismatches/timeouts. Original Release 0 and the entire starting patch were restored byte-for-byte. Results: `amp-release-sweep.csv`; captures: `tests/fixtures/amp-release-sweep.syx`. All 128 messages are replayed through the C++ decoder. No mapping change was needed. This validates parameter transport/storage and decoding, not envelope timing in milliseconds or acoustic response.
 
-Amp ADSR transport/decoder sweeps now cover 512 cases across Attack, Decay, Sustain, and Release. Trigger/retrigger and other envelope options remain separately untested.
+Amp ADSR transport/decoder sweeps now cover 512 cases across Attack, Decay, Sustain, and Release.
+
+## Amp Envelope Trigger and Retrigger combinations
+
+Tested all six combinations of Trigger (Multi, Single, Autoglide; NRPN 0:73) and Retrigger (Off/On; NRPN 0:109). Trigger occupies byte 55 bits 1–2 with wire values 0, 1, 2 respectively. Retrigger occupies byte 114 bit 6; its existing mapping matched all captures. The entire starting patch was restored byte-for-byte.
+
+Trigger was missing from patch decoding and editor application. Added its captured mapping, converting wire order to editor choice order (Single, Multi, Autoglide). The six-capture regression failed before that fix. Results: `amp-switches.csv`; captures: `tests/fixtures/amp-switches.syx`; sampler: `tools/AmpSwitchSampler.swift`. This validates settings transport/storage and decoding, not acoustic envelope behavior. Other envelope options remain separately untested.

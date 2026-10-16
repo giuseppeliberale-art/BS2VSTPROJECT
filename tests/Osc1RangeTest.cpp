@@ -191,5 +191,19 @@ int main(int argc, char** argv) {
     }
     std::cout << (releaseOK ? "PASS" : "FAIL") << " all 128 captured Amp Release values\n";
     passed &= releaseOK;
+    std::ifstream ampSwitchInput(std::string(argv[1]) + "/amp-switches.syx", std::ios::binary);
+    const std::string ampSwitchBytes((std::istreambuf_iterator<char>(ampSwitchInput)), {});
+    bool ampSwitchOK = ampSwitchBytes.size() == 6 * 154;
+    if (ampSwitchOK) {
+        int index = 0;
+        for (int trigger = 0; trigger < 3; ++trigger)
+            for (int retrigger = 0; retrigger < 2; ++retrigger) {
+                const auto decoded = bsii::decodePatchFields(juce::MemoryBlock(ampSwitchBytes.data() + index++ * 154, 154));
+                ampSwitchOK &= decoded.valid && decoded.ampTrigger == (trigger == 0 ? 1 : trigger == 1 ? 0 : 2)
+                    && decoded.ampRetrigger == retrigger;
+            }
+    }
+    std::cout << (ampSwitchOK ? "PASS" : "FAIL") << " six captured Amp trigger/retrigger combinations\n";
+    passed &= ampSwitchOK;
     return passed ? 0 : 1;
 }
