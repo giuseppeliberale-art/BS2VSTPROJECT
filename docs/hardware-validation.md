@@ -67,3 +67,23 @@ Osc 2 Fine at hardware-displayed −50 fetched as raw 77 (app 178→77), matchin
 Osc 2 Coarse at hardware-displayed +6.0 fetched as raw 192 (app 127→192), with Fine restored to hardware 0/raw 128. Live RX remained paused. Capture: `osc2-coarse-plus6.syx`. Osc 1 +6.0 was observed at raw 193, so adjacent raw values may share an LCD indication; full display quantization remains unverified.
 
 Osc 2 Coarse at hardware-displayed −6.0 fetched as raw 62 (app 192→62), with Live RX paused. Capture: `osc2-coarse-minus6.syx`. This differs by one raw step from the Osc 1 −6.0 capture (63), paralleling the +6.0 observations (192 versus 193). The LCD indication alone does not yet establish a unique raw value or full conversion formula.
+
+## Live paired-CC endpoint diagnosis
+
+The user reported Coarse ±12.0 appearing as ±11.9 through live MIDI, while a fresh SysEx fetch of physical Osc 2 −12.0 decoded raw 0 and displayed −12.0 correctly. A read-only CoreMIDI capture of Osc 2 Coarse contained CC30 MSB with CC62 LSB 0/64 across the sweep, including MSB 127 / LSB 64 at the high end. This is high-eight-bit packing: `raw = (MSB << 1) | (LSB >> 6)`. The previous full-range rescale mapped the packed upper value 16320 to raw 254 instead of 255. TX likewise now packs raw as `raw << 6`, rather than stretching to 16383. Shared pairedCC8 RX/TX paths use this packing.
+
+Tests cover exact low/high packets and all 256 encode/decode round trips. The first captured low-region message was MSB 0 / LSB 64 (raw 1), so the negative-endpoint report still needs a fresh live confirmation after rebuild. No change was made to Coarse’s approximate musical display formula.
+
+## Isolated automated MIDI → SysEx sweep
+
+With BSII Control closed, `tools/MIDISampler.swift` sent all 256 Osc 2 Coarse raw values via CC30/62 and requested a patch after each. All 256 SysEx values matched exactly, with zero timeouts. The starting raw value 255 was restored; full before/after SysEx messages were byte-identical. Results: `osc2-coarse-sweep.csv`.
+
+Runs with the standalone app open failed; those samples were rejected. Closing the app removed the interference. Its processBlock currently retains incoming MIDI messages, making MIDI pass-through/echo a candidate cause requiring separate confirmation. Do not run the sampler concurrently with the app. No hardware LCD values are automatically observed, so this sweep confirms transport/patch storage rather than the display-rounding formula.
+
+Run on macOS with the synth connected and the app closed:
+
+```sh
+swift tools/MIDISampler.swift /tmp/bsii-sampling-results
+```
+
+The sampler changes the current edit buffer, restores its starting Coarse value and verifies it, and never sends a patch-save command. It uses MIDI channel 1 and requires exactly one Bass Station II input and output.

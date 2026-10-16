@@ -1,3 +1,4 @@
+#include "BSIIPairedCC.h"
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 #include <cmath>
@@ -173,9 +174,7 @@ void BSIIControlAudioProcessor::parseIncomingMidi (const juce::MidiBuffer& midiM
                 const auto msb = pairedMSB[static_cast<size_t> (spec.numberMSB)].load (std::memory_order_acquire);
                 if (msb >= 0)
                 {
-                    const auto value14 = ((msb & 0x7f) << 7) | (value & 0x7f);
-                    const auto value8 = juce::jlimit (0, 255,
-                        static_cast<int> (std::lround ((static_cast<double> (value14) / 16383.0) * 255.0)));
+                    const auto value8 = bsii::pairedCCToRaw (msb, value);
                     pendingHardwareValues[i].store (
                         juce::jlimit (spec.minimum, spec.maximum, value8),
                         std::memory_order_release);

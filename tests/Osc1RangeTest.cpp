@@ -1,5 +1,6 @@
 #include "BSIIPatchDecoder.h"
 #include "BSIITuningDisplay.h"
+#include "BSIIPairedCC.h"
 #include <fstream>
 #include <iostream>
 #include <iterator>
@@ -43,5 +44,12 @@ int main(int argc, char** argv) {
     for (int raw = 0; raw <= 255; ++raw)
         passed &= std::abs(bsii::coarseRaw(bsii::coarseDisplay(raw)) - raw) <= 1;
     std::cout << (passed ? "PASS" : "FAIL") << " tuning displays, hardware Fine captures, and input round trips\n";
+    passed &= bsii::pairedCCToRaw(0, 0) == 0;
+    passed &= bsii::pairedCCToRaw(127, 64) == 255;
+    for (int raw = 0; raw < 256; ++raw) {
+        const int packed = bsii::rawToPairedCC(raw);
+        passed &= bsii::pairedCCToRaw(packed >> 7, packed & 127) == raw;
+    }
+    std::cout << (passed ? "PASS" : "FAIL") << " captured paired-CC packing and all 256 round trips\n";
     return passed ? 0 : 1;
 }

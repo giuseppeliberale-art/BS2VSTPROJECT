@@ -1,6 +1,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "BSIIPairedCC.h"
 #include <cmath>
 #include <vector>
 
@@ -177,8 +178,7 @@ namespace bsii
                                int msbController, int lsbController, int value0To255)
     {
         const auto value8 = clamp8 (value0To255);
-        const auto value14 = juce::jlimit (0, 16383,
-            static_cast<int> (std::lround ((static_cast<double> (value8) / 255.0) * 16383.0)));
+        const auto value14 = rawToPairedCC (value8);
 
         sendCC (out, channel, msbController, (value14 >> 7) & 0x7f);
         sendCC (out, channel, lsbController, value14 & 0x7f);
