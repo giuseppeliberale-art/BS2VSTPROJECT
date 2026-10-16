@@ -109,3 +109,7 @@ Sampler invocation:
 ```sh
 swift tools/MIDISampler.swift /tmp/bsii-mix-osc1-results mix-osc1
 ```
+
+## Osc 2 Mixer level automated sweep
+
+Sent all 256 raw values on paired CC21/53 and fetched a patch after each. The Osc 2 Mixer field (byte 38 mask 0x03 / byte 39 mask 0x7E) matched every sent value. Zero mismatches or timeouts; original level 0 and the entire starting patch were restored byte-for-byte. Results: `mix-osc2-sweep.csv`. All 256 captured messages in `tests/fixtures/mix-osc2-sweep.syx` are replayed through the C++ decoder alongside the Osc 1 sweep. No decoder mapping change was needed.

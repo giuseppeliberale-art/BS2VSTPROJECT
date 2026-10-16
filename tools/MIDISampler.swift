@@ -1,13 +1,13 @@
 import Foundation
 import CoreMIDI
 
-guard (2...3).contains(CommandLine.arguments.count) else { fatalError("Usage: swift tools/MIDISampler.swift OUTPUT_DIRECTORY [osc2-coarse|mix-osc1]. Use routing-fixed BSII Control or close older app versions.") }
+guard (2...3).contains(CommandLine.arguments.count) else { fatalError("Usage: swift tools/MIDISampler.swift OUTPUT_DIRECTORY [osc2-coarse|mix-osc1|mix-osc2]. Use routing-fixed BSII Control or close older app versions.") }
 let outputDirectory = URL(fileURLWithPath: CommandLine.arguments[1], isDirectory: true)
 try FileManager.default.createDirectory(at: outputDirectory, withIntermediateDirectories: true)
 let control = CommandLine.arguments.count == 3 ? CommandLine.arguments[2] : "osc2-coarse"
-guard ["osc2-coarse", "mix-osc1"].contains(control) else { fatalError("Unknown control") }
-let msbCC: UInt8 = control == "mix-osc1" ? 20 : 30
-let lsbCC: UInt8 = control == "mix-osc1" ? 52 : 62
+guard ["osc2-coarse", "mix-osc1", "mix-osc2"].contains(control) else { fatalError("Unknown control") }
+let msbCC: UInt8 = control == "mix-osc1" ? 20 : control == "mix-osc2" ? 21 : 30
+let lsbCC: UInt8 = control == "mix-osc1" ? 52 : control == "mix-osc2" ? 53 : 62
 var client = MIDIClientRef(), input = MIDIPortRef(), output = MIDIPortRef()
 var destination = MIDIEndpointRef()
 let lock = NSLock()
@@ -74,6 +74,7 @@ func patch() -> [UInt8]? {
 }
 func readValue(_ b: [UInt8]) -> Int {
     if control == "mix-osc1" { return ((Int(b[37]) & 7) << 5) | ((Int(b[38]) & 124) >> 2) }
+    if control == "mix-osc2" { return ((Int(b[38]) & 3) << 6) | ((Int(b[39]) & 126) >> 1) }
     return ((Int(b[27]) & 31) << 3) | ((Int(b[28]) & 112) >> 4)
 }
 func setValue(_ raw: Int) {
