@@ -99,3 +99,13 @@ With the rebuilt standalone app open and Live RX running, the same automated 256
 A software-controlled Osc 2 Coarse probe sent raw 62 and verified raw 62 through SysEx. The user confirmed that the physical LCD did not update in response to MIDI. The probe therefore provides no LCD mapping evidence. The pre-probe patch was subsequently restored; its full SysEx readback was byte-identical (Osc 2 Coarse raw 63).
 
 Conclusion: 256 distinct MIDI/SysEx control values are verified. Exact LCD rounding and actual acoustic pitch spacing remain unverified. Retain the approximate Coarse display and its tooltip. Further manual knob sampling is not required at present.
+
+## Osc 1 Mixer level automated sweep
+
+Sent all 256 raw values on paired CC20/52, fetched a 154-byte patch after each, and decoded the Osc 1 Mixer field at byte 37 mask 0x07 / byte 38 mask 0x7C. All 256 values matched with zero timeouts. The complete starting patch was restored and verified byte-for-byte (original Osc 1 level 255). No synth patch-save command was sent. Results: `mix-osc1-sweep.csv`. The 256 captured messages are concatenated in `tests/fixtures/mix-osc1-sweep.syx` and replayed through the actual C++ decoder regression check. No decoder mapping change was needed.
+
+Sampler invocation:
+
+```sh
+swift tools/MIDISampler.swift /tmp/bsii-mix-osc1-results mix-osc1
+```

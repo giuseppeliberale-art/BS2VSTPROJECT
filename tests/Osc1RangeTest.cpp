@@ -51,5 +51,16 @@ int main(int argc, char** argv) {
         passed &= bsii::pairedCCToRaw(packed >> 7, packed & 127) == raw;
     }
     std::cout << (passed ? "PASS" : "FAIL") << " captured paired-CC packing and all 256 round trips\n";
+    std::ifstream mixerInput(std::string(argv[1]) + "/mix-osc1-sweep.syx", std::ios::binary);
+    const std::string mixerBytes((std::istreambuf_iterator<char>(mixerInput)), {});
+    bool mixerOK = mixerBytes.size() == 256 * 154;
+    if (mixerOK) {
+        for (int raw = 0; raw < 256; ++raw) {
+            const auto decoded = bsii::decodePatchFields(juce::MemoryBlock(mixerBytes.data() + raw * 154, 154));
+            mixerOK &= decoded.valid && decoded.mixOsc1 == raw;
+        }
+    }
+    std::cout << (mixerOK ? "PASS" : "FAIL") << " all 256 captured Osc 1 Mixer levels\n";
+    passed &= mixerOK;
     return passed ? 0 : 1;
 }

@@ -1,9 +1,13 @@
 import Foundation
 import CoreMIDI
 
-guard CommandLine.arguments.count == 2 else { fatalError("Usage: swift tools/MIDISampler.swift OUTPUT_DIRECTORY. Use routing-fixed BSII Control or close older app versions.") }
+guard (2...3).contains(CommandLine.arguments.count) else { fatalError("Usage: swift tools/MIDISampler.swift OUTPUT_DIRECTORY [osc2-coarse|mix-osc1]. Use routing-fixed BSII Control or close older app versions.") }
 let outputDirectory = URL(fileURLWithPath: CommandLine.arguments[1], isDirectory: true)
 try FileManager.default.createDirectory(at: outputDirectory, withIntermediateDirectories: true)
+let control = CommandLine.arguments.count == 3 ? CommandLine.arguments[2] : "osc2-coarse"
+guard ["osc2-coarse", "mix-osc1"].contains(control) else { fatalError("Unknown control") }
+let msbCC: UInt8 = control == "mix-osc1" ? 20 : 30
+let lsbCC: UInt8 = control == "mix-osc1" ? 52 : 62
 var client = MIDIClientRef(), input = MIDIPortRef(), output = MIDIPortRef()
 var destination = MIDIEndpointRef()
 let lock = NSLock()
@@ -68,34 +72,37 @@ func patch() -> [UInt8]? {
     lock.lock(); defer { lock.unlock() }
     return messages.last
 }
-func coarse(_ b: [UInt8]) -> Int { ((Int(b[27]) & 31) << 3) | ((Int(b[28]) & 112) >> 4) }
-func setCoarse(_ raw: Int) {
-    send([0xB0,30,UInt8(raw >> 1)])
+func readValue(_ b: [UInt8]) -> Int {
+    if control == "mix-osc1" { return ((Int(b[37]) & 7) << 5) | ((Int(b[38]) & 124) >> 2) }
+    return ((Int(b[27]) & 31) << 3) | ((Int(b[28]) & 112) >> 4)
+}
+func setValue(_ raw: Int) {
+    send([0xB0,msbCC,UInt8(raw >> 1)])
     Thread.sleep(forTimeInterval: 0.005)
-    send([0xB0,62,UInt8((raw & 1) << 6)])
+    send([0xB0,lsbCC,UInt8((raw & 1) << 6)])
     Thread.sleep(forTimeInterval: 0.08)
 }
 guard let baseline = patch() else { fatalError("No baseline patch response; no parameters changed") }
 try Data(baseline).write(to: outputDirectory.appendingPathComponent("before.syx"))
-let original = coarse(baseline)
-print("Baseline Osc 2 Coarse raw: \(original). Sampling 256 values."); fflush(stdout)
-var rows = ["sent_raw,cc30_msb,cc62_lsb,sysex_raw,match"]
+let original = readValue(baseline)
+print("Baseline \(control) raw: \(original). Sampling 256 values."); fflush(stdout)
+var rows = ["sent_raw,msb_value,lsb_value,sysex_raw,match"]
 var failures = 0
 for raw in 0...255 {
-    setCoarse(raw)
+    setValue(raw)
     guard let result = patch() else { print("Timeout at \(raw); stopping sweep"); failures += 1; break }
-    let actual = coarse(result)
+    let actual = readValue(result)
     if actual != raw { failures += 1 }
     rows.append("\(raw),\(raw >> 1),\((raw & 1) << 6),\(actual),\(actual == raw)")
     try Data(result).write(to: outputDirectory.appendingPathComponent(String(format: "raw-%03d.syx", raw)))
     if raw % 32 == 0 { print("Sample \(raw): received \(actual)"); fflush(stdout) }
 }
-setCoarse(original)
+setValue(original)
 let restored = patch()
-let restoreOK = restored.map { coarse($0) == original } ?? false
+let restoreOK = restored.map { $0 == baseline } ?? false
 if let restored = restored { try Data(restored).write(to: outputDirectory.appendingPathComponent("after.syx")) }
-try (rows.joined(separator:"\n")+"\n").write(to: outputDirectory.appendingPathComponent("osc2-coarse.csv"), atomically: true, encoding: .utf8)
-let summary = "Samples: \(rows.count-1)\nMismatches/timeouts: \(failures)\nOriginal raw value: \(original)\nOriginal Coarse restored and verified: \(restoreOK)\n"
+try (rows.joined(separator:"\n")+"\n").write(to: outputDirectory.appendingPathComponent("\(control).csv"), atomically: true, encoding: .utf8)
+let summary = "Samples: \(rows.count-1)\nMismatches/timeouts: \(failures)\nOriginal raw value: \(original)\nEntire starting patch restored and verified: \(restoreOK)\n"
 try summary.write(to: outputDirectory.appendingPathComponent("summary.txt"), atomically:true, encoding:.utf8)
 print(summary)
 MIDIPortDispose(input); MIDIPortDispose(output); MIDIClientDispose(client)
