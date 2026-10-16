@@ -93,3 +93,9 @@ The sampler changes the current edit buffer, restores its starting Coarse value 
 The processor parsed incoming MIDI but left it in the outgoing buffer. The standalone wrapper could therefore send incoming patch replies back to the synth. It now consumes incoming MIDI after parsing in standalone mode; explicit editor sends remain on their existing output path, and plugin-mode pass-through is preserved. A routing regression test failed before the change and passed afterward.
 
 With the rebuilt standalone app open and Live RX running, the same automated 256-value Osc 2 Coarse sweep returned 256 exact matches and zero timeouts. The starting Coarse value 255 was restored, and the complete before/after patches were byte-identical. This reproduces the previously failing concurrent setup and verifies its correction. Results: `osc2-coarse-app-open-sweep.csv`. Hardware-knob-to-app confirmation remains a separate manual check.
+
+## LCD rounding probe limitation
+
+A software-controlled Osc 2 Coarse probe sent raw 62 and verified raw 62 through SysEx. The user confirmed that the physical LCD did not update in response to MIDI. The probe therefore provides no LCD mapping evidence. The pre-probe patch was subsequently restored; its full SysEx readback was byte-identical (Osc 2 Coarse raw 63).
+
+Conclusion: 256 distinct MIDI/SysEx control values are verified. Exact LCD rounding and actual acoustic pitch spacing remain unverified. Retain the approximate Coarse display and its tooltip. Further manual knob sampling is not required at present.
