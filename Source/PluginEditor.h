@@ -17,13 +17,14 @@ public:
     void setFromHardware (int value);
     int specIndex() const { return index; }
 private:
-    void updateOctaveSwitch();
+    void updateDiscreteSwitch();
     int index;
     const bsii::ParameterSpec& spec;
     juce::Label label;
     juce::Slider slider;
-    juce::TextButton octaveOne { "-1" }, octaveTwo { "-2" };
+    juce::TextButton firstChoice, secondChoice;
     bool isOctaveSwitch = false;
+    bool isSyncSwitch = false;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> attachment;
     std::function<void(int, int)> callback;
     bool applyingHardware = false;

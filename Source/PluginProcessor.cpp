@@ -10,7 +10,7 @@ BSIIControlAudioProcessor::BSIIControlAudioProcessor()
         .withOutput ("Output", juce::AudioChannelSet::stereo(), true)),
       apvts (*this, nullptr, "STATE", createParameterLayout())
 {
-    for (auto& value : pendingHardwareValues) value.store (-1, std::memory_order_relaxed);
+    for (auto& value : pendingHardwareValues) value.store (bsii::noHardwareValue, std::memory_order_relaxed);
     for (auto& value : pendingChoiceWireValues) value.store (-1, std::memory_order_relaxed);
     for (auto& value : pairedMSB) value.store (-1, std::memory_order_relaxed);
     for (auto& value : currentNrpnMSB) value.store (-1, std::memory_order_relaxed);
@@ -207,8 +207,8 @@ void BSIIControlAudioProcessor::setHardwareMidiChannel (int channel)
 
 int BSIIControlAudioProcessor::consumeHardwareValue (int specIndex)
 {
-    if (! juce::isPositiveAndBelow (specIndex, static_cast<int> (maxSpecs))) return -1;
-    return pendingHardwareValues[static_cast<size_t> (specIndex)].exchange (-1, std::memory_order_acq_rel);
+    if (! juce::isPositiveAndBelow (specIndex, static_cast<int> (maxSpecs))) return bsii::noHardwareValue;
+    return pendingHardwareValues[static_cast<size_t> (specIndex)].exchange (bsii::noHardwareValue, std::memory_order_acq_rel);
 }
 
 int BSIIControlAudioProcessor::consumeChoiceWireValue (int choiceIndex)

@@ -12,8 +12,8 @@ let lsbCC: UInt8 = control == "osc1-fine" ? 58 : control == "osc2-fine" ? 61 : c
 let singleCC = ["filter-resonance", "filter-overdrive", "filter-modenv", "amp-attack", "amp-decay", "amp-sustain", "amp-release", "mod-attack", "mod-decay", "mod-sustain", "mod-release", "lfo1-wave", "lfo2-wave", "lfo1-delay", "lfo2-delay", "distortion", "osc-filter-mod", "vca-limit", "portamento", "bend-amount", "arp-swing", "velocity-amp", "velocity-mod", "osc-sync", "osc1-modenv-pitch", "osc2-modenv-pitch", "osc1-modenv-pw", "osc2-modenv-pw", "osc1-lfo2-pw", "osc2-lfo2-pw", "osc1-manual-pw", "osc2-manual-pw", "patch-volume", "sub-octave", "sub-wave"].contains(control)
 let nrpnNumber: UInt8? = control == "filter-tracking" ? 108 : control == "lfo1-slew" ? 86 : control == "lfo2-slew" ? 90 : control == "lfo1-keysync" ? 89 : control == "lfo2-keysync" ? 93 : control == "modwheel-lfo1-pitch" ? 70 : control == "modwheel-osc2-pitch" ? 78 : control == "aftertouch-filter" ? 74 : control == "aftertouch-lfo1" ? 75 : control == "aftertouch-lfo2-speed" ? 76 : control == "osc1-wave" ? 72 : control == "osc2-wave" ? 82 : nil
 let nrpn = nrpnNumber != nil
-let minimumRaw = control == "bend-amount" ? 1 : 0
-let maximumRaw = control == "sub-wave" ? 2 : control == "bend-amount" ? 12 : control.hasSuffix("-keysync") ? 1 : control.hasSuffix("-wave") ? 3 : control == "filter-tracking" ? 7 : (singleCC || nrpn) ? 127 : 255
+let minimumRaw = control == "bend-amount" ? -24 : 0
+let maximumRaw = control == "sub-wave" ? 2 : control == "bend-amount" ? 24 : control.hasSuffix("-keysync") ? 1 : control.hasSuffix("-wave") ? 3 : control == "filter-tracking" ? 7 : (singleCC || nrpn) ? 127 : 255
 var client = MIDIClientRef(), input = MIDIPortRef(), output = MIDIPortRef()
 var destination = MIDIEndpointRef()
 let lock = NSLock()

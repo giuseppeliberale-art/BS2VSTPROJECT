@@ -15,7 +15,7 @@ namespace bsii
         juce::String patchName;
 
         int patchVolume=-1, subOctaveRaw=-1, subWave=-1;
-        int portamento=-1, bendAmount=-1;
+        int portamento=-1, bendAmount=noHardwareValue;
         int osc1Wave=-1, osc2Wave=-1;
         int osc1ModEnvPW=-1;
         int osc1Fine=-1, osc1Coarse=-1, osc1ManualPW=-1, osc1Range=-1, osc1ModEnvPitch=-1, osc1Lfo1Pitch=-1, osc1Lfo2PW=-1;
@@ -146,7 +146,7 @@ namespace bsii
         // Each field is range-checked independently. Nothing here can invalidate
         // the verified fields above.
         acceptCandidate (extractField (b, 13, 0x03, 0x7C), 0, 127, out.portamento, out);
-        acceptVerified (bendAmountFromWire (extractField (b, 16, 0x7F)), 1, 12, out.bendAmount, out);
+        acceptVerified (bendAmountFromWire (extractField (b, 16, 0x7F)), -24, 24, out.bendAmount, out);
 
         acceptCandidate (extractField (b, 19, 0x0F, 0x70), 0, 127, out.osc1ManualPW, out);
         // Controlled hardware dumps: 16'/8'/4'/2' encode as 63/64/65/66.

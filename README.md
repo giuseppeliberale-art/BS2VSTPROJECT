@@ -53,3 +53,12 @@ Open this folder in GitHub Desktop with **File → Add Local Repository**. Revie
 Snapshot save/load and a combined Send All hardware recall are covered separately in [state integration validation](docs/state-integration-validation.md).
 
 The current standalone UI shows Sub Octave as a highlighted **−1 / −2 switch**. The window is resizable, control rows adapt to width, and taller pages scroll so lower values remain reachable.
+
+## Routine validation and project handover
+
+Run `./tools/validate.sh` to build the standalone app and run the offline regression
+suite. It prints a short result and saves full logs under `validation-results/`
+(ignored by Git). No synth connection is required and no MIDI is sent.
+This checks the build and existing regressions; hardware testing and app signing
+remain separate. See [current project handover](docs/project-status.md) for the
+working app location, priorities, known limits and links to detailed evidence.

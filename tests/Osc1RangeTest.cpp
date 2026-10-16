@@ -485,7 +485,19 @@ int main(int argc, char** argv) {
             passed &= ok;
         }
     }
-    for (int semitones = 1; semitones <= 12; ++semitones) {
+    {
+        std::ifstream input(std::string(argv[1]) + "/bend-full-wire-sweep.syx", std::ios::binary);
+        const std::string bytes((std::istreambuf_iterator<char>(input)), {});
+        bool ok = bytes.size() == 128 * 154;
+        if (ok)
+            for (int wire = 0; wire < 128; ++wire) {
+                const auto d = bsii::decodePatchFields(juce::MemoryBlock(bytes.data() + wire * 154, 154));
+                ok &= d.valid && d.bendAmount == juce::jlimit(40, 88, wire) - 64;
+            }
+        std::cout << (ok ? "PASS" : "FAIL") << " all captured signed bend values including -1 and zero\n";
+        passed &= ok;
+    }
+    for (int semitones = -24; semitones <= 24; ++semitones) {
         const auto wire = bsii::bendAmountToWire(semitones);
         passed &= wire == semitones + 64 && bsii::bendAmountFromWire(wire) == semitones;
     }

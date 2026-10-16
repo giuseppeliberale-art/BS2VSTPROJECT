@@ -23,23 +23,26 @@ ParameterControl::ParameterControl (juce::AudioProcessorValueTreeState& state,
     attachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment> (state, spec.id, slider);
     const juce::String parameterId (spec.id);
     isOctaveSwitch = parameterId == "subOctaveRaw";
-    if (isOctaveSwitch)
+    isSyncSwitch = parameterId == "oscSyncRaw";
+    if (isOctaveSwitch || isSyncSwitch)
     {
+        firstChoice.setButtonText (isSyncSwitch ? "Off" : "-1");
+        secondChoice.setButtonText (isSyncSwitch ? "On" : "-2");
         slider.setVisible (false);
-        addAndMakeVisible (octaveOne);
-        addAndMakeVisible (octaveTwo);
-        for (auto* button : { &octaveOne, &octaveTwo })
+        addAndMakeVisible (firstChoice);
+        addAndMakeVisible (secondChoice);
+        for (auto* button : { &firstChoice, &secondChoice })
         {
             button->setClickingTogglesState (true);
             button->setColour (juce::TextButton::buttonOnColourId, juce::Colour (0xff087ea4));
             button->setColour (juce::TextButton::textColourOnId, juce::Colours::white);
         }
-        octaveOne.setConnectedEdges (juce::Button::ConnectedOnRight);
-        octaveTwo.setConnectedEdges (juce::Button::ConnectedOnLeft);
-        // Physical -2 was captured with the stored octave bit clear.
-        octaveOne.onClick = [this] { slider.setValue (127, juce::sendNotificationSync); updateOctaveSwitch(); };
-        octaveTwo.onClick = [this] { slider.setValue (0, juce::sendNotificationSync); updateOctaveSwitch(); };
-        updateOctaveSwitch();
+        firstChoice.setConnectedEdges (juce::Button::ConnectedOnRight);
+        secondChoice.setConnectedEdges (juce::Button::ConnectedOnLeft);
+        // Keep raw storage compatible; each switch sends canonical endpoint values.
+        firstChoice.onClick = [this] { slider.setValue (isSyncSwitch ? 0 : 127, juce::sendNotificationSync); updateDiscreteSwitch(); };
+        secondChoice.onClick = [this] { slider.setValue (isSyncSwitch ? 127 : 0, juce::sendNotificationSync); updateDiscreteSwitch(); };
+        updateDiscreteSwitch();
     }
     const bool fine = parameterId == "osc1Fine" || parameterId == "osc2Fine";
     const bool coarse = parameterId == "osc1Coarse" || parameterId == "osc2Coarse";
@@ -61,31 +64,64 @@ ParameterControl::ParameterControl (juce::AudioProcessorValueTreeState& state,
                                : "Approximate coarse tuning in semitones (-12.0 to +12.0). Hardware display rounding may differ.");
         slider.updateText();
     }
+    const bool signedAmount = parameterId == "velocityAmp" || parameterId == "velocityMod"
+        || parameterId == "modWhLfo1Pitch" || parameterId == "modWhOsc2Pitch"
+        || parameterId == "aftertouchFilter" || parameterId == "aftertouchLfo1"
+        || parameterId == "aftertouchLfo2Spd";
+    if (signedAmount)
+    {
+        slider.textFromValueFunction = [] (double raw)
+        {
+            const auto amount = juce::roundToInt (raw) - 64;
+            return (amount > 0 ? "+" : "") + juce::String (amount);
+        };
+        slider.valueFromTextFunction = [this] (const juce::String& text)
+        {
+            return static_cast<double> (juce::jlimit (spec.minimum, spec.maximum, text.getIntValue() + 64));
+        };
+        slider.setTooltip ("Signed modulation amount (" + juce::String (spec.minimum - 64)
+                           + " to +63). Zero is neutral; MIDI and snapshot storage remain unchanged.");
+        slider.updateText();
+    }
+    if (parameterId == "bendAmount")
+    {
+        slider.textFromValueFunction = [] (double value)
+        {
+            const auto semitones = juce::roundToInt (value);
+            return (semitones > 0 ? "+" : "") + juce::String (semitones);
+        };
+        slider.valueFromTextFunction = [] (const juce::String& text)
+        {
+            return static_cast<double> (text.getIntValue());
+        };
+        slider.setTooltip ("Pitch bend range in semitones (-24 to +24). Negative values reverse the wheel; zero disables bending.");
+        slider.updateText();
+    }
     slider.onValueChange = [this]
     {
-        updateOctaveSwitch();
+        updateDiscreteSwitch();
         if (! applyingHardware && callback)
             callback (index, juce::roundToInt (slider.getValue()));
     };
 }
 
-void ParameterControl::updateOctaveSwitch()
+void ParameterControl::updateDiscreteSwitch()
 {
-    if (! isOctaveSwitch) return;
-    const bool oneOctaveBelow = slider.getValue() >= 63;
-    octaveOne.setToggleState (oneOctaveBelow, juce::dontSendNotification);
-    octaveTwo.setToggleState (! oneOctaveBelow, juce::dontSendNotification);
+    if (! isOctaveSwitch && ! isSyncSwitch) return;
+    const bool firstSelected = isSyncSwitch ? slider.getValue() == 0 : slider.getValue() >= 63;
+    firstChoice.setToggleState (firstSelected, juce::dontSendNotification);
+    secondChoice.setToggleState (! firstSelected, juce::dontSendNotification);
 }
 
 void ParameterControl::resized()
 {
     auto area = getLocalBounds();
     label.setBounds (area.removeFromTop (22));
-    if (isOctaveSwitch)
+    if (isOctaveSwitch || isSyncSwitch)
     {
         auto buttons = area.withSizeKeepingCentre (juce::jmin (132, area.getWidth() - 12), 38);
-        octaveOne.setBounds (buttons.removeFromLeft (buttons.getWidth() / 2));
-        octaveTwo.setBounds (buttons);
+        firstChoice.setBounds (buttons.removeFromLeft (buttons.getWidth() / 2));
+        secondChoice.setBounds (buttons);
         return;
     }
     slider.setBounds (area);
@@ -111,7 +147,11 @@ ChoiceControl::ChoiceControl (juce::AudioProcessorValueTreeState& state,
         combo.addItem (spec.choices[static_cast<size_t> (i)].label, i + 1);
     addAndMakeVisible (combo);
 
-    note.setText (spec.verifiedWireValues ? "MIDI verified" : "MIDI test", juce::dontSendNotification);
+    const juce::String parameterId (spec.id);
+    note.setText ((parameterId == "ampTrigger" || parameterId == "modTrigger")
+                      ? "Shared: Amp + Mod"
+                      : (spec.verifiedWireValues ? "MIDI verified" : "MIDI test"),
+                  juce::dontSendNotification);
     note.setJustificationType (juce::Justification::centred);
     note.setColour (juce::Label::textColourId,
                     spec.verifiedWireValues ? juce::Colours::lightgreen.withAlpha (0.75f)
@@ -254,7 +294,7 @@ BSIIControlAudioProcessorEditor::BSIIControlAudioProcessorEditor (BSIIControlAud
     {
         midiChannel = juce::jmax (1, channelBox.getSelectedId());
         processor.setHardwareMidiChannel (midiChannel);
-        std::fill (lastSentValues.begin(), lastSentValues.end(), -1);
+        std::fill (lastSentValues.begin(), lastSentValues.end(), bsii::noHardwareValue);
         std::fill (lastSentChoiceIndices.begin(), lastSentChoiceIndices.end(), -1);
     };
 
@@ -302,7 +342,7 @@ BSIIControlAudioProcessorEditor::BSIIControlAudioProcessorEditor (BSIIControlAud
     diagnosticLabel.setJustificationType (juce::Justification::centredLeft);
     diagnosticLabel.setText ("SysEx validation: no patch decoded yet.", juce::dontSendNotification);
 
-    lastSentValues.assign (bsii::parameterSpecs().size(), -1);
+    lastSentValues.assign (bsii::parameterSpecs().size(), bsii::noHardwareValue);
     lastSentChoiceIndices.assign (bsii::choiceSpecs().size(), -1);
     buildPages();
     refreshMidiOutputs();
@@ -533,7 +573,7 @@ bool BSIIControlAudioProcessorEditor::reopenSelectedMidiOutput (bool forceReopen
     midiOutput = juce::MidiOutput::openDevice (selectedDeviceIdentifier);
     if (midiOutput != nullptr)
     {
-        std::fill (lastSentValues.begin(), lastSentValues.end(), -1);
+        std::fill (lastSentValues.begin(), lastSentValues.end(), bsii::noHardwareValue);
         std::fill (lastSentChoiceIndices.begin(), lastSentChoiceIndices.end(), -1);
         statusLabel.setText ("TX connected to " + deviceName + ". RX requires Bass Station II enabled under Settings -> Active MIDI inputs.",
                              juce::dontSendNotification);
@@ -577,9 +617,35 @@ void BSIIControlAudioProcessorEditor::sendChoiceValue (int choiceIndex, int sele
 {
     if (suppressMidiSends) return;
     const auto& specs = bsii::choiceSpecs();
-    if (midiOutput == nullptr || ! juce::isPositiveAndBelow (choiceIndex, static_cast<int> (specs.size()))) return;
+    if (! juce::isPositiveAndBelow (choiceIndex, static_cast<int> (specs.size()))) return;
     const auto& spec = specs[static_cast<size_t> (choiceIndex)];
     if (! juce::isPositiveAndBelow (selectedChoiceIndex, static_cast<int> (spec.choices.size()))) return;
+
+    // A front-panel-style trigger edit applies to both envelopes. Keep distinct
+    // stored parameters so patch reception and existing snapshots remain lossless.
+    const juce::String editedId (spec.id);
+    if (editedId == "ampTrigger" || editedId == "modTrigger")
+    {
+        const auto wireValue = spec.choices[static_cast<size_t> (selectedChoiceIndex)].wireValue;
+        for (size_t i = 0; i < specs.size(); ++i)
+        {
+            const juce::String id (specs[i].id);
+            if (id != "ampTrigger" && id != "modTrigger") continue;
+            // The receive-style setter updates the attachment without re-entering
+            // this callback. Synchronise the other page even without MIDI output.
+            for (auto& control : choiceControls)
+                if (control->choiceIndex() == static_cast<int> (i))
+                    control->setFromWireValue (wireValue);
+            if (midiOutput != nullptr)
+            {
+                bsii::sendChoice (*midiOutput, midiChannel, specs[i], wireValue);
+                lastSentChoiceIndices[i] = selectedChoiceIndex;
+            }
+        }
+        return;
+    }
+
+    if (midiOutput == nullptr) return;
     if (lastSentChoiceIndices[static_cast<size_t> (choiceIndex)] == selectedChoiceIndex) return;
     lastSentChoiceIndices[static_cast<size_t> (choiceIndex)] = selectedChoiceIndex;
     bsii::sendChoice (*midiOutput, midiChannel, spec, spec.choices[static_cast<size_t> (selectedChoiceIndex)].wireValue);
@@ -781,7 +847,8 @@ bool BSIIControlAudioProcessorEditor::decodeSysExIntoEditor (const juce::MemoryB
     juce::StringArray changedFields;
     auto set = [this, &changedFields] (const char* id, int value)
     {
-        if (value < 0) return;
+        if (value == bsii::noHardwareValue
+            || (value < 0 && juce::String (id) != "bendAmount")) return;
         const auto before = currentParameterValue (id);
         if (setEditorParameterValue (id, value) && before != value)
             changedFields.add (juce::String (id) + " " + juce::String (before) + "->" + juce::String (value));
@@ -872,7 +939,7 @@ bool BSIIControlAudioProcessorEditor::decodeSysExIntoEditor (const juce::MemoryB
     set ("distortion", decoded.distortion);
     set ("vcaLimit", decoded.vcaLimit);
 
-    std::fill (lastSentValues.begin(), lastSentValues.end(), -1);
+    std::fill (lastSentValues.begin(), lastSentValues.end(), bsii::noHardwareValue);
     std::fill (lastSentChoiceIndices.begin(), lastSentChoiceIndices.end(), -1);
     updateFilterModeUi();
 
@@ -973,7 +1040,7 @@ bool BSIIControlAudioProcessorEditor::loadStateFromFile (const juce::File& file)
 
     juce::ScopedValueSetter<bool> guard (suppressMidiSends, true);
     processor.getParameters().replaceState (state);
-    std::fill (lastSentValues.begin(), lastSentValues.end(), -1);
+    std::fill (lastSentValues.begin(), lastSentValues.end(), bsii::noHardwareValue);
     std::fill (lastSentChoiceIndices.begin(), lastSentChoiceIndices.end(), -1);
     return true;
 }
@@ -1035,7 +1102,7 @@ void BSIIControlAudioProcessorEditor::applyHardwareUpdates()
     {
         const auto index = control->specIndex();
         const auto value = processor.consumeHardwareValue (index);
-        if (value < 0) continue;
+        if (value == bsii::noHardwareValue) continue;
         lastSentValues[static_cast<size_t> (index)] = value;
         control->setFromHardware (value);
     }

@@ -11,9 +11,9 @@ Audited application source and committed captures at `d436925`; updated after th
 - **Both Coarse controls now have full 256-value captured decoder sweeps and five earlier manual observations each.** The previous Coarse regression gap is closed; exact LCD rounding remains uncalibrated.
 - **Both main oscillator waveforms now have four-setting SysEx captures and decoder replay**, in addition to their earlier manually confirmed bidirectional live MIDI. Sub Wave also has captured SysEx coverage.
 
-The fixture directory contains **95 files / 9,123 patch messages**, all traversed by the captured-patch test: 63 sweep files (9,003 messages), four option-combination files (92 messages), eight range messages, ten Fine messages, and ten Coarse messages. These are fixture-message counts, not independent acoustic tests or assertions of end-to-end UI coverage.
+The fixture directory contains **96 files / 9,251 patch messages**, all traversed by the captured-patch test: 64 sweep files (9,131 messages), four option-combination files (92 messages), eight range messages, ten Fine messages, and ten Coarse messages. These are fixture-message counts, not independent acoustic tests or assertions of end-to-end UI coverage.
 
-`ctest --test-dir build -C Release --output-on-failure` now passes six registered tests: StandaloneMidiRouting, two snapshot round-trip comparisons, two complete Send All recall comparisons, and Osc1RangeCapturedPatches. The latter's historical name now covers all 76 exposed controls; the name does not imply that only Oscillator 1 Range is tested. Two additional integration SysEx files and four snapshots live separately under `tests/state-fixtures/`; they are not included in the 95-file sweep/observation count above.
+`ctest --test-dir build -C Release --output-on-failure` now passes six registered tests: StandaloneMidiRouting, two snapshot round-trip comparisons, two complete Send All recall comparisons, and Osc1RangeCapturedPatches. The latter's historical name now covers all 76 exposed controls; the name does not imply that only Oscillator 1 Range is tested. Two additional integration SysEx files and four snapshots live separately under `tests/state-fixtures/`; they are not included in the 96-file sweep/observation count above.
 
 ## Next work, in order
 
@@ -32,7 +32,7 @@ The fixture directory contains **95 files / 9,123 patch messages**, all traverse
 - Selected fixes received visual import/fetch checks, and one combined alternate Send All recall now matches every exposed control. These do not prove every intermediate UI setting, parameter interaction, or live receive route.
 - Current changes were built for Standalone and the regression targets. A fresh AU/VST3 build and host/session recall test of this head are not recorded.
 - Malformed/truncated SysEx, device disconnect/reconnect, wrong-channel behavior, and simultaneous UI/host/hardware edits do not have dedicated captured-path regression coverage.
-- Bend's editor supports only +1 to +12 despite the captured wider signed hardware wire range. Live bend conversion was changed, but physical hardware-origin live CC reception was not manually checked afterward.
+- Bend now supports -24 through +24. A 128-input captured wire probe covers clamping, negative values, -1 and zero. Hardware-origin reference points -24/0/+24 were captured as CC107 40/64/88; user confirmed final-build live UI reception at -1.
 - Sync retains a raw numeric UI. Sub Octave now presents a highlighted −1/−2 switch while preserving its raw parameter and canonical 0/127 patch values. Hardware −2 was matched to the clear stored bit on 17 October; both UI switch selections were verified by patch readback. Acoustic pitch intervals were not measured.
 - Hardware functions not exposed in the app (for example additional arp or LFO sync modes) are outside this 76-control inventory.
 

@@ -84,7 +84,7 @@ namespace bsii
             { "filterLfo2",        "LFO2",                  "Filter",      Protocol::pairedCC8, 17, 49, 0, 255, 128 },
             { "filterOverdrive",   "Overdrive",             "Filter",      Protocol::cc7,      114, -1, 0, 127,   0 },
 
-            { "portamento",        "Portamento",            "LFO / Glide", Protocol::cc7,        5, -1, 0, 127,   0 },
+            { "portamento",        "Portamento / Glide Time", "LFO / Glide", Protocol::cc7,        5, -1, 0, 127,   0 },
             { "lfo1Speed",         "LFO1 Speed",            "LFO / Glide", Protocol::pairedCC8, 18, 50, 0, 255,  75 },
             { "lfo1Delay",         "LFO1 Delay",            "LFO / Glide", Protocol::cc7,       86, -1, 0, 127,   0 },
             { "lfo2Speed",         "LFO2 Speed",            "LFO / Glide", Protocol::pairedCC8, 19, 51, 0, 255,  52 },
@@ -105,10 +105,10 @@ namespace bsii
             { "modRetriggerCount", "Retrigger Count",       "Mod Env",     Protocol::nrpn7,      0,118, 0,  16,   0 },
 
             { "distortion",        "Distortion",            "FX / Perf",   Protocol::cc7,       94, -1, 0, 127,   0 },
-            { "oscSyncRaw",         "Osc Sync (raw CC)",     "FX / Perf",   Protocol::cc7,      110, -1, 0, 127,   0 },
+            { "oscSyncRaw",         "Osc Sync",     "FX / Perf",   Protocol::cc7,      110, -1, 0, 127,   0 },
             { "oscFilterMod",      "Osc Filter Mod",        "FX / Perf",   Protocol::cc7,      115, -1, 0, 127,   0 },
             { "arpSwing",          "Arp Swing",             "FX / Perf",   Protocol::cc7,      116, -1, 3,  97,  64 },
-            { "bendAmount",        "Bend Amount",           "FX / Perf",   Protocol::cc7,      107, -1, 1,  12,  12 },
+            { "bendAmount",        "Bend Amount",           "FX / Perf",   Protocol::cc7,      107, -1, -24, 24,  12 },
             { "velocityAmp",       "Velocity -> Amp",       "FX / Perf",   Protocol::cc7,      112, -1, 1, 127,  64 },
             { "velocityMod",       "Velocity -> Mod",       "FX / Perf",   Protocol::cc7,      113, -1, 1, 127,  64 },
             { "vcaLimit",          "VCA Limit",             "FX / Perf",   Protocol::cc7,       95, -1, 0, 127,   0 },

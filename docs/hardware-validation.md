@@ -291,3 +291,22 @@ Existing decoder mappings are correct. Limited both app Fine parameter/slider ra
 The complete starting patch was restored and verified byte-for-byte after each sweep (both starting Fine values 128). Results: `osc{1,2}-fine-sweep.csv`; fixtures: matching files under `tests/fixtures/`. Regression replay checks all 512 returned patches against the measured clamp and explicitly checks raw 127/128 both display zero. The earlier ten manual Fine observations remain in the suite.
 
 Rebuilt-app spot checks with Live RX paused: imported the Oscillator 1 raw-255 response (stored 228), displaying +100; Get Patch restored raw 128/display 0. Imported Oscillator 2 raw-000 response (stored 27), displaying −100; Get Patch restored raw 128/display 0. Imports did not send the test settings to the synth.
+
+## Signed Bend Amount range extension
+
+Hardware-origin setting changes confirmed display -24/0/+24 → CC10740/64/88,
+including reopening -24 to confirm retention. Saved live trace in chat workspace
+work/midi-debug/bend-full-range-live-resumed.txt. Added original128-input wire probe
+as tests/fixtures/bend-full-wire-sweep.syx (19,712 bytes); expected stored range
+clamps40…88 and decodes as wire-64. New real-decoder regression failed before fix,
+then passed alongside all six registered tests. Expanded parameter range to -24…24;
+separate no-update sentinel avoids dropping -1/negative live values, patch values,
+or first sends. Existing positive numeric snapshot values remain compatible.
+
+Signed UI entry verified against fresh hardware patch readbacks for -24, -1 and0.
+Direct CC10763 followed by Get Patch changed editor0→-1, confirming negative patch
+application. UI +24 then full hardware patch comparison matched the pre-UI-test
+backup byte-for-byte. No full patch restore needed in this Bend UI test. Current
+preset selected by user retained. Final-build physical hardware→app live check
+still pending; firmware remains4.14. AU/VST3 normalized automation migration not
+verified for the expanded parameter range.

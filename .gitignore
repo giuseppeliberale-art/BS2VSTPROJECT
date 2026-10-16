@@ -24,3 +24,6 @@ xcuserdata/
 *.app/
 *.vst3/
 *.component/
+
+# Local validation summaries and full logs
+/validation-results/

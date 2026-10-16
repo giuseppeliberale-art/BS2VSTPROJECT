@@ -39,6 +39,7 @@ public:
     void setHardwareMidiChannel (int channel);
     void setLiveMidiRxEnabled (bool enabled) { liveMidiRxEnabled.store (enabled, std::memory_order_relaxed); }
     bool isLiveMidiRxEnabled() const { return liveMidiRxEnabled.load (std::memory_order_relaxed); }
+    // Returns bsii::noHardwareValue when no update is pending (negative bend is valid).
     int consumeHardwareValue (int specIndex);
     int consumeChoiceWireValue (int choiceIndex);
 
