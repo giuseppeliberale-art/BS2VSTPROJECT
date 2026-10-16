@@ -16,6 +16,7 @@ namespace bsii
 
         int patchVolume=-1, subOctaveRaw=-1, subWave=-1;
         int portamento=-1, bendAmount=-1;
+        int osc1Wave=-1, osc2Wave=-1;
         int osc1ModEnvPW=-1;
         int osc1Fine=-1, osc1Coarse=-1, osc1ManualPW=-1, osc1Range=-1, osc1ModEnvPitch=-1, osc1Lfo1Pitch=-1, osc1Lfo2PW=-1;
         int osc2Fine=-1, osc2Coarse=-1, osc2ManualPW=-1, osc2Range=-1, osc2ModEnvPitch=-1, osc2Lfo1Pitch=-1, osc2ModEnvPW=-1, osc2Lfo2PW=-1;
@@ -120,6 +121,8 @@ namespace bsii
         acceptVerified (((b[50] & 0x1F) << 2) | ((b[51] >> 5) & 0x03), 0, 127, out.ampAttack, out);
         // Hardware wire order is Multi, Single, Autoglide; the editor lists Single first.
         const int ampTriggerWire = extractField (b, 55, 0x06);
+        acceptVerified (extractField (b, 19, 0x60), 0, 3, out.osc1Wave, out);
+        acceptVerified (extractField (b, 24, 0x03), 0, 3, out.osc2Wave, out);
         acceptVerified (extractField (b, 109, 0x03, 0x7C), 0, 127, out.patchVolume, out);
         acceptVerified (extractField (b, 36, 0x30), 0, 2, out.subWave, out);
         acceptVerified (extractField (b, 37, 0x08) == 0 ? 0 : 127, 0, 127, out.subOctaveRaw, out);

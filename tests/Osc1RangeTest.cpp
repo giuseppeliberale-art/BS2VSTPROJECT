@@ -558,5 +558,17 @@ int main(int argc, char** argv) {
             passed &= ok;
         }
     }
+    for (int osc = 1; osc <= 2; ++osc) {
+        std::ifstream input(std::string(argv[1]) + "/osc" + std::to_string(osc) + "-wave-sweep.syx", std::ios::binary);
+        const std::string bytes((std::istreambuf_iterator<char>(input)), {});
+        bool ok = bytes.size() == 4 * 154;
+        if (ok)
+            for (int raw = 0; raw < 4; ++raw) {
+                const auto d = bsii::decodePatchFields(juce::MemoryBlock(bytes.data() + raw * 154, 154));
+                ok &= d.valid && (osc == 1 ? d.osc1Wave : d.osc2Wave) == raw;
+            }
+        std::cout << (ok ? "PASS" : "FAIL") << " captured Osc " << osc << " waveform sweep\n";
+        passed &= ok;
+    }
     return passed ? 0 : 1;
 }

@@ -267,3 +267,11 @@ Captured all 128 Patch Volume inputs (CC7), all 128 Sub Octave inputs (CC81), an
 All three fields were missing from patch decoding and editor application. Added their captured mappings; regression replay failed for all three before the fix. The entire starting patch was restored and verified byte-for-byte after each test (Volume 100, Sub Wave 2, octave bit set). Results: `{patch-volume,sub-octave,sub-wave}-sweep.csv`; matching fixtures under `tests/fixtures/`.
 
 An initial sampler routing error sent these new control names to the fallback CC30. Those exploratory runs restored the complete starting patch and were discarded. Corrected routes CC7/81/80 were rerun; only the corrected captures are committed. The exploratory decoder initially returned unknown values; committed CSVs were decoded from the returned bytes after mapping discovery. All 259 corrected captures match. This validates MIDI transport/storage and decoding, not measured output level or acoustic sub waveform/octave.
+
+## Main oscillator waveform SysEx
+
+Captured all four selections for Oscillator 1 (NRPN 0:72) and Oscillator 2 (NRPN 0:82). Oscillator 1 occupies byte 19 mask 0x60; Oscillator 2 occupies byte 24 mask 0x03. Both store Sine/Triangle/Saw/Pulse as indexes 0/1/2/3. Added both missing decoder fields and editor application. Both four-message regression replays failed before the mappings and pass afterward.
+
+The entire starting patch was restored and verified byte-for-byte after each four-setting capture (both starting waveforms Sine). Results: `osc{1,2}-wave-sweep.csv`; fixtures: corresponding files under `tests/fixtures/`. Exploratory sampler CSVs initially marked these unmapped fields unknown; the committed CSVs were decoded from all eight captures after locating the fields. All eight values match. Earlier manual tests establish live MIDI behavior separately; these captures validate returned patch storage and decoding.
+
+Rebuilt-app verification with Live RX paused: importing each oscillator's Pulse capture changed its visible selector Sine → Pulse; a fresh Get Patch from the restored hardware changed it Pulse → Sine. Both editor application paths were verified without changing the hardware during import.

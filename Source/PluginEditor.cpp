@@ -744,6 +744,7 @@ bool BSIIControlAudioProcessorEditor::decodeSysExIntoEditor (const juce::MemoryB
     set ("bendAmount", decoded.bendAmount);
 
     set ("osc1Fine", decoded.osc1Fine);
+    set ("osc1Wave", decoded.osc1Wave);
     set ("osc1Coarse", decoded.osc1Coarse);
     set ("osc1ManualPW", decoded.osc1ManualPW);
     set ("osc1ModEnvPW", decoded.osc1ModEnvPW);
@@ -753,6 +754,7 @@ bool BSIIControlAudioProcessorEditor::decodeSysExIntoEditor (const juce::MemoryB
     set ("osc1Lfo2PW", decoded.osc1Lfo2PW);
 
     set ("osc2Fine", decoded.osc2Fine);
+    set ("osc2Wave", decoded.osc2Wave);
     set ("osc2Coarse", decoded.osc2Coarse);
     set ("osc2ManualPW", decoded.osc2ManualPW);
     set ("osc2Range", decoded.osc2Range);

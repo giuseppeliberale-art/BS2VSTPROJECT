@@ -1,23 +1,23 @@
 # Validation coverage audit — 17 October 2026
 
-Audited application source and committed captures at `d436925`. This is a coverage inventory, not a new hardware test or a declaration that every UI path works. No synth settings were changed during this audit. The `v0.8.2` baseline tag remains on `91d1ffc`.
+Audited application source and committed captures at `d436925`; updated after the eight main oscillator waveform captures and mapping fix following `0d408be`. This is a coverage inventory, not a new hardware test or a declaration that every UI path works. No synth settings were changed during this audit. The `v0.8.2` baseline tag remains on `91d1ffc`.
 
 ## Current result
 
 - **76 exposed controls:** 58 numeric parameters and 18 choices (`Source/BSIIMidi.h`).
-- **74 controls have patch fields applied to the editor.** Oscillator 1 and 2 Waveform are the two omissions from both `DecodedPatchFields` and `decodeSysExIntoEditor`.
-- **70 controls have setting/value captures replayed through their decoder fields.** Coverage includes expected hardware clamping and normalization, not necessarily a unique result for every MIDI input.
+- **All 76 controls have patch fields applied to the editor.** The two main oscillator waveform omissions identified by the audit have now been filled using hardware captures.
+- **72 controls have setting/value captures replayed through their decoder fields.** Coverage includes expected hardware clamping and normalization, not necessarily a unique result for every MIDI input.
 - **Two Fine controls have selected manual-position regression captures**, not exhaustive transport sweeps.
 - **Two Coarse controls have captured observations but no direct decoder assertions in the current regression.** Oscillator 2 also has two documented full 256-value MIDI/SysEx sweeps as CSVs; neither full sweep is committed as a replay fixture.
-- **Two main oscillator waveform controls have manually confirmed bidirectional live MIDI only.** Their patch-fetch/import behavior remains missing. Sub Wave has since gained captured SysEx coverage.
+- **Both main oscillator waveforms now have four-setting SysEx captures and decoder replay**, in addition to their earlier manually confirmed bidirectional live MIDI. Sub Wave also has captured SysEx coverage.
 
-The fixture directory contains **89 files / 8,091 patch messages**. The current captured-patch test traverses **79 files / 8,081 messages**: 57 sweep files (7,971 messages), four option-combination files (92 messages), eight range messages, and ten Fine messages. The ten saved Coarse observation files are not opened by that test. These are fixture-message counts, not independent acoustic tests or assertions of end-to-end UI coverage.
+The fixture directory contains **91 files / 8,099 patch messages**. The current captured-patch test traverses **81 files / 8,089 messages**: 59 sweep files (7,979 messages), four option-combination files (92 messages), eight range messages, and ten Fine messages. The ten saved Coarse observation files are not opened by that test. These are fixture-message counts, not independent acoustic tests or assertions of end-to-end UI coverage.
 
 `ctest --test-dir build -C Release --output-on-failure` passed both registered tests during this audit: StandaloneMidiRouting and Osc1RangeCapturedPatches. The latter's historical name now covers most controls; the name does not imply that only Oscillator 1 Range is tested.
 
 ## Next work, in order
 
-1. **Main oscillator waveform SysEx:** capture all four waveform settings for each oscillator; add decoder fields and editor application; reproduce the missing-update failure, then verify import and fresh Get Patch with Live RX paused.
+1. **Completed: main oscillator waveform SysEx.** Eight captured settings now drive both decoder fields and editor application. Both missing-update regressions were reproduced before the fix.
 2. **Coarse regression:** replay the ten existing Coarse captures through the actual decoder, then preserve/replay full sweeps. Oscillator 1 still needs an exhaustive transport sweep; Oscillator 2's documented sweeps should be retained as raw fixtures or repeated with restoration checks.
 3. **Fine coverage:** decide whether the selected musical-position captures are sufficient; otherwise sweep the supported hardware range and check clamping and center behavior. Current display conversion tests do not substitute for such a transport sweep.
 4. **Application integration:** hardware-origin live reception, actual app sends, Send All, snapshot save/load, and plugin-host smoke tests. Most automated sweeps use the standalone CoreMIDI sampler, not the app's sending function or hardware knobs.
@@ -100,10 +100,10 @@ The table maps every current parameter/choice ID to its available evidence. “C
 | FX / Perf | `aftertouchFilter` | NRPN 0:74 | Captured setting/value sweep + decoder replay |
 | FX / Perf | `aftertouchLfo1` | NRPN 0:75 | Captured setting/value sweep + decoder replay |
 | FX / Perf | `aftertouchLfo2Spd` | NRPN 0:76 | Captured setting/value sweep + decoder replay |
-| Osc 1 | `osc1Wave` | NRPN 0:72 | Missing SysEx field/application; live MIDI manually confirmed |
+| Osc 1 | `osc1Wave` | NRPN 0:72 | Four captured waveform settings + decoder replay; live MIDI manually confirmed |
 | Osc 1 | `subWave` | CC 80 | Captured setting/value sweep + decoder replay |
 | Osc 1 | `osc1Range` | CC 70 | Captured setting/value sweep + decoder replay |
-| Osc 2 | `osc2Wave` | NRPN 0:82 | Missing SysEx field/application; live MIDI manually confirmed |
+| Osc 2 | `osc2Wave` | NRPN 0:82 | Four captured waveform settings + decoder replay; live MIDI manually confirmed |
 | Osc 2 | `osc2Range` | CC 75 | Captured setting/value sweep + decoder replay |
 | Filter | `filterType` | CC 83 | Captured option combinations + decoder replay (see limits below) |
 | Filter | `filterShape` | CC 84 | Captured option combinations + decoder replay (see limits below) |
