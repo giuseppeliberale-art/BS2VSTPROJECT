@@ -151,3 +151,9 @@ Sent all 128 raw values on single CC85 and fetched a patch after each. Existing 
 ## Filter LFO 2 amount automated sweep
 
 Sent all 256 raw values on paired CC17/49 and fetched a patch after each. Existing candidate LFO 2 amount decoding (byte 97 mask 0x7F / byte 98 mask 0x40) matched every value, with zero mismatches/timeouts. Original amount 128 and the entire starting patch were restored byte-for-byte. Results: `filter-lfo2-sweep.csv`; captures: `tests/fixtures/filter-lfo2-sweep.syx`. All 256 messages are replayed through the C++ decoder. No mapping change was needed. These are raw control values; bipolar display calibration and acoustic modulation response were not tested.
+
+## Filter Type, Shape, and Slope combinations
+
+Tested all 12 combinations: Classic/Acid × LP/BP/HP × 12/24 dB. Each case sets Classic, sets Shape via CC84 and Slope via CC106, then sets Type via CC83 before requesting a patch. All returned raw fields matched the sent selections. Acid patches retained the Shape/Slope selections in their raw bytes; the existing decoder normalizes their effective display to LP/24 dB. The sweep verifies storage and the existing normalization, not the acoustic Acid response. Entire starting patch restored byte-for-byte.
+
+Results: `filter-switches.csv`; captures: `tests/fixtures/filter-switches.syx`. All 12 captured cases are replayed through the actual C++ decoder. No mapping change was needed.

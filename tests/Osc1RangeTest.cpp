@@ -120,5 +120,21 @@ int main(int argc, char** argv) {
     }
     std::cout << (lfo2OK ? "PASS" : "FAIL") << " all 256 captured Filter LFO 2 values\n";
     passed &= lfo2OK;
+    std::ifstream switchInput(std::string(argv[1]) + "/filter-switches.syx", std::ios::binary);
+    const std::string switchBytes((std::istreambuf_iterator<char>(switchInput)), {});
+    bool switchesOK = switchBytes.size() == 12 * 154;
+    if (switchesOK) {
+        int index = 0;
+        for (int type = 0; type < 2; ++type)
+            for (int shape = 0; shape < 3; ++shape)
+                for (int slope = 0; slope < 2; ++slope) {
+                    const auto decoded = bsii::decodePatchFields(juce::MemoryBlock(switchBytes.data() + index++ * 154, 154));
+                    switchesOK &= decoded.valid && decoded.filterType == type
+                        && decoded.filterShape == (type == 1 ? 0 : shape)
+                        && decoded.filterSlope == (type == 1 ? 1 : slope);
+                }
+    }
+    std::cout << (switchesOK ? "PASS" : "FAIL") << " all 12 captured Filter switch cases\n";
+    passed &= switchesOK;
     return passed ? 0 : 1;
 }
