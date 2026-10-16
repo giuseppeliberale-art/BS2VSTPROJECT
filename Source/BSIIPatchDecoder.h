@@ -21,6 +21,7 @@ namespace bsii
         int ampFixed=-1, ampRetriggerCount=-1;
         int ampTrigger=-1; // Editor choice index: Single=0, Multi=1, Autoglide=2.
         int velocityAmp=-1, ampAttack=-1, ampDecay=-1, ampSustain=-1, ampRelease=-1, ampRetrigger=-1;
+        int modTrigger=-1, modFixed=-1, modRetriggerCount=-1;
         int velocityMod=-1, modAttack=-1, modDecay=-1, modSustain=-1, modRelease=-1, modRetrigger=-1;
         int lfo1Wave=-1, lfo1Delay=-1, lfo1Slew=-1, lfo1Speed=-1, lfo1KeySync=-1;
         int lfo2Wave=-1, lfo2Delay=-1, lfo2Slew=-1, lfo2Speed=-1, lfo2KeySync=-1;
@@ -115,6 +116,12 @@ namespace bsii
         acceptVerified (((b[50] & 0x1F) << 2) | ((b[51] >> 5) & 0x03), 0, 127, out.ampAttack, out);
         // Hardware wire order is Multi, Single, Autoglide; the editor lists Single first.
         const int ampTriggerWire = extractField (b, 55, 0x06);
+        const int modTriggerWire = extractField (b, 62, 0x0C);
+        if (modTriggerWire <= 2)
+            acceptVerified (modTriggerWire == 0 ? 1 : modTriggerWire == 1 ? 0 : 2,
+                            0, 2, out.modTrigger, out);
+        acceptVerified (extractField (b, 120, 0x01), 0, 1, out.modFixed, out);
+        acceptVerified (extractField (b, 122, 0x07, 0x60), 0, 16, out.modRetriggerCount, out);
         acceptVerified (extractField (b, 119, 0x02), 0, 1, out.ampFixed, out);
         acceptVerified (extractField (b, 121, 0x0F, 0x40), 0, 16, out.ampRetriggerCount, out);
         if (ampTriggerWire <= 2)

@@ -266,5 +266,26 @@ int main(int argc, char** argv) {
         std::cout << (ok ? "PASS" : "FAIL") << " all 128 captured Mod release values\n";
         passed &= ok;
     }
+    {
+        std::ifstream input(std::string(argv[1]) + "/mod-options.syx", std::ios::binary);
+        const std::string bytes((std::istreambuf_iterator<char>(input)), {});
+        bool ok = bytes.size() == 40 * 154;
+        auto check = [&](int index, int trigger, int retrigger, int fixed, int count) {
+            const auto d = bsii::decodePatchFields(juce::MemoryBlock(bytes.data() + index * 154, 154));
+            return d.valid && d.modTrigger == (trigger == 0 ? 1 : trigger == 1 ? 0 : 2)
+                && d.modRetrigger == retrigger && d.modFixed == fixed && d.modRetriggerCount == count;
+        };
+        if (ok) {
+            int index = 0;
+            for (int trigger = 0; trigger < 3; ++trigger)
+                for (int retrigger = 0; retrigger < 2; ++retrigger)
+                    ok &= check(index++, trigger, retrigger, 0, 0);
+            for (int fixed = 0; fixed < 2; ++fixed)
+                for (int count = 0; count <= 16; ++count)
+                    ok &= check(index++, 0, 0, fixed, count);
+        }
+        std::cout << (ok ? "PASS" : "FAIL") << " 40 captured Mod Envelope option cases\n";
+        passed &= ok;
+    }
     return passed ? 0 : 1;
 }

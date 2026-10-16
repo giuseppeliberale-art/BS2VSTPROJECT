@@ -198,4 +198,12 @@ Both fields were missing from patch decoding and editor application. Added the c
 
 Sent all 128 raw values for each of Attack (CC102), Decay (CC103), Sustain (CC104), and Release (CC105), requesting a patch after every setting: 512 cases with zero mismatches/timeouts. Existing decoder mappings matched every capture: Attack uses byte 57 mask 0x3F / byte 58 mask 0x40; Decay byte 58 mask 0x1F / byte 59 mask 0x60; Sustain byte 59 mask 0x0F / byte 60 mask 0x70; Release byte 60 mask 0x07 / byte 61 mask 0x78. No mapping changes were needed.
 
-The entire starting patch was restored and verified byte-for-byte after each sweep (starting Attack 0, Decay 0, Sustain 127, Release 0). Results are in `mod-{attack,decay,sustain,release}-sweep.csv`; corresponding fixtures in `tests/fixtures/` replay every captured message through the actual C++ decoder. This validates transport/storage and decoding, not envelope timing or acoustic response. Mod Envelope Trigger, Retrigger, Fixed Sustain, and Retrigger Count remain separately untested.
+The entire starting patch was restored and verified byte-for-byte after each sweep (starting Attack 0, Decay 0, Sustain 127, Release 0). Results are in `mod-{attack,decay,sustain,release}-sweep.csv`; corresponding fixtures in `tests/fixtures/` replay every captured message through the actual C++ decoder. This validates transport/storage and decoding, not envelope timing or acoustic response. Mod Envelope options are covered separately below.
+
+## Mod Envelope Trigger, Retrigger, Fixed Sustain, and Retrigger Count
+
+Captured six Trigger × Retrigger cases (NRPN 0:105 and 0:110), then 34 Fixed Sustain × Retrigger Count cases (NRPN 0:115 and 0:118). The other pair was set to Multi/Off or Off/0 respectively. All 40 returned patches matched the selections, and the complete starting patch was restored byte-for-byte. These are pairwise sweeps, not an exhaustive four-way interaction test.
+
+Trigger uses byte 62 bits 2–3 (wire Multi=0, Single=1, Autoglide=2); Retrigger uses byte 115 bit 5; Fixed Sustain uses byte 120 bit 0; Count uses byte 122 bits 0–2 followed by byte 123 bits 5–6. Existing Retrigger decoding matched. Trigger, Fixed Sustain, and Count were missing from decoding and editor application; added these mappings, with Trigger converted to editor choice order. The 40-capture regression failed before the additions.
+
+Results: `mod-options.csv`; captures: `tests/fixtures/mod-options.syx`; sampler: `tools/ModOptionsSampler.swift`. This validates settings transport/storage and decoding, not acoustic envelope behavior.

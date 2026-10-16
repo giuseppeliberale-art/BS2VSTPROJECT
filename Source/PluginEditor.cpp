@@ -790,6 +790,9 @@ bool BSIIControlAudioProcessorEditor::decodeSysExIntoEditor (const juce::MemoryB
     set ("modSustain", decoded.modSustain);
     set ("modRelease", decoded.modRelease);
     set ("modRetrigger", decoded.modRetrigger);
+    set ("modTrigger", decoded.modTrigger);
+    set ("modFixed", decoded.modFixed);
+    set ("modRetriggerCount", decoded.modRetriggerCount);
 
     set ("lfo1Wave", decoded.lfo1Wave);
     set ("lfo1Delay", decoded.lfo1Delay);
