@@ -1,0 +1,26 @@
+# macOS
+.DS_Store
+._*
+
+# CMake builds and fetched dependencies
+/build/
+/build-*/
+/cmake-build-*/
+/CMakeUserPresets.json
+
+# Xcode personal settings
+xcuserdata/
+*.xcuserstate
+
+# Editor personal settings
+/.idea/
+/.vscode/
+
+# Compiled products
+*.o
+*.a
+*.dylib
+*.dSYM/
+*.app/
+*.vst3/
+*.component/
