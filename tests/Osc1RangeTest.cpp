@@ -158,5 +158,16 @@ int main(int argc, char** argv) {
     }
     std::cout << (attackOK ? "PASS" : "FAIL") << " all 128 captured Amp Attack values\n";
     passed &= attackOK;
+    std::ifstream decayInput(std::string(argv[1]) + "/amp-decay-sweep.syx", std::ios::binary);
+    const std::string decayBytes((std::istreambuf_iterator<char>(decayInput)), {});
+    bool decayOK = decayBytes.size() == 128 * 154;
+    if (decayOK) {
+        for (int raw = 0; raw < 128; ++raw) {
+            const auto decoded = bsii::decodePatchFields(juce::MemoryBlock(decayBytes.data() + raw * 154, 154));
+            decayOK &= decoded.valid && decoded.ampDecay == raw;
+        }
+    }
+    std::cout << (decayOK ? "PASS" : "FAIL") << " all 128 captured Amp Decay values\n";
+    passed &= decayOK;
     return passed ? 0 : 1;
 }

@@ -167,3 +167,7 @@ Filter transport/decoder coverage now includes Cutoff, Resonance, Overdrive, Mod
 ## Amp Envelope Attack automated sweep
 
 Sent all 128 raw values on single CC90 and fetched a patch after each. Existing verified Attack decoding (byte 50 mask 0x1F / byte 51 bits 5–6) matched every value, with zero mismatches/timeouts. Original Attack 0 and the entire starting patch were restored byte-for-byte. Results: `amp-attack-sweep.csv`; captures: `tests/fixtures/amp-attack-sweep.syx`. All 128 messages are replayed through the C++ decoder. No mapping change was needed. This validates parameter transport/storage and decoding, not envelope timing in milliseconds or its acoustic response.
+
+## Amp Envelope Decay automated sweep
+
+Sent all 128 raw values on single CC91 and fetched a patch after each. Existing candidate Decay decoding (byte 51 mask 0x0F / byte 52 mask 0x70) matched every value, with zero mismatches/timeouts. Original Decay 0 and the entire starting patch were restored byte-for-byte. Results: `amp-decay-sweep.csv`; captures: `tests/fixtures/amp-decay-sweep.syx`. All 128 messages are replayed through the C++ decoder. No mapping change was needed. This validates parameter transport/storage and decoding, not envelope timing in milliseconds or acoustic response.
