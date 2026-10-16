@@ -335,5 +335,77 @@ int main(int argc, char** argv) {
         std::cout << (ok ? "PASS" : "FAIL") << " all 256 captured lfo2-speed values\n";
         passed &= ok;
     }
+    {
+        std::ifstream input(std::string(argv[1]) + "/lfo1-delay-sweep.syx", std::ios::binary);
+        const std::string bytes((std::istreambuf_iterator<char>(input)), {});
+        bool ok = bytes.size() == 128 * 154;
+        if (ok)
+            for (int raw = 0; raw < 128; ++raw) {
+                const auto d = bsii::decodePatchFields(juce::MemoryBlock(bytes.data() + raw * 154, 154));
+                ok &= d.valid && d.lfo1Delay == raw;
+            }
+        std::cout << (ok ? "PASS" : "FAIL") << " all 128 captured lfo1-delay values\n";
+        passed &= ok;
+    }
+    {
+        std::ifstream input(std::string(argv[1]) + "/lfo2-delay-sweep.syx", std::ios::binary);
+        const std::string bytes((std::istreambuf_iterator<char>(input)), {});
+        bool ok = bytes.size() == 128 * 154;
+        if (ok)
+            for (int raw = 0; raw < 128; ++raw) {
+                const auto d = bsii::decodePatchFields(juce::MemoryBlock(bytes.data() + raw * 154, 154));
+                ok &= d.valid && d.lfo2Delay == raw;
+            }
+        std::cout << (ok ? "PASS" : "FAIL") << " all 128 captured lfo2-delay values\n";
+        passed &= ok;
+    }
+    {
+        std::ifstream input(std::string(argv[1]) + "/lfo1-slew-sweep.syx", std::ios::binary);
+        const std::string bytes((std::istreambuf_iterator<char>(input)), {});
+        bool ok = bytes.size() == 128 * 154;
+        if (ok)
+            for (int raw = 0; raw < 128; ++raw) {
+                const auto d = bsii::decodePatchFields(juce::MemoryBlock(bytes.data() + raw * 154, 154));
+                ok &= d.valid && d.lfo1Slew == raw;
+            }
+        std::cout << (ok ? "PASS" : "FAIL") << " all 128 captured lfo1-slew values\n";
+        passed &= ok;
+    }
+    {
+        std::ifstream input(std::string(argv[1]) + "/lfo2-slew-sweep.syx", std::ios::binary);
+        const std::string bytes((std::istreambuf_iterator<char>(input)), {});
+        bool ok = bytes.size() == 128 * 154;
+        if (ok)
+            for (int raw = 0; raw < 128; ++raw) {
+                const auto d = bsii::decodePatchFields(juce::MemoryBlock(bytes.data() + raw * 154, 154));
+                ok &= d.valid && d.lfo2Slew == raw;
+            }
+        std::cout << (ok ? "PASS" : "FAIL") << " all 128 captured lfo2-slew values\n";
+        passed &= ok;
+    }
+    {
+        std::ifstream input(std::string(argv[1]) + "/lfo1-keysync-sweep.syx", std::ios::binary);
+        const std::string bytes((std::istreambuf_iterator<char>(input)), {});
+        bool ok = bytes.size() == 2 * 154;
+        if (ok)
+            for (int raw = 0; raw < 2; ++raw) {
+                const auto d = bsii::decodePatchFields(juce::MemoryBlock(bytes.data() + raw * 154, 154));
+                ok &= d.valid && d.lfo1KeySync == raw;
+            }
+        std::cout << (ok ? "PASS" : "FAIL") << " all 2 captured lfo1-keysync values\n";
+        passed &= ok;
+    }
+    {
+        std::ifstream input(std::string(argv[1]) + "/lfo2-keysync-sweep.syx", std::ios::binary);
+        const std::string bytes((std::istreambuf_iterator<char>(input)), {});
+        bool ok = bytes.size() == 2 * 154;
+        if (ok)
+            for (int raw = 0; raw < 2; ++raw) {
+                const auto d = bsii::decodePatchFields(juce::MemoryBlock(bytes.data() + raw * 154, 154));
+                ok &= d.valid && d.lfo2KeySync == raw;
+            }
+        std::cout << (ok ? "PASS" : "FAIL") << " all 2 captured lfo2-keysync values\n";
+        passed &= ok;
+    }
     return passed ? 0 : 1;
 }
