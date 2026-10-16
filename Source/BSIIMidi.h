@@ -124,13 +124,13 @@ namespace bsii
         static const std::vector<ChoiceSpec> specs
         {
             { "osc1Wave", "Waveform", "Osc 1", Protocol::nrpn7, 0, 72,
-              { {0, "Sine"}, {1, "Triangle"}, {2, "Saw"}, {3, "Pulse"} }, 2, false },
+              { {0, "Sine"}, {1, "Triangle"}, {2, "Saw"}, {3, "Pulse"} }, 2, true },
             { "subWave", "Sub Wave", "Osc 1", Protocol::cc7, 80, -1,
-              { {0, "Sine"}, {1, "Pulse"}, {2, "Square"} }, 0, false },
+              { {0, "Sine"}, {1, "Pulse"}, {2, "Square"} }, 0, true },
             { "osc1Range", "Range", "Osc 1", Protocol::cc7, 70, -1,
               { {63, "16'"}, {64, "8'"}, {65, "4'"}, {66, "2'"} }, 1, true },
             { "osc2Wave", "Waveform", "Osc 2", Protocol::nrpn7, 0, 82,
-              { {0, "Sine"}, {1, "Triangle"}, {2, "Saw"}, {3, "Pulse"} }, 2, false },
+              { {0, "Sine"}, {1, "Triangle"}, {2, "Saw"}, {3, "Pulse"} }, 2, true },
             { "osc2Range", "Range", "Osc 2", Protocol::cc7, 75, -1,
               { {63, "16'"}, {64, "8'"}, {65, "4'"}, {66, "2'"} }, 1, true },
             { "filterType", "Type", "Filter", Protocol::cc7, 83, -1,
