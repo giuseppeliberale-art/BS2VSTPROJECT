@@ -147,3 +147,7 @@ Sent all 128 raw values on single CC114 and fetched a patch after each. Existing
 ## Filter Mod Env amount automated sweep
 
 Sent all 128 raw values on single CC85 and fetched a patch after each. Existing candidate Mod Env decoding (byte 105 mask 0x3F / byte 106 mask 0x40) matched every value, with zero mismatches/timeouts. Original amount 64 and the entire starting patch were restored byte-for-byte. Results: `filter-modenv-sweep.csv`; captures: `tests/fixtures/filter-modenv-sweep.syx`. All 128 messages are replayed through the C++ decoder. No mapping change was needed. These are raw control values; bipolar display calibration and acoustic modulation response were not tested.
+
+## Filter LFO 2 amount automated sweep
+
+Sent all 256 raw values on paired CC17/49 and fetched a patch after each. Existing candidate LFO 2 amount decoding (byte 97 mask 0x7F / byte 98 mask 0x40) matched every value, with zero mismatches/timeouts. Original amount 128 and the entire starting patch were restored byte-for-byte. Results: `filter-lfo2-sweep.csv`; captures: `tests/fixtures/filter-lfo2-sweep.syx`. All 256 messages are replayed through the C++ decoder. No mapping change was needed. These are raw control values; bipolar display calibration and acoustic modulation response were not tested.

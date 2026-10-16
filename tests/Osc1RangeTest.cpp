@@ -109,5 +109,16 @@ int main(int argc, char** argv) {
     }
     std::cout << (modenvOK ? "PASS" : "FAIL") << " all 128 captured Filter Mod Env values\n";
     passed &= modenvOK;
+    std::ifstream lfo2Input(std::string(argv[1]) + "/filter-lfo2-sweep.syx", std::ios::binary);
+    const std::string lfo2Bytes((std::istreambuf_iterator<char>(lfo2Input)), {});
+    bool lfo2OK = lfo2Bytes.size() == 256 * 154;
+    if (lfo2OK) {
+        for (int raw = 0; raw < 256; ++raw) {
+            const auto decoded = bsii::decodePatchFields(juce::MemoryBlock(lfo2Bytes.data() + raw * 154, 154));
+            lfo2OK &= decoded.valid && decoded.filterLfo2 == raw;
+        }
+    }
+    std::cout << (lfo2OK ? "PASS" : "FAIL") << " all 256 captured Filter LFO 2 values\n";
+    passed &= lfo2OK;
     return passed ? 0 : 1;
 }
