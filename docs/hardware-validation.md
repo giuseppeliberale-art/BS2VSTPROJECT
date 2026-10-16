@@ -117,3 +117,7 @@ Sent all 256 raw values on paired CC21/53 and fetched a patch after each. The Os
 ## Sub oscillator Mixer level automated sweep
 
 Sent all 256 raw values on paired CC22/54 and fetched a patch after each. Sub Mixer decoding (byte 39 mask 0x01 / byte 40 mask 0x7F) matched every value, with zero mismatches/timeouts. The original level 0 and entire starting patch were restored byte-for-byte. Results: `mix-sub-sweep.csv`; captures: `tests/fixtures/mix-sub-sweep.syx`. All 256 messages are replayed through the actual C++ decoder alongside both oscillator Mixer sweeps. No mapping change was needed.
+
+## Noise Mixer level automated sweep
+
+Sent all 256 raw values on paired CC23/55 and fetched a patch after each. Noise Mixer decoding (byte 41 mask 0x7F / byte 42 mask 0x40) matched every value, with zero mismatches/timeouts. Original level 0 and the entire starting patch were restored byte-for-byte. Results: `mix-noise-sweep.csv`; captures: `tests/fixtures/mix-noise-sweep.syx`. All 256 messages are replayed through the actual C++ decoder alongside the other Mixer sweeps. No mapping change was needed.
