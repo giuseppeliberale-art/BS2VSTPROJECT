@@ -17,10 +17,13 @@ public:
     void setFromHardware (int value);
     int specIndex() const { return index; }
 private:
+    void updateOctaveSwitch();
     int index;
     const bsii::ParameterSpec& spec;
     juce::Label label;
     juce::Slider slider;
+    juce::TextButton octaveOne { "-1" }, octaveTwo { "-2" };
+    bool isOctaveSwitch = false;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> attachment;
     std::function<void(int, int)> callback;
     bool applyingHardware = false;
@@ -55,7 +58,7 @@ public:
     void addControl (juce::Component* control);
     void resized() override;
     void paint (juce::Graphics&) override;
-    int preferredHeight() const;
+    int preferredHeight (int width) const;
 private:
     juce::String title;
     std::vector<juce::Component*> controls;
@@ -64,9 +67,12 @@ private:
 class EditorPage : public juce::Component
 {
 public:
+    EditorPage();
     void addSection (ParameterSection* section);
     void resized() override;
 private:
+    juce::Component content;
+    juce::Viewport viewport;
     std::vector<ParameterSection*> sections;
 };
 

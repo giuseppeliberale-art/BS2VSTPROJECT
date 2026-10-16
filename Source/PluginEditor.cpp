@@ -22,6 +22,25 @@ ParameterControl::ParameterControl (juce::AudioProcessorValueTreeState& state,
 
     attachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment> (state, spec.id, slider);
     const juce::String parameterId (spec.id);
+    isOctaveSwitch = parameterId == "subOctaveRaw";
+    if (isOctaveSwitch)
+    {
+        slider.setVisible (false);
+        addAndMakeVisible (octaveOne);
+        addAndMakeVisible (octaveTwo);
+        for (auto* button : { &octaveOne, &octaveTwo })
+        {
+            button->setClickingTogglesState (true);
+            button->setColour (juce::TextButton::buttonOnColourId, juce::Colour (0xff087ea4));
+            button->setColour (juce::TextButton::textColourOnId, juce::Colours::white);
+        }
+        octaveOne.setConnectedEdges (juce::Button::ConnectedOnRight);
+        octaveTwo.setConnectedEdges (juce::Button::ConnectedOnLeft);
+        // Physical -2 was captured with the stored octave bit clear.
+        octaveOne.onClick = [this] { slider.setValue (127, juce::sendNotificationSync); updateOctaveSwitch(); };
+        octaveTwo.onClick = [this] { slider.setValue (0, juce::sendNotificationSync); updateOctaveSwitch(); };
+        updateOctaveSwitch();
+    }
     const bool fine = parameterId == "osc1Fine" || parameterId == "osc2Fine";
     const bool coarse = parameterId == "osc1Coarse" || parameterId == "osc2Coarse";
     if (fine || coarse)
@@ -44,15 +63,31 @@ ParameterControl::ParameterControl (juce::AudioProcessorValueTreeState& state,
     }
     slider.onValueChange = [this]
     {
+        updateOctaveSwitch();
         if (! applyingHardware && callback)
             callback (index, juce::roundToInt (slider.getValue()));
     };
+}
+
+void ParameterControl::updateOctaveSwitch()
+{
+    if (! isOctaveSwitch) return;
+    const bool oneOctaveBelow = slider.getValue() >= 63;
+    octaveOne.setToggleState (oneOctaveBelow, juce::dontSendNotification);
+    octaveTwo.setToggleState (! oneOctaveBelow, juce::dontSendNotification);
 }
 
 void ParameterControl::resized()
 {
     auto area = getLocalBounds();
     label.setBounds (area.removeFromTop (22));
+    if (isOctaveSwitch)
+    {
+        auto buttons = area.withSizeKeepingCentre (juce::jmin (132, area.getWidth() - 12), 38);
+        octaveOne.setBounds (buttons.removeFromLeft (buttons.getWidth() / 2));
+        octaveTwo.setBounds (buttons);
+        return;
+    }
     slider.setBounds (area);
 }
 
@@ -125,11 +160,11 @@ void ChoiceControl::setInteractionEnabled (bool enabled)
 ParameterSection::ParameterSection (juce::String titleText) : title (std::move (titleText)) {}
 void ParameterSection::addControl (juce::Component* control) { controls.push_back (control); addAndMakeVisible (control); }
 
-int ParameterSection::preferredHeight() const
+int ParameterSection::preferredHeight (int width) const
 {
-    constexpr int controlsPerRow = 6;
+    const int controlsPerRow = juce::jlimit (1, 6, (width - 20) / 120);
     const auto rows = juce::jmax (1, static_cast<int> ((controls.size() + controlsPerRow - 1) / controlsPerRow));
-    return 34 + rows * 130 + 12;
+    return 38 + rows * 126 + 12;
 }
 
 void ParameterSection::paint (juce::Graphics& g)
@@ -148,7 +183,7 @@ void ParameterSection::resized()
 {
     auto area = getLocalBounds().reduced (10);
     area.removeFromTop (28);
-    constexpr int controlsPerRow = 6;
+    const int controlsPerRow = juce::jlimit (1, 6, area.getWidth() / 120);
     constexpr int controlHeight = 126;
 
     for (size_t i = 0; i < controls.size(); ++i)
@@ -164,13 +199,25 @@ void ParameterSection::resized()
     }
 }
 
-void EditorPage::addSection (ParameterSection* section) { sections.push_back (section); addAndMakeVisible (section); }
+EditorPage::EditorPage()
+{
+    viewport.setViewedComponent (&content, false);
+    viewport.setScrollBarsShown (true, false);
+    addAndMakeVisible (viewport);
+}
+void EditorPage::addSection (ParameterSection* section) { sections.push_back (section); content.addAndMakeVisible (section); }
 void EditorPage::resized()
 {
-    auto area = getLocalBounds().reduced (8);
+    viewport.setBounds (getLocalBounds());
+    const int width = juce::jmax (1, getWidth() - viewport.getScrollBarThickness());
+    int totalHeight = 16;
+    for (auto* section : sections)
+        totalHeight += section->preferredHeight (juce::jmax (1, width - 16)) + 8;
+    content.setSize (width, juce::jmax (getHeight(), totalHeight));
+    auto area = content.getLocalBounds().reduced (8);
     for (auto* section : sections)
     {
-        const auto h = section->preferredHeight();
+        const auto h = section->preferredHeight (area.getWidth());
         section->setBounds (area.removeFromTop (h));
         area.removeFromTop (8);
     }
@@ -179,7 +226,9 @@ void EditorPage::resized()
 BSIIControlAudioProcessorEditor::BSIIControlAudioProcessorEditor (BSIIControlAudioProcessor& p)
     : AudioProcessorEditor (&p), processor (p)
 {
-    setSize (1080, 840);
+    setResizable (true, true);
+    setResizeLimits (760, 600, 1600, 1200);
+    setSize (900, 760);
     titleLabel.setText ("Bass Station II Control — Waveforms + SysEx Validation v0.8.2", juce::dontSendNotification);
     titleLabel.setFont (juce::FontOptions (23.0f).withStyle ("Bold"));
     addAndMakeVisible (titleLabel);
@@ -272,7 +321,7 @@ void BSIIControlAudioProcessorEditor::buildPages()
 {
     const std::vector<std::pair<juce::String, std::vector<juce::String>>> pageDefinitions
     {
-        { "Osc 1", { "Master", "Osc 1" } },
+        { "Osc 1", { "Osc 1" } },
         { "Osc 2", { "Osc 2" } },
         { "Mixer", { "Mixer" } },
         { "Filter", { "Filter" } },
@@ -303,7 +352,8 @@ void BSIIControlAudioProcessorEditor::buildPages()
 
             for (size_t i = 0; i < params.size(); ++i)
             {
-                if (sectionName != params[i].section) continue;
+                if (sectionName != params[i].section
+                    && ! (sectionName == "Osc 1" && juce::String (params[i].section) == "Master")) continue;
                 auto control = std::make_unique<ParameterControl> (processor.getParameters(), params[i], static_cast<int> (i),
                     [this] (int specIndex, int value) { sendParameterValue (specIndex, value); });
                 section->addControl (control.get());
@@ -334,7 +384,7 @@ void BSIIControlAudioProcessorEditor::resized()
 
     auto deviceRow = area.removeFromTop (32);
     midiLabel.setBounds (deviceRow.removeFromLeft (82));
-    midiOutputBox.setBounds (deviceRow.removeFromLeft (280));
+    midiOutputBox.setBounds (deviceRow.removeFromLeft (juce::jlimit (140, 280, area.getWidth() - 552)));
     deviceRow.removeFromLeft (12);
     channelLabel.setBounds (deviceRow.removeFromLeft (58));
     channelBox.setBounds (deviceRow.removeFromLeft (70));

@@ -76,7 +76,7 @@ namespace bsii
             { "mixRing",           "Ring Mod",              "Mixer",       Protocol::pairedCC8, 24, 56, 0, 255,   0 },
             { "mixExternal",       "External",              "Mixer",       Protocol::pairedCC8, 25, 57, 0, 255,   0 },
 
-            { "subOctaveRaw",      "Sub Octave (raw CC)",   "Osc 1",       Protocol::cc7,       81, -1, 0, 127,   0 },
+            { "subOctaveRaw",      "Sub Octave",            "Osc 1",       Protocol::cc7,       81, -1, 0, 127,   0 },
 
             { "filterCutoff",      "Cutoff",                "Filter",      Protocol::pairedCC8, 16, 48, 0, 255, 255 },
             { "filterResonance",   "Resonance",             "Filter",      Protocol::cc7,       82, -1, 0, 127,   0 },

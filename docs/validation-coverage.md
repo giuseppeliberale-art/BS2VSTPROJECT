@@ -33,7 +33,7 @@ The fixture directory contains **95 files / 9,123 patch messages**, all traverse
 - Current changes were built for Standalone and the regression targets. A fresh AU/VST3 build and host/session recall test of this head are not recorded.
 - Malformed/truncated SysEx, device disconnect/reconnect, wrong-channel behavior, and simultaneous UI/host/hardware edits do not have dedicated captured-path regression coverage.
 - Bend's editor supports only +1 to +12 despite the captured wider signed hardware wire range. Live bend conversion was changed, but physical hardware-origin live CC reception was not manually checked afterward.
-- Raw Sync and Sub Octave controls retain numeric UI values; patch decoding uses canonical 0/127. Acoustic octave direction was not established by the sub-octave transport sweep.
+- Sync retains a raw numeric UI. Sub Octave now presents a highlighted −1/−2 switch while preserving its raw parameter and canonical 0/127 patch values. Hardware −2 was matched to the clear stored bit on 17 October; both UI switch selections were verified by patch readback. Acoustic pitch intervals were not measured.
 - Hardware functions not exposed in the app (for example additional arp or LFO sync modes) are outside this 76-control inventory.
 
 ## Complete exposed-control inventory
