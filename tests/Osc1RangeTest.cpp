@@ -596,5 +596,21 @@ int main(int argc, char** argv) {
         std::cout << (ok ? "PASS" : "FAIL") << " captured Osc " << osc << " Coarse 256-value sweep\n";
         passed &= ok;
     }
+    for (int osc = 1; osc <= 2; ++osc) {
+        std::ifstream input(std::string(argv[1]) + "/osc" + std::to_string(osc) + "-fine-sweep.syx", std::ios::binary);
+        const std::string bytes((std::istreambuf_iterator<char>(input)), {});
+        bool ok = bytes.size() == 256 * 154;
+        if (ok)
+            for (int raw = 0; raw < 256; ++raw) {
+                const auto d = bsii::decodePatchFields(juce::MemoryBlock(bytes.data() + raw * 154, 154));
+                const int actual = osc == 1 ? d.osc1Fine : d.osc2Fine;
+                const int expected = juce::jlimit(27, 228, raw);
+                ok &= d.valid && actual == expected;
+                if (raw == 127 || raw == 128)
+                    ok &= actual == raw && bsii::fineDisplay(actual) == 0;
+            }
+        std::cout << (ok ? "PASS" : "FAIL") << " captured Osc " << osc << " Fine 256-input clamp/center sweep\n";
+        passed &= ok;
+    }
     return passed ? 0 : 1;
 }

@@ -53,7 +53,7 @@ namespace bsii
         {
             { "patchVolume",       "Patch Volume",          "Master",      Protocol::cc7,        7,  -1, 0, 127, 100 },
 
-            { "osc1Fine",          "Fine",                  "Osc 1",       Protocol::pairedCC8, 26, 58, 0, 255, 128 },
+            { "osc1Fine",          "Fine",                  "Osc 1",       Protocol::pairedCC8, 26, 58, 27, 228, 128 },
             { "osc1Coarse",        "Coarse",                "Osc 1",       Protocol::pairedCC8, 27, 59, 0, 255, 128 },
             { "osc1ModEnvPitch",   "Mod Env -> Pitch",      "Osc 1",       Protocol::cc7,       71, -1, 0, 127,  64 },
             { "osc1Lfo1Pitch",     "LFO1 -> Pitch",         "Osc 1",       Protocol::pairedCC8, 28, 60, 0, 255, 128 },
@@ -61,7 +61,7 @@ namespace bsii
             { "osc1Lfo2PW",        "LFO2 -> PW",            "Osc 1",       Protocol::cc7,       73, -1, 0, 127,  64 },
             { "osc1ManualPW",      "Manual PW",             "Osc 1",       Protocol::cc7,       74, -1, 0, 127,  64 },
 
-            { "osc2Fine",          "Fine",                  "Osc 2",       Protocol::pairedCC8, 29, 61, 0, 255, 128 },
+            { "osc2Fine",          "Fine",                  "Osc 2",       Protocol::pairedCC8, 29, 61, 27, 228, 128 },
             { "osc2Coarse",        "Coarse",                "Osc 2",       Protocol::pairedCC8, 30, 62, 0, 255, 128 },
             { "osc2ModEnvPitch",   "Mod Env -> Pitch",      "Osc 2",       Protocol::cc7,       76, -1, 0, 127,  64 },
             { "osc2Lfo1Pitch",     "LFO1 -> Pitch",         "Osc 2",       Protocol::pairedCC8, 31, 63, 0, 255, 128 },

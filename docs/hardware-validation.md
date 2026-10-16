@@ -281,3 +281,13 @@ Rebuilt-app verification with Live RX paused: importing each oscillator's Pulse 
 Repeated full Coarse sweeps for Oscillator 1 (paired CC27/59) and Oscillator 2 (CC30/62). Each returned all 256 raw values exactly, with zero mismatches/timeouts. Both complete starting patches were restored byte-for-byte (starting raw values 127 and 63). Existing decoder mappings remain correct; no app source/display changes were needed.
 
 Committed both full raw sweeps as `tests/fixtures/osc{1,2}-coarse-sweep.syx` and results as `docs/osc{1,2}-coarse-regression-sweep.csv`, retaining the earlier Oscillator 2 CSVs separately. Added actual decoder replay of all 512 messages and the ten earlier Coarse captures: Oscillator 1 raw 0/63/127/193/255 and Oscillator 2 raw 0/62/128/192/255 for min/−6/center/+6/max. All 522 checks pass. These observations intentionally preserve oscillator-to-oscillator and midpoint differences; they do not establish an exact LCD rounding function. Existing approximate display conversion is unchanged.
+
+## Full Fine tuning validation — 17 October 2026
+
+Sent all 256 paired-CC inputs for Oscillator 1 Fine (CC26/58) and Oscillator 2 Fine (CC29/61), requesting a patch after every value. Both return `clamp(input, 27, 228)` exactly: inputs 0–26 clamp to 27 and 229–255 clamp to 228. All 202 values within the interval persist directly, including both 127 and 128. There were no timeouts; the initial exploratory expectation of an unrestricted 0–255 range flagged the 54 clamped inputs per oscillator. Committed CSVs explicitly record the measured expected clamp, with all 512 checks matching.
+
+Existing decoder mappings are correct. Limited both app Fine parameter/slider ranges to raw 27–228 so dragging/sending cannot request unsupported endpoint values. The existing −100…+100 presentation, integer-cent conversion, and two-code zero are unchanged. Both center codes remain individually round-trippable through MIDI/SysEx; this does not measure their acoustic difference or validate every LCD indication.
+
+The complete starting patch was restored and verified byte-for-byte after each sweep (both starting Fine values 128). Results: `osc{1,2}-fine-sweep.csv`; fixtures: matching files under `tests/fixtures/`. Regression replay checks all 512 returned patches against the measured clamp and explicitly checks raw 127/128 both display zero. The earlier ten manual Fine observations remain in the suite.
+
+Rebuilt-app spot checks with Live RX paused: imported the Oscillator 1 raw-255 response (stored 228), displaying +100; Get Patch restored raw 128/display 0. Imported Oscillator 2 raw-000 response (stored 27), displaying −100; Get Patch restored raw 128/display 0. Imports did not send the test settings to the synth.
