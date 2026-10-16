@@ -49,3 +49,21 @@ With Live RX paused, physical Osc 2 Fine was set to centre, fully clockwise, and
 ## Osc 2 Coarse observations — 16 October 2026
 
 With Live RX paused and Fine centred, the user confirmed hardware Coarse display 0, +12.0 fully clockwise, and −12.0 fully anticlockwise. Get Patch decoded raw values 128, 255, and 0 respectively. The app visibly updated 128→255→0 through SysEx. Captures are preserved as `tests/fixtures/osc2-coarse-{centre,max,min}.syx`. No tuning decoder changes were made; endpoint observations do not establish conversion at every intermediate value.
+
+### Intermediate tuning check
+
+With both oscillators initially centred on the hardware, the user set only Osc 1 Fine to displayed +50. Get Patch with Live RX paused changed Osc 1 Fine from raw 128 to 178. The returned patch also gave Osc 1 Coarse 128 and Osc 2 Coarse 127 at hardware-reported zero, demonstrating that displayed zero has been observed at adjacent raw midpoint values; exact display rounding/conversion is not yet established. Capture: `osc1-fine-plus50.syx`.
+
+Osc 1 Fine at hardware-displayed −50 fetched as raw 77, changing the app from 178→77 with Live RX paused. Capture: `osc1-fine-minus50.syx`. Together with +50→178, this provides intermediate observations; precise rounding across the centre remains to be established.
+
+Osc 1 Coarse at hardware-displayed +6.0 fetched as raw 193; Osc 1 Fine returned to hardware 0 fetched as raw 127. App changes were Coarse 128→193 and Fine 77→127 with Live RX paused. Capture: `osc1-coarse-plus6.syx`. Coarse display quantization must be checked before using a simple linear display conversion.
+
+Osc 1 Coarse at hardware-displayed −6.0 fetched as raw 63, changing the app 193→63 with Live RX paused. Capture: `osc1-coarse-minus6.syx`. Intermediate Coarse observations are −6.0→63 and +6.0→193; these do not by themselves define the full quantization/rounding rule.
+
+Osc 2 Fine at hardware-displayed +50 fetched as raw 178, with Osc 1 Fine returned to 0/raw 128. App changes were Osc 1 Fine 178→128 and Osc 2 Fine 127→178. Capture: `osc2-fine-plus50.syx`. A preceding attempt changed Osc 1 instead; it was identified and excluded from the Osc 2 fixtures.
+
+Osc 2 Fine at hardware-displayed −50 fetched as raw 77 (app 178→77), matching the Osc 1 −50 observation. Live RX remained paused. Capture: `osc2-fine-minus50.syx`.
+
+Osc 2 Coarse at hardware-displayed +6.0 fetched as raw 192 (app 127→192), with Fine restored to hardware 0/raw 128. Live RX remained paused. Capture: `osc2-coarse-plus6.syx`. Osc 1 +6.0 was observed at raw 193, so adjacent raw values may share an LCD indication; full display quantization remains unverified.
+
+Osc 2 Coarse at hardware-displayed −6.0 fetched as raw 62 (app 192→62), with Live RX paused. Capture: `osc2-coarse-minus6.syx`. This differs by one raw step from the Osc 1 −6.0 capture (63), paralleling the +6.0 observations (192 versus 193). The LCD indication alone does not yet establish a unique raw value or full conversion formula.
