@@ -35,3 +35,17 @@ After the fix, all four captured-patch regression cases passed. In the rebuilt a
 Controlled captures with only physical Osc 2 Range changed and Live RX paused confirmed 16′/8′/4′/2′ = 63/64/65/66. Extract the field from zero-based byte 26 (mask 0x1F) and byte 27 (mask 0x60), then subtract 63 for editor choice indexes 0–3. Previously the decoder rejected these values and the editor deliberately skipped applying Osc 2 Range. Both steps are now enabled using the hardware-verified mapping. The four `osc2-*.syx` captures join the Osc 1 regression fixtures.
 
 All eight captured range cases passed after the Osc 2 fix. A fresh live fetch in the rebuilt app changed Osc 2 Range from 8′ to the hardware’s 2′ (choice index 1→3), with Live RX paused.
+
+## Osc 1 tuning observations — 16 October 2026
+
+With Live RX paused, the user moved physical Osc 1 Fine and Coarse through centre and both end stops. Each capture used Get Patch from BSII. Fine decoded as 128 at centre, 228 fully clockwise, and 27 fully anticlockwise. Coarse decoded as 127 at the user-reported centre, 255 fully clockwise, and 0 fully anticlockwise. The app visibly applied the fetched values. Six raw captures are preserved in `tests/fixtures/osc1-{fine,coarse}-{centre,max,min}.syx`.
+
+These are observed raw editor values, not a claim about musical units. A repeat fetch after the user confirmed physical Coarse at displayed 0 again updated the app to raw 127 (from raw 0), while Fine stayed at 128. Thus hardware-displayed Coarse 0 was observed twice as raw 127; musical-unit display/conversion remains a separate concern. No tuning decoder changes were made.
+
+## Osc 2 Fine observations — 16 October 2026
+
+With Live RX paused, physical Osc 2 Fine was set to centre, fully clockwise, and fully anticlockwise. Get Patch decoded raw values 127, 228, and 27 respectively; the app visibly changed from 127 to 228 and then to 27. Three captures are preserved as `tests/fixtures/osc2-fine-{centre,max,min}.syx`. A repeat fetch with physical Osc 2 Fine returned to centre confirmed raw 127 again (app changed 27→127). The user clarified the hardware Fine display scale: fully anticlockwise −100, centre 0, fully clockwise +100. Accordingly the observed Osc 2 Fine pairs are −100→27, 0→127, +100→228. These observations do not change the decoder or establish musical-unit conversion.
+
+## Osc 2 Coarse observations — 16 October 2026
+
+With Live RX paused and Fine centred, the user confirmed hardware Coarse display 0, +12.0 fully clockwise, and −12.0 fully anticlockwise. Get Patch decoded raw values 128, 255, and 0 respectively. The app visibly updated 128→255→0 through SysEx. Captures are preserved as `tests/fixtures/osc2-coarse-{centre,max,min}.syx`. No tuning decoder changes were made; endpoint observations do not establish conversion at every intermediate value.
