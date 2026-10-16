@@ -738,6 +738,9 @@ bool BSIIControlAudioProcessorEditor::decodeSysExIntoEditor (const juce::MemoryB
     };
 
     set ("portamento", decoded.portamento);
+    set ("patchVolume", decoded.patchVolume);
+    set ("subWave", decoded.subWave);
+    set ("subOctaveRaw", decoded.subOctaveRaw);
     set ("bendAmount", decoded.bendAmount);
 
     set ("osc1Fine", decoded.osc1Fine);

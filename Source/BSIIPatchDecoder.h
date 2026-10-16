@@ -14,6 +14,7 @@ namespace bsii
         int candidateCount = 0;
         juce::String patchName;
 
+        int patchVolume=-1, subOctaveRaw=-1, subWave=-1;
         int portamento=-1, bendAmount=-1;
         int osc1ModEnvPW=-1;
         int osc1Fine=-1, osc1Coarse=-1, osc1ManualPW=-1, osc1Range=-1, osc1ModEnvPitch=-1, osc1Lfo1Pitch=-1, osc1Lfo2PW=-1;
@@ -119,6 +120,9 @@ namespace bsii
         acceptVerified (((b[50] & 0x1F) << 2) | ((b[51] >> 5) & 0x03), 0, 127, out.ampAttack, out);
         // Hardware wire order is Multi, Single, Autoglide; the editor lists Single first.
         const int ampTriggerWire = extractField (b, 55, 0x06);
+        acceptVerified (extractField (b, 109, 0x03, 0x7C), 0, 127, out.patchVolume, out);
+        acceptVerified (extractField (b, 36, 0x30), 0, 2, out.subWave, out);
+        acceptVerified (extractField (b, 37, 0x08) == 0 ? 0 : 127, 0, 127, out.subOctaveRaw, out);
         // CC110 accepts any nonzero value as On; the raw editor uses 127 for On.
         acceptVerified (extractField (b, 18, 0x40) == 0 ? 0 : 127, 0, 127, out.oscSyncRaw, out);
         const int modTriggerWire = extractField (b, 62, 0x0C);

@@ -537,5 +537,26 @@ int main(int argc, char** argv) {
             passed &= ok;
         }
     }
+    {
+        struct SubCapture { const char* name; int bsii::DecodedPatchFields::* field; int count; };
+        const SubCapture captures[] = {
+            {"patch-volume", &bsii::DecodedPatchFields::patchVolume, 128},
+            {"sub-octave", &bsii::DecodedPatchFields::subOctaveRaw, 128},
+            {"sub-wave", &bsii::DecodedPatchFields::subWave, 3}
+        };
+        for (const auto& capture : captures) {
+            std::ifstream input(std::string(argv[1]) + "/" + capture.name + "-sweep.syx", std::ios::binary);
+            const std::string bytes((std::istreambuf_iterator<char>(input)), {});
+            bool ok = bytes.size() == capture.count * 154;
+            if (ok)
+                for (int raw = 0; raw < capture.count; ++raw) {
+                    const auto d = bsii::decodePatchFields(juce::MemoryBlock(bytes.data() + raw * 154, 154));
+                    const int expected = std::string(capture.name) == "sub-octave" ? (raw < 63 ? 0 : 127) : raw;
+                    ok &= d.valid && d.*(capture.field) == expected;
+                }
+            std::cout << (ok ? "PASS" : "FAIL") << " captured " << capture.name << " sweep\n";
+            passed &= ok;
+        }
+    }
     return passed ? 0 : 1;
 }
