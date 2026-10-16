@@ -275,3 +275,9 @@ Captured all four selections for Oscillator 1 (NRPN 0:72) and Oscillator 2 (NRPN
 The entire starting patch was restored and verified byte-for-byte after each four-setting capture (both starting waveforms Sine). Results: `osc{1,2}-wave-sweep.csv`; fixtures: corresponding files under `tests/fixtures/`. Exploratory sampler CSVs initially marked these unmapped fields unknown; the committed CSVs were decoded from all eight captures after locating the fields. All eight values match. Earlier manual tests establish live MIDI behavior separately; these captures validate returned patch storage and decoding.
 
 Rebuilt-app verification with Live RX paused: importing each oscillator's Pulse capture changed its visible selector Sine → Pulse; a fresh Get Patch from the restored hardware changed it Pulse → Sine. Both editor application paths were verified without changing the hardware during import.
+
+## Coarse tuning regression completion — 17 October 2026
+
+Repeated full Coarse sweeps for Oscillator 1 (paired CC27/59) and Oscillator 2 (CC30/62). Each returned all 256 raw values exactly, with zero mismatches/timeouts. Both complete starting patches were restored byte-for-byte (starting raw values 127 and 63). Existing decoder mappings remain correct; no app source/display changes were needed.
+
+Committed both full raw sweeps as `tests/fixtures/osc{1,2}-coarse-sweep.syx` and results as `docs/osc{1,2}-coarse-regression-sweep.csv`, retaining the earlier Oscillator 2 CSVs separately. Added actual decoder replay of all 512 messages and the ten earlier Coarse captures: Oscillator 1 raw 0/63/127/193/255 and Oscillator 2 raw 0/62/128/192/255 for min/−6/center/+6/max. All 522 checks pass. These observations intentionally preserve oscillator-to-oscillator and midpoint differences; they do not establish an exact LCD rounding function. Existing approximate display conversion is unchanged.

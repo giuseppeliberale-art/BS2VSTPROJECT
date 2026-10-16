@@ -1,24 +1,24 @@
 # Validation coverage audit — 17 October 2026
 
-Audited application source and committed captures at `d436925`; updated after the eight main oscillator waveform captures and mapping fix following `0d408be`. This is a coverage inventory, not a new hardware test or a declaration that every UI path works. No synth settings were changed during this audit. The `v0.8.2` baseline tag remains on `91d1ffc`.
+Audited application source and committed captures at `d436925`; updated after the eight main oscillator waveform captures and mapping fix following `0d408be`, and the Coarse regression sweeps following `06d8d5c`. This is a coverage inventory, not a new hardware test or a declaration that every UI path works. No synth settings were changed during this audit. The `v0.8.2` baseline tag remains on `91d1ffc`.
 
 ## Current result
 
 - **76 exposed controls:** 58 numeric parameters and 18 choices (`Source/BSIIMidi.h`).
 - **All 76 controls have patch fields applied to the editor.** The two main oscillator waveform omissions identified by the audit have now been filled using hardware captures.
-- **72 controls have setting/value captures replayed through their decoder fields.** Coverage includes expected hardware clamping and normalization, not necessarily a unique result for every MIDI input.
+- **74 controls have setting/value captures replayed through their decoder fields.** Coverage includes expected hardware clamping and normalization, not necessarily a unique result for every MIDI input.
 - **Two Fine controls have selected manual-position regression captures**, not exhaustive transport sweeps.
-- **Two Coarse controls have captured observations but no direct decoder assertions in the current regression.** Oscillator 2 also has two documented full 256-value MIDI/SysEx sweeps as CSVs; neither full sweep is committed as a replay fixture.
+- **Both Coarse controls now have full 256-value captured decoder sweeps and five earlier manual observations each.** The previous Coarse regression gap is closed; exact LCD rounding remains uncalibrated.
 - **Both main oscillator waveforms now have four-setting SysEx captures and decoder replay**, in addition to their earlier manually confirmed bidirectional live MIDI. Sub Wave also has captured SysEx coverage.
 
-The fixture directory contains **91 files / 8,099 patch messages**. The current captured-patch test traverses **81 files / 8,089 messages**: 59 sweep files (7,979 messages), four option-combination files (92 messages), eight range messages, and ten Fine messages. The ten saved Coarse observation files are not opened by that test. These are fixture-message counts, not independent acoustic tests or assertions of end-to-end UI coverage.
+The fixture directory contains **93 files / 8,611 patch messages**, all traversed by the captured-patch test: 61 sweep files (8,491 messages), four option-combination files (92 messages), eight range messages, ten Fine messages, and ten Coarse messages. These are fixture-message counts, not independent acoustic tests or assertions of end-to-end UI coverage.
 
 `ctest --test-dir build -C Release --output-on-failure` passed both registered tests during this audit: StandaloneMidiRouting and Osc1RangeCapturedPatches. The latter's historical name now covers most controls; the name does not imply that only Oscillator 1 Range is tested.
 
 ## Next work, in order
 
 1. **Completed: main oscillator waveform SysEx.** Eight captured settings now drive both decoder fields and editor application. Both missing-update regressions were reproduced before the fix.
-2. **Coarse regression:** replay the ten existing Coarse captures through the actual decoder, then preserve/replay full sweeps. Oscillator 1 still needs an exhaustive transport sweep; Oscillator 2's documented sweeps should be retained as raw fixtures or repeated with restoration checks.
+2. **Completed: Coarse regression.** Both new 256-value sweeps and all ten existing observations now replay through the actual decoder. Full-patch restoration was verified after each sweep.
 3. **Fine coverage:** decide whether the selected musical-position captures are sufficient; otherwise sweep the supported hardware range and check clamping and center behavior. Current display conversion tests do not substitute for such a transport sweep.
 4. **Application integration:** hardware-origin live reception, actual app sends, Send All, snapshot save/load, and plugin-host smoke tests. Most automated sweeps use the standalone CoreMIDI sampler, not the app's sending function or hardware knobs.
 
@@ -44,14 +44,14 @@ The table maps every current parameter/choice ID to its available evidence. “C
 | --- | --- | --- | --- |
 | Master | `patchVolume` | CC 7 | Captured setting/value sweep + decoder replay |
 | Osc 1 | `osc1Fine` | CC 26/58 | Five manual Fine positions + display tests; no full transport sweep |
-| Osc 1 | `osc1Coarse` | CC 27/59 | Manual captures; field not asserted by decoder regression; no full sweep |
+| Osc 1 | `osc1Coarse` | CC 27/59 | 256-value captured sweep + five manual observations replayed |
 | Osc 1 | `osc1ModEnvPitch` | CC 71 | Captured setting/value sweep + decoder replay |
 | Osc 1 | `osc1Lfo1Pitch` | CC 28/60 | Captured setting/value sweep + decoder replay |
 | Osc 1 | `osc1ModEnvPW` | CC 72 | Captured setting/value sweep + decoder replay |
 | Osc 1 | `osc1Lfo2PW` | CC 73 | Captured setting/value sweep + decoder replay |
 | Osc 1 | `osc1ManualPW` | CC 74 | Captured setting/value sweep + decoder replay |
 | Osc 2 | `osc2Fine` | CC 29/61 | Five manual Fine positions + display tests; no full transport sweep |
-| Osc 2 | `osc2Coarse` | CC 30/62 | Manual captures + two 256-value CSV sweeps; field not asserted by decoder regression |
+| Osc 2 | `osc2Coarse` | CC 30/62 | 256-value captured sweep + five manual observations replayed; earlier CSV sweeps retained |
 | Osc 2 | `osc2ModEnvPitch` | CC 76 | Captured setting/value sweep + decoder replay |
 | Osc 2 | `osc2Lfo1Pitch` | CC 31/63 | Captured setting/value sweep + decoder replay |
 | Osc 2 | `osc2ModEnvPW` | CC 77 | Captured setting/value sweep + decoder replay |

@@ -570,5 +570,31 @@ int main(int argc, char** argv) {
         std::cout << (ok ? "PASS" : "FAIL") << " captured Osc " << osc << " waveform sweep\n";
         passed &= ok;
     }
+    {
+        const char* positions[] = {"min", "minus6", "centre", "plus6", "max"};
+        const int expected[2][5] = {{0, 63, 127, 193, 255}, {0, 62, 128, 192, 255}};
+        bool observationsOK = true;
+        for (int osc = 1; osc <= 2; ++osc)
+            for (int i = 0; i < 5; ++i) {
+                std::ifstream input(std::string(argv[1]) + "/osc" + std::to_string(osc) + "-coarse-" + positions[i] + ".syx", std::ios::binary);
+                const std::string bytes((std::istreambuf_iterator<char>(input)), {});
+                const auto d = bsii::decodePatchFields(juce::MemoryBlock(bytes.data(), bytes.size()));
+                observationsOK &= d.valid && (osc == 1 ? d.osc1Coarse : d.osc2Coarse) == expected[osc - 1][i];
+            }
+        std::cout << (observationsOK ? "PASS" : "FAIL") << " ten hardware Coarse observation captures\n";
+        passed &= observationsOK;
+    }
+    for (int osc = 1; osc <= 2; ++osc) {
+        std::ifstream input(std::string(argv[1]) + "/osc" + std::to_string(osc) + "-coarse-sweep.syx", std::ios::binary);
+        const std::string bytes((std::istreambuf_iterator<char>(input)), {});
+        bool ok = bytes.size() == 256 * 154;
+        if (ok)
+            for (int raw = 0; raw < 256; ++raw) {
+                const auto d = bsii::decodePatchFields(juce::MemoryBlock(bytes.data() + raw * 154, 154));
+                ok &= d.valid && (osc == 1 ? d.osc1Coarse : d.osc2Coarse) == raw;
+            }
+        std::cout << (ok ? "PASS" : "FAIL") << " captured Osc " << osc << " Coarse 256-value sweep\n";
+        passed &= ok;
+    }
     return passed ? 0 : 1;
 }
