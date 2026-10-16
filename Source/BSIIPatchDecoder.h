@@ -120,7 +120,9 @@ namespace bsii
         acceptCandidate (extractField (b, 16, 0x7F), 1, 12, out.bendAmount, out);
 
         acceptCandidate (extractField (b, 19, 0x0F, 0x70), 0, 127, out.osc1ManualPW, out);
-        acceptCandidate (extractField (b, 20, 0x07, 0x78), 0, 3, out.osc1Range, out);
+        // Controlled hardware dumps: 16'/8'/4'/2' encode as 63/64/65/66.
+        // The editor choice parameter uses indexes 0/1/2/3.
+        acceptVerified (extractField (b, 20, 0x07, 0x78) - 63, 0, 3, out.osc1Range, out);
         acceptCandidate (extractField (b, 21, 0x07, 0x7C), 0, 255, out.osc1Coarse, out);
         acceptCandidate (extractField (b, 22, 0x03, 0x7E), 0, 255, out.osc1Fine, out);
 

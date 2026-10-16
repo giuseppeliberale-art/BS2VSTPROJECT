@@ -60,3 +60,14 @@ target_link_libraries(BSIIControl PRIVATE
     juce::juce_recommended_lto_flags
     juce::juce_recommended_warning_flags
 )
+
+option(BSII_BUILD_TESTS "Build hardware-capture regression tests" OFF)
+if(BSII_BUILD_TESTS)
+    enable_testing()
+    add_executable(BSIIOsc1RangeTest tests/Osc1RangeTest.cpp)
+    target_include_directories(BSIIOsc1RangeTest PRIVATE tests Source)
+    target_compile_features(BSIIOsc1RangeTest PRIVATE cxx_std_20)
+    target_compile_definitions(BSIIOsc1RangeTest PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0)
+    target_link_libraries(BSIIOsc1RangeTest PRIVATE juce::juce_core)
+    add_test(NAME Osc1RangeCapturedPatches COMMAND BSIIOsc1RangeTest "${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures")
+endif()
