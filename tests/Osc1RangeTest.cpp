@@ -51,15 +51,15 @@ int main(int argc, char** argv) {
         passed &= bsii::pairedCCToRaw(packed >> 7, packed & 127) == raw;
     }
     std::cout << (passed ? "PASS" : "FAIL") << " captured paired-CC packing and all 256 round trips\n";
-    const char* mixerNames[] = {"osc1", "osc2", "sub", "noise"};
-    for (int mixer = 0; mixer < 4; ++mixer) {
+    const char* mixerNames[] = {"osc1", "osc2", "sub", "noise", "ring"};
+    for (int mixer = 0; mixer < 5; ++mixer) {
         std::ifstream mixerInput(std::string(argv[1]) + "/mix-" + mixerNames[mixer] + "-sweep.syx", std::ios::binary);
         const std::string mixerBytes((std::istreambuf_iterator<char>(mixerInput)), {});
         bool mixerOK = mixerBytes.size() == 256 * 154;
         if (mixerOK) {
             for (int raw = 0; raw < 256; ++raw) {
                 const auto decoded = bsii::decodePatchFields(juce::MemoryBlock(mixerBytes.data() + raw * 154, 154));
-                mixerOK &= decoded.valid && (mixer == 0 ? decoded.mixOsc1 : mixer == 1 ? decoded.mixOsc2 : mixer == 2 ? decoded.mixSub : decoded.mixNoise) == raw;
+                mixerOK &= decoded.valid && (mixer == 0 ? decoded.mixOsc1 : mixer == 1 ? decoded.mixOsc2 : mixer == 2 ? decoded.mixSub : mixer == 3 ? decoded.mixNoise : decoded.mixRing) == raw;
             }
         }
         std::cout << (mixerOK ? "PASS" : "FAIL") << " all 256 captured " << mixerNames[mixer] << " Mixer levels\n";

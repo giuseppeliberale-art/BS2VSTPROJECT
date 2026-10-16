@@ -121,3 +121,7 @@ Sent all 256 raw values on paired CC22/54 and fetched a patch after each. Sub Mi
 ## Noise Mixer level automated sweep
 
 Sent all 256 raw values on paired CC23/55 and fetched a patch after each. Noise Mixer decoding (byte 41 mask 0x7F / byte 42 mask 0x40) matched every value, with zero mismatches/timeouts. Original level 0 and the entire starting patch were restored byte-for-byte. Results: `mix-noise-sweep.csv`; captures: `tests/fixtures/mix-noise-sweep.syx`. All 256 messages are replayed through the actual C++ decoder alongside the other Mixer sweeps. No mapping change was needed.
+
+## Ring Mod Mixer level automated sweep
+
+Sent all 256 raw values on paired CC24/56 and fetched a patch after each. Ring Mod Mixer decoding (byte 42 mask 0x3F / byte 43 mask 0x60) matched every value, with zero mismatches/timeouts. Original level 0 and the entire starting patch were restored byte-for-byte. Results: `mix-ring-sweep.csv`; captures: `tests/fixtures/mix-ring-sweep.syx`. All 256 messages are replayed through the actual C++ decoder alongside the other Mixer sweeps. No mapping change was needed.
