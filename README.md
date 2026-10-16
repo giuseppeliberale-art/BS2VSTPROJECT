@@ -49,3 +49,5 @@ The initial commit and `v0.8.2` tag preserve the source from the v0.8.2 working 
 Requirements: macOS, Xcode with command-line tools, CMake 3.22 or newer, and an internet connection for the initial JUCE 9.0.4 download. The project uses C++20. Build outputs appear under `build/BSIIControl_artefacts/Release/`.
 
 Open this folder in GitHub Desktop with **File → Add Local Repository**. Review changes, commit, then push to keep GitHub up to date.
+
+Snapshot save/load and a combined Send All hardware recall are covered separately in [state integration validation](docs/state-integration-validation.md).

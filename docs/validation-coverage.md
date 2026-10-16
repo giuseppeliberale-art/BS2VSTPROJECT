@@ -1,6 +1,6 @@
 # Validation coverage audit — 17 October 2026
 
-Audited application source and committed captures at `d436925`; updated after the eight main oscillator waveform captures and mapping fix following `0d408be`, and the Coarse regression sweeps following `06d8d5c`, and full Fine validation following `7240353`. This is a coverage inventory, not a new hardware test or a declaration that every UI path works. No synth settings were changed during this audit. The `v0.8.2` baseline tag remains on `91d1ffc`.
+Audited application source and committed captures at `d436925`; updated after the eight main oscillator waveform captures and mapping fix following `0d408be`, and the Coarse regression sweeps following `06d8d5c`, full Fine validation following `7240353`, and snapshot/Send All integration following `72e3fed`. This is a coverage inventory, not a new hardware test or a declaration that every UI path works. No synth settings were changed during this audit. The `v0.8.2` baseline tag remains on `91d1ffc`.
 
 ## Current result
 
@@ -13,14 +13,14 @@ Audited application source and committed captures at `d436925`; updated after th
 
 The fixture directory contains **95 files / 9,123 patch messages**, all traversed by the captured-patch test: 63 sweep files (9,003 messages), four option-combination files (92 messages), eight range messages, ten Fine messages, and ten Coarse messages. These are fixture-message counts, not independent acoustic tests or assertions of end-to-end UI coverage.
 
-`ctest --test-dir build -C Release --output-on-failure` passed both registered tests during this audit: StandaloneMidiRouting and Osc1RangeCapturedPatches. The latter's historical name now covers most controls; the name does not imply that only Oscillator 1 Range is tested.
+`ctest --test-dir build -C Release --output-on-failure` now passes six registered tests: StandaloneMidiRouting, two snapshot round-trip comparisons, two complete Send All recall comparisons, and Osc1RangeCapturedPatches. The latter's historical name now covers all 76 exposed controls; the name does not imply that only Oscillator 1 Range is tested. Two additional integration SysEx files and four snapshots live separately under `tests/state-fixtures/`; they are not included in the 95-file sweep/observation count above.
 
 ## Next work, in order
 
 1. **Completed: main oscillator waveform SysEx.** Eight captured settings now drive both decoder fields and editor application. Both missing-update regressions were reproduced before the fix.
 2. **Completed: Coarse regression.** Both new 256-value sweeps and all ten existing observations now replay through the actual decoder. Full-patch restoration was verified after each sweep.
 3. **Completed: Fine transport coverage.** Both full 256-input sweeps now replay the measured 27–228 clamp and both center codes. Slider limits match the hardware; acoustic and exact LCD calibration remain outside these tests.
-4. **Application integration:** hardware-origin live reception, actual app sends, Send All, snapshot save/load, and plugin-host smoke tests. Most automated sweeps use the standalone CoreMIDI sampler, not the app's sending function or hardware knobs.
+4. **Partly completed: application integration.** Snapshot save/load preserves all 82 persisted entries; actual app Send All reproduces the baseline patch exactly and an alternate snapshot matches all 76 decoded controls. See [state-integration-validation.md](state-integration-validation.md). Remaining work includes hardware-origin live reception, Acid/other combined recalls, and plugin-host smoke tests. Most full value sweeps still use the CoreMIDI sampler rather than hardware knobs or the app sending function.
 
 ## Evidence limits
 
@@ -29,7 +29,7 @@ The fixture directory contains **95 files / 9,123 patch messages**, all traverse
 - Coarse's decimal display remains approximate; the LCD does not update from received MIDI, so automated sweeps do not calibrate its exact rounding.
 - Envelope options were tested as Trigger × Retrigger and Fixed Sustain × Count pairs. Filter switches cover all 12 combinations. There is no exhaustive interaction test of every control together.
 - “MIDI verified” UI badges describe the historical live MIDI checks. Decoder “verified” versus “candidate” counters are historical classification, not a current coverage score; many candidate fields now have exhaustive captures.
-- Only selected fixes received visual import/fetch checks. Decoder replay success does not prove that every editor attachment or live receive route is correct.
+- Selected fixes received visual import/fetch checks, and one combined alternate Send All recall now matches every exposed control. These do not prove every intermediate UI setting, parameter interaction, or live receive route.
 - Current changes were built for Standalone and the regression targets. A fresh AU/VST3 build and host/session recall test of this head are not recorded.
 - Malformed/truncated SysEx, device disconnect/reconnect, wrong-channel behavior, and simultaneous UI/host/hardware edits do not have dedicated captured-path regression coverage.
 - Bend's editor supports only +1 to +12 despite the captured wider signed hardware wire range. Live bend conversion was changed, but physical hardware-origin live CC reception was not manually checked afterward.

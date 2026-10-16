@@ -70,6 +70,22 @@ if(BSII_BUILD_TESTS)
     target_compile_definitions(BSIIMidiRoutingTest PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0)
     target_link_libraries(BSIIMidiRoutingTest PRIVATE juce::juce_audio_basics)
     add_test(NAME StandaloneMidiRouting COMMAND BSIIMidiRoutingTest)
+    add_executable(BSIISnapshotRecallTest tests/SnapshotRecallTest.cpp)
+    target_include_directories(BSIISnapshotRecallTest PRIVATE tests Source)
+    target_compile_features(BSIISnapshotRecallTest PRIVATE cxx_std_20)
+    target_compile_definitions(BSIISnapshotRecallTest PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0)
+    target_link_libraries(BSIISnapshotRecallTest PRIVATE juce::juce_core)
+    foreach(state baseline alternate)
+        add_test(NAME SnapshotRoundtrip_${state} COMMAND BSIISnapshotRecallTest snapshot
+            "${CMAKE_CURRENT_SOURCE_DIR}/tests/state-fixtures/${state}.bsiistate"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tests/state-fixtures/${state}-roundtrip.bsiistate")
+    endforeach()
+    add_test(NAME SendAllBaselineRecall COMMAND BSIISnapshotRecallTest patch
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/state-fixtures/baseline.bsiistate"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/state-fixtures/baseline.syx")
+    add_test(NAME SendAllAlternateRecall COMMAND BSIISnapshotRecallTest patch
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/state-fixtures/alternate.bsiistate"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/state-fixtures/alternate-recalled.syx")
     add_executable(BSIIOsc1RangeTest tests/Osc1RangeTest.cpp)
     target_include_directories(BSIIOsc1RangeTest PRIVATE tests Source)
     target_compile_features(BSIIOsc1RangeTest PRIVATE cxx_std_20)
