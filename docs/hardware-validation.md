@@ -139,3 +139,7 @@ Sent all 256 raw values on paired CC16/48 and fetched a patch after each. The ex
 ## Filter Resonance automated sweep
 
 Sent all 128 raw values on single CC82 and fetched a patch after each. Existing verified Resonance decoding (byte 45 mask 0x03 / byte 46 bits 2–6) matched every value, with zero mismatches/timeouts. Original Resonance 0 and the entire starting patch were restored byte-for-byte. Results: `filter-resonance-sweep.csv`; captures: `tests/fixtures/filter-resonance-sweep.syx`. All 128 messages are replayed through the C++ decoder. No mapping change was needed. This validates parameter transport/storage and decoding, not resonance’s acoustic response.
+
+## Filter Overdrive automated sweep
+
+Sent all 128 raw values on single CC114 and fetched a patch after each. Existing verified Overdrive decoding (byte 46 mask 0x01 / byte 47 bits 1–6) matched every value, with zero mismatches/timeouts. Original Overdrive 0 and the entire starting patch were restored byte-for-byte. Results: `filter-overdrive-sweep.csv`; captures: `tests/fixtures/filter-overdrive-sweep.syx`. All 128 messages are replayed through the C++ decoder. No mapping change was needed. This validates parameter transport/storage and decoding, not the acoustic distortion response.

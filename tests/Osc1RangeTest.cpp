@@ -87,5 +87,16 @@ int main(int argc, char** argv) {
     }
     std::cout << (resonanceOK ? "PASS" : "FAIL") << " all 128 captured Filter Resonance values\n";
     passed &= resonanceOK;
+    std::ifstream overdriveInput(std::string(argv[1]) + "/filter-overdrive-sweep.syx", std::ios::binary);
+    const std::string overdriveBytes((std::istreambuf_iterator<char>(overdriveInput)), {});
+    bool overdriveOK = overdriveBytes.size() == 128 * 154;
+    if (overdriveOK) {
+        for (int raw = 0; raw < 128; ++raw) {
+            const auto decoded = bsii::decodePatchFields(juce::MemoryBlock(overdriveBytes.data() + raw * 154, 154));
+            overdriveOK &= decoded.valid && decoded.filterOverdrive == raw;
+        }
+    }
+    std::cout << (overdriveOK ? "PASS" : "FAIL") << " all 128 captured Filter Overdrive values\n";
+    passed &= overdriveOK;
     return passed ? 0 : 1;
 }
