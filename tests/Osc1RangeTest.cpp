@@ -218,5 +218,53 @@ int main(int argc, char** argv) {
     }
     std::cout << (optionsOK ? "PASS" : "FAIL") << " 34 captured Amp Fixed Sustain/Retrigger Count combinations\n";
     passed &= optionsOK;
+    {
+        std::ifstream input(std::string(argv[1]) + "/mod-attack-sweep.syx", std::ios::binary);
+        const std::string bytes((std::istreambuf_iterator<char>(input)), {});
+        bool ok = bytes.size() == 128 * 154;
+        if (ok)
+            for (int raw = 0; raw < 128; ++raw) {
+                const auto decoded = bsii::decodePatchFields(juce::MemoryBlock(bytes.data() + raw * 154, 154));
+                ok &= decoded.valid && decoded.modAttack == raw;
+            }
+        std::cout << (ok ? "PASS" : "FAIL") << " all 128 captured Mod attack values\n";
+        passed &= ok;
+    }
+    {
+        std::ifstream input(std::string(argv[1]) + "/mod-decay-sweep.syx", std::ios::binary);
+        const std::string bytes((std::istreambuf_iterator<char>(input)), {});
+        bool ok = bytes.size() == 128 * 154;
+        if (ok)
+            for (int raw = 0; raw < 128; ++raw) {
+                const auto decoded = bsii::decodePatchFields(juce::MemoryBlock(bytes.data() + raw * 154, 154));
+                ok &= decoded.valid && decoded.modDecay == raw;
+            }
+        std::cout << (ok ? "PASS" : "FAIL") << " all 128 captured Mod decay values\n";
+        passed &= ok;
+    }
+    {
+        std::ifstream input(std::string(argv[1]) + "/mod-sustain-sweep.syx", std::ios::binary);
+        const std::string bytes((std::istreambuf_iterator<char>(input)), {});
+        bool ok = bytes.size() == 128 * 154;
+        if (ok)
+            for (int raw = 0; raw < 128; ++raw) {
+                const auto decoded = bsii::decodePatchFields(juce::MemoryBlock(bytes.data() + raw * 154, 154));
+                ok &= decoded.valid && decoded.modSustain == raw;
+            }
+        std::cout << (ok ? "PASS" : "FAIL") << " all 128 captured Mod sustain values\n";
+        passed &= ok;
+    }
+    {
+        std::ifstream input(std::string(argv[1]) + "/mod-release-sweep.syx", std::ios::binary);
+        const std::string bytes((std::istreambuf_iterator<char>(input)), {});
+        bool ok = bytes.size() == 128 * 154;
+        if (ok)
+            for (int raw = 0; raw < 128; ++raw) {
+                const auto decoded = bsii::decodePatchFields(juce::MemoryBlock(bytes.data() + raw * 154, 154));
+                ok &= decoded.valid && decoded.modRelease == raw;
+            }
+        std::cout << (ok ? "PASS" : "FAIL") << " all 128 captured Mod release values\n";
+        passed &= ok;
+    }
     return passed ? 0 : 1;
 }
