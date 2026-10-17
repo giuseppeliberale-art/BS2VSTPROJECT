@@ -1,5 +1,6 @@
 #include "BSIIPairedCC.h"
 #include "BSIIMidiRouting.h"
+#include "BSIIProjectRecall.h"
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 #include <cmath>
@@ -129,9 +130,122 @@ void BSIIControlAudioProcessor::restoreHardwareConnection()
     connectionRestorePending = false;
 }
 
+BSIIControlAudioProcessor::ProjectRecallInfo BSIIControlAudioProcessor::getProjectRecallInfo() const
+{
+    const juce::ScopedLock lock (connectionLock);
+    return { recallMode, recallProgram, bsii::isRecallPatch (projectSound), capturePending, recallStatus };
+}
+
+bool BSIIControlAudioProcessor::configureProjectRecall (RecallMode mode, int program)
+{
+    const juce::ScopedLock lock (connectionLock);
+    if (mode == RecallMode::preset && ! juce::isPositiveAndBelow (program, 128))
+    { recallStatus = "Select a known preset first."; return false; }
+    if (mode == RecallMode::capturedSound && ! bsii::isRecallPatch (projectSound))
+    { recallStatus = "Capture the hardware sound first."; return false; }
+    if (mode != RecallMode::off && mode != RecallMode::preset && mode != RecallMode::capturedSound) return false;
+    recallMode = mode;
+    if (mode == RecallMode::preset) recallProgram = program;
+    recallPending = false; // Configuring recall never immediately replaces the sound.
+    recallStatus = mode == RecallMode::off ? "Automatic recall is off."
+        : mode == RecallMode::preset ? "Will load stored preset " + juce::String (recallProgram) + " when this Set reconnects."
+        : "Will restore the captured sound to the edit buffer when this Set reconnects.";
+    updateHostDisplay (juce::AudioProcessor::ChangeDetails().withNonParameterStateChanged (true));
+    return true;
+}
+
+bool BSIIControlAudioProcessor::captureProjectSound()
+{
+    const juce::ScopedLock lock (connectionLock);
+    if (capturePending || ! midiOutput) { recallStatus = "Capture needs a connected MIDI output."; return false; }
+    if (usesDirectHardwareSysEx() && ! connectHardwareSysExInput (midiOutput->getName()))
+    { recallStatus = "Capture needs one matching MIDI input."; return false; }
+    captureAfterSerial = getLatestSysEx().serial;
+    captureStartedMs = juce::Time::getMillisecondCounter();
+    capturePending = true;
+    static constexpr uint8_t request[] { 0xf0, 0, 0x20, 0x29, 0, 0x33, 0, 0x40, 0xf7 };
+    midiOutput->sendMessageNow (juce::MidiMessage (request, sizeof (request), 0.0));
+    recallStatus = "Capturing current hardware sound...";
+    return true;
+}
+
+bool BSIIControlAudioProcessor::serviceProjectRecall()
+{
+    const auto latest = getLatestSysEx(); // Native receive callback only owns sysExLock.
+    const auto now = juce::Time::getMillisecondCounter();
+    const juce::ScopedLock lock (connectionLock);
+    if (capturePending)
+    {
+        if (latest.serial != captureAfterSerial)
+        {
+            capturePending = false;
+            if (bsii::isRecallPatch (latest.data))
+            {
+                projectSound = latest.data;
+                recallStatus = "Project sound captured. Choose Captured sound, then save the Set.";
+                updateHostDisplay (juce::AudioProcessor::ChangeDetails().withNonParameterStateChanged (true));
+            }
+            else recallStatus = "Capture rejected: expected one current edit-buffer patch. Previous capture kept.";
+        }
+        else if (now - captureStartedMs >= 3000u)
+        { capturePending = false; recallStatus = "No capture reply. Previous project sound kept."; }
+    }
+    // Watch actual endpoint disappearance. Do not interpret ordinary Stop/Play
+    // or editor creation as a reconnect, and never resend on each timer tick.
+    if (now - lastPortCheckMs >= 1000u)
+    {
+        lastPortCheckMs = now;
+        if (midiOutput && connectionSaved)
+        {
+            bool found = false;
+            for (const auto& device : juce::MidiOutput::getAvailableDevices())
+                found |= device.identifier == midiOutput->getIdentifier();
+            if (! found)
+            {
+                midiOutput.reset();
+                connectHardwareSysExInput ({});
+                connectionRestorePending = true;
+                lastConnectionAttemptMs = 0;
+                recallPending = recallMode != RecallMode::off;
+                recallSettling = false;
+                capturePending = false;
+                recallStatus = "Waiting for saved MIDI device.";
+            }
+        }
+    }
+    if (recallPending && midiOutput)
+    {
+        recallPending = false;
+        if (recallMode == RecallMode::preset && juce::isPositiveAndBelow (recallProgram, 128))
+        {
+            midiOutput->sendMessageNow (juce::MidiMessage::programChange (hardwareMidiChannel.load(), recallProgram));
+            knownHardwareProgram.store (recallProgram);
+            recallStatus = "Restored stored preset " + juce::String (recallProgram) + ".";
+        }
+        else if (recallMode == RecallMode::capturedSound && bsii::isRecallPatch (projectSound))
+        {
+            midiOutput->sendMessageNow (juce::MidiMessage (projectSound.getData(), static_cast<int> (projectSound.getSize()), 0.0));
+            knownHardwareProgram.store (-1);
+            recallStatus = "Restored captured sound to edit buffer. Stored presets unchanged.";
+        }
+        else return false;
+        // Drop old incoming controls/PCs from before recall, but preserve queued
+        // host automation values so they are dispatched after the sound settles.
+        pendingHardwareProgram.store (-1);
+        for (auto& value : pendingHardwareValues) value.store (bsii::noHardwareValue);
+        for (auto& value : pendingChoiceWireValues) value.store (-1);
+        recallStartedMs = now;
+        recallSettling = true;
+    }
+    if (recallSettling && now - recallStartedMs < 300u) return true;
+    recallSettling = false;
+    return false;
+}
+
 void BSIIControlAudioProcessor::timerCallback()
 {
     restoreHardwareConnection();
+    if (serviceProjectRecall()) return;
     const auto channel = hardwareMidiChannel.load();
     const auto& params = bsii::parameterSpecs();
     for (size_t i = 0; i < params.size(); ++i)
@@ -431,6 +545,9 @@ void BSIIControlAudioProcessor::getStateInformation (juce::MemoryBlock& destData
         state.setProperty ("bsiiMidiOutputName", savedOutputName, nullptr);
         state.setProperty ("bsiiMidiChannel", hardwareMidiChannel.load(), nullptr);
         state.setProperty ("bsiiLiveRxEnabled", liveMidiRxEnabled.load(), nullptr);
+        state.setProperty ("bsiiRecallMode", static_cast<int> (recallMode), nullptr);
+        state.setProperty ("bsiiRecallProgram", recallProgram, nullptr);
+        state.setProperty ("bsiiProjectSound", projectSound.toBase64Encoding(), nullptr);
     }
     if (auto xml = state.createXml()) copyXmlToBinary (*xml, destData);
 }
@@ -454,9 +571,28 @@ void BSIIControlAudioProcessor::setStateInformation (const void* data, int sizeI
         setHardwareMidiChannel (static_cast<int> (state.getProperty ("bsiiMidiChannel", 1)));
         setLiveMidiRxEnabled (static_cast<bool> (state.getProperty ("bsiiLiveRxEnabled", true)));
     }
+    {
+        const juce::ScopedLock lock (connectionLock);
+        recallMode = RecallMode::off;
+        recallProgram = static_cast<int> (state.getProperty ("bsiiRecallProgram", -1));
+        projectSound.reset();
+        const auto encoded = state.getProperty ("bsiiProjectSound").toString();
+        if (encoded.length() <= 1024)
+        {
+            juce::MemoryBlock patch;
+            if (patch.fromBase64Encoding (encoded) && bsii::isRecallPatch (patch)) projectSound = patch;
+        }
+        const auto requestedMode = static_cast<int> (state.getProperty ("bsiiRecallMode", 0));
+        if (requestedMode == 1 && juce::isPositiveAndBelow (recallProgram, 128)) recallMode = RecallMode::preset;
+        if (requestedMode == 2 && bsii::isRecallPatch (projectSound)) recallMode = RecallMode::capturedSound;
+        recallPending = recallMode != RecallMode::off;
+        recallSettling = false;
+        capturePending = false;
+        recallStatus = recallPending ? "Waiting to restore project sound on connection." : "Automatic recall is off.";
+    }
     // Connection metadata belongs to host sessions, not portable patch snapshots.
     for (const auto* property : { "bsiiConnectionSaved", "bsiiMidiOutputId", "bsiiMidiOutputName",
-                                 "bsiiMidiChannel", "bsiiLiveRxEnabled" })
+                                 "bsiiMidiChannel", "bsiiLiveRxEnabled", "bsiiRecallMode", "bsiiRecallProgram", "bsiiProjectSound" })
         state.removeProperty (property, nullptr);
     apvts.replaceState (state);
 }

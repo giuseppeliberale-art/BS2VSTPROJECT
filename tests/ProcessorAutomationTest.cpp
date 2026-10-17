@@ -1,6 +1,7 @@
 #include <CoreFoundation/CoreFoundation.h>
 #include "PluginProcessor.h"
 #include "BSIIPatchDecoder.h"
+#include "BSIIProjectRecall.h"
 #include <iostream>
 #include <thread>
 
@@ -216,6 +217,85 @@ int main (int argc, char** argv)
                 if (combo->getNumItems() == 128) presetShown = combo->getSelectedId() == 24;
         ok &= presetShown && receiver.getKnownHardwareProgram() == 23;
     }
+    {
+        using Mode = BSIIControlAudioProcessor::RecallMode;
+        juce::MemoryBlock patch;
+        ok &= juce::File::getCurrentWorkingDirectory().getChildFile ("tests/state-fixtures/baseline.syx").loadFileAsData (patch);
+        ok &= bsii::isRecallPatch (patch);
+        auto command = patch;
+        static_cast<juce::uint8*> (command.getData())[7] = 1;
+        ok &= ! bsii::isRecallPatch (command); // Never accept a different write command.
+        command = patch;
+        static_cast<juce::uint8*> (command.getData())[20] = 0x80;
+        ok &= ! bsii::isRecallPatch (command);
+        ok &= ! bsii::isRecallPatch (juce::MemoryBlock (patch.getData(), 153));
+        juce::AudioProcessor::setTypeOfNextNewPlugin (juce::AudioProcessor::wrapperType_Standalone);
+        BSIIControlAudioProcessor capture;
+        juce::AudioProcessor::setTypeOfNextNewPlugin (juce::AudioProcessor::wrapperType_Undefined);
+        for (const auto& port : juce::MidiOutput::getAvailableDevices())
+            if (port.name == name) capture.hardwareMidiOutput() = juce::MidiOutput::openDevice (port.identifier);
+        capture.rememberHardwareMidiOutput (capture.hardwareMidiOutput()->getIdentifier(), name);
+        capture.setHardwareMidiChannel (3);
+        ok &= ! capture.configureProjectRecall (Mode::preset, -1);
+        ok &= ! capture.configureProjectRecall (Mode::capturedSound, -1);
+        juce::AudioBuffer<float> audio (2, 64);
+        juce::MidiBuffer incoming;
+        incoming.addEvent (juce::MidiMessage (patch.getData(), static_cast<int> (patch.getSize()), 0.0), 0);
+        capture.processBlock (audio, incoming); // Old receipt cannot satisfy fresh capture.
+        ok &= capture.captureProjectSound();
+        expected.add ("f0 00 20 29 00 33 00 40 f7");
+        pump();
+        ok &= capture.getProjectRecallInfo().capturing && ! capture.getProjectRecallInfo().hasCapture;
+        incoming.addEvent (juce::MidiMessage (patch.getData(), static_cast<int> (patch.getSize()), 0.0), 0);
+        capture.processBlock (audio, incoming); pump();
+        ok &= capture.getProjectRecallInfo().hasCapture && ! capture.getProjectRecallInfo().capturing;
+        ok &= capture.configureProjectRecall (Mode::capturedSound, -1);
+        juce::MemoryBlock capturedState;
+        capture.getStateInformation (capturedState);
+        auto tree = capture.getParameters().copyState();
+        ok &= ! tree.hasProperty ("bsiiProjectSound"); // Portable parameter snapshots exclude recall.
+        {
+            BSIIControlAudioProcessor fresh;
+            HostEdits edits;
+            fresh.addListener (&edits);
+            fresh.setStateInformation (capturedState.getData(), static_cast<int> (capturedState.getSize()));
+            const int recallEdits = edits.count;
+            auto* resonance = fresh.getParameters().getParameter ("filterResonance");
+            resonance->setValueNotifyingHost (resonance->convertTo0to1 (45));
+            pump (450);
+            expected.add (juce::String::toHexString (patch.getData(), static_cast<int> (patch.getSize())));
+            auto message = juce::MidiMessage::controllerEvent (3, 82, 45);
+            expected.add (juce::String::toHexString (message.getRawData(), message.getRawDataSize()));
+            pump (400); // Exactly one recall, before pending automation; no editor.
+            ok &= fresh.getProjectRecallInfo().hasCapture && edits.count == recallEdits + 1;
+            fresh.removeListener (&edits);
+        }
+        ok &= capture.configureProjectRecall (Mode::preset, 23);
+        juce::MemoryBlock presetState;
+        capture.getStateInformation (presetState);
+        {
+            BSIIControlAudioProcessor fresh;
+            fresh.setStateInformation (presetState.getData(), static_cast<int> (presetState.getSize()));
+            pump (450);
+            auto message = juce::MidiMessage::programChange (3, 23);
+            expected.add (juce::String::toHexString (message.getRawData(), message.getRawDataSize()));
+            ok &= fresh.getKnownHardwareProgram() == 23;
+            pump (400);
+        }
+        auto xml = juce::AudioProcessor::getXmlFromBinary (capturedState.getData(), static_cast<int> (capturedState.getSize()));
+        xml->setAttribute ("bsiiProjectSound", "invalid patch");
+        juce::MemoryBlock corrupt;
+        juce::AudioProcessor::copyXmlToBinary (*xml, corrupt);
+        {
+            BSIIControlAudioProcessor fresh;
+            fresh.setStateInformation (corrupt.getData(), static_cast<int> (corrupt.getSize())); pump (400);
+            ok &= fresh.getProjectRecallInfo().mode == Mode::off && ! fresh.getProjectRecallInfo().hasCapture;
+        }
+        ok &= capture.captureProjectSound();
+        expected.add ("f0 00 20 29 00 33 00 40 f7");
+        pump (3100); // Timeout keeps the previous captured patch.
+        ok &= ! capture.getProjectRecallInfo().capturing && capture.getProjectRecallInfo().hasCapture;
+    }
     log.withFileExtension ("stop").replaceWithText ("stop");
     sink.waitForProcessToFinish (5000);
     const auto actual = juce::StringArray::fromLines (log.loadFileAsString());
@@ -223,6 +303,6 @@ int main (int argc, char** argv)
     if (actual != expected)
         std::cerr << "Expected:\n" << expected.joinIntoString ("\n") << "\nActual:\n" << actual.joinIntoString ("\n") << "\n";
     log.deleteFile(); log.withFileExtension ("stop").deleteFile();
-    std::cout << (ok ? "PASS" : "FAIL") << " processor automation before/after editor, native CC/paired CC/NRPN, linked triggers, silent receive/recall, channel persistence, saved connection without editor and exact-name fallback\n";
+    std::cout << (ok ? "PASS" : "FAIL") << " processor automation before/after editor, native CC/paired CC/NRPN, linked triggers, silent receive/recall, channel persistence, saved connection, patch-refresh notifications, capture validation and project recall before automation\n";
     return ok ? 0 : 1;
 }

@@ -97,11 +97,22 @@ port and arm the track with Monitor Auto, or use Monitor In, for live controls.
 Select the hardware output/channel in the plugin, then save the DAW Set. Host
 state now includes that connection, channel and Live RX setting so the processor
 can reconnect without opening the editor. Older Sets need one save with the new
-build after choosing the output. Reconnection does not automatically send a patch;
+build after choosing the output. With recall set to Off, reconnection does not automatically send a patch;
 the user confirmed this reconnects successfully after an Ableton restart. Patch replies use a separate
 direct SysEx input because Live's ordinary track path does not supply them.
 Input/output names must match uniquely. These are early tests, not complete DAW
 support; see [plugin smoke-test results](docs/plugin-smoke-test.md).
+
+### Optional project sound recall
+
+Use **On reconnect** to choose **Off**, **Stored preset**, or **Captured sound**.
+Stored preset remembers the selected preset number. For an exact backup of the
+hardware sound, click **Capture Project Sound**, wait for success, choose Captured
+sound, then save your DAW Set. That capture stays fixed until you capture again.
+Recall runs once on session load/USB reconnection, including with the editor closed;
+it does not run on every Play or overwrite stored hardware presets. Wait for recall
+to finish before playback. Existing Sets default to Off. Hardware acceptance is
+pending; see [recall behavior and checks](docs/project-sound-recall.md).
 
 ## Which save, load or transfer control should I use?
 

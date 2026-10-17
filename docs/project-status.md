@@ -174,3 +174,25 @@ preset identity is now processor-owned across editor recreation, provided the DA
 actually forwards Program Change. Seven offline groups, native integration,
 all format builds and installed AU validation pass. User's Ableton preset-change
 playback retest is pending; flat automation segments are not yet verified.
+
+
+## Project sound recall work
+
+User requested both preset-number recall and a captured sound preserved inside
+the DAW session, applied once on project load/connection rather than every Play.
+Added optional Off/Stored preset/Captured sound plus fresh Capture Project Sound.
+Off is the compatibility default; no hardware preset slot write is introduced.
+The captured baseline only changes with explicit capture, not automation or DAW
+save. Processor recall precedes pending parameter dispatch with a 300 ms settle.
+See docs/project-sound-recall.md for exact scope, timing and manual checklist.
+
+The apparent one-way live MIDI issue immediately before this task was resolved
+by activating the Ableton plugin. User confirmed External Instrument -> BSII Control
+works for notes, automation and hardware-to-plugin controls. No routing code fix
+was needed for that report. Keep the plugin activated.
+
+
+Recall build validation: seven offline groups and expanded native processor test
+PASS. Release Standalone/VST3/AU build and installed AU/signature checks PASS.
+Updated plugins installed; previous bundles retained in ignored validation-results.
+User's manual stored-preset/captured-sound recall acceptance is still pending.

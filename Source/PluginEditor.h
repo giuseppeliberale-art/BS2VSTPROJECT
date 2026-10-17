@@ -115,6 +115,9 @@ private:
     juce::Label titleLabel, subtitleLabel, statusLabel, rxLabel, nrpnLabel, sysexLabel, midiLabel, channelLabel, stateHintLabel, diagnosticLabel;
     juce::ComboBox midiOutputBox, channelBox, presetBox;
     juce::Label presetLabel, presetHint;
+    juce::Label recallLabel, recallStatusLabel;
+    juce::ComboBox recallModeBox;
+    juce::TextButton captureProjectButton { "Capture Project Sound" };
     juce::TextButton previousPresetButton { "Previous" }, nextPresetButton { "Next" }, loadPresetButton { "Load Preset" };
     bsii::PresetSync presetSync;
     juce::TextButton refreshButton { "Refresh MIDI" };

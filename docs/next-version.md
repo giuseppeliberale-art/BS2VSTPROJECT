@@ -106,3 +106,16 @@ Existing Sets need a save with the updated build after selecting the output.
 Local regression covers a real processor save/new-instance restore without editor,
 channel3 MIDI dispatch, obsolete identifiers and missing-device handling. Manual
 Ableton restart verification is still pending.
+
+
+### Optional project sound recall
+
+Added On reconnect: Off / Stored preset / Captured sound and Capture Project Sound.
+Host state stores the explicit recall choice, preset target and raw edit-buffer
+capture. Capture is fresh and explicit; routine DAW saves, automation and Get Patch
+do not replace it. Default Off preserves existing Sets. Processor recall runs once
+on session restore or detected saved USB endpoint reconnection, then waits300ms
+before flushing queued parameter changes. It never runs on each Play. The accepted
+patch format only addresses the temporary edit buffer. No stored preset save command
+is introduced. Local native/offline checks, all format builds and AU validation
+pass; manual hardware acceptance remains pending. See project-sound-recall.md.

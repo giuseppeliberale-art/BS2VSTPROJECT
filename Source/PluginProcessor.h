@@ -49,6 +49,18 @@ public:
     void rememberHardwareMidiOutput (const juce::String& identifier, const juce::String& name);
     bool hasSavedHardwareConnection() const;
 
+    enum class RecallMode { off = 0, preset = 1, capturedSound = 2 };
+    struct ProjectRecallInfo
+    {
+        RecallMode mode = RecallMode::off;
+        int program = -1;
+        bool hasCapture = false, capturing = false;
+        juce::String status;
+    };
+    ProjectRecallInfo getProjectRecallInfo() const;
+    bool configureProjectRecall (RecallMode, int program);
+    bool captureProjectSound(); // Fresh edit-buffer request; does not send a sound.
+
     // Reception/import/recall updates parameters without transmitting them.
     // Thread-local scopes leave concurrent automation on other threads enabled.
     class ScopedMidiSilence
@@ -100,6 +112,7 @@ private:
     void parameterChanged (const juce::String&, float) override;
     void timerCallback() override;
     void restoreHardwareConnection();
+    bool serviceProjectRecall();
     bool midiIsSilenced() const;
     static thread_local ScopedMidiSilence* midiSilence;
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
@@ -113,7 +126,13 @@ private:
     juce::String savedOutputIdentifier, savedOutputName;
     bool connectionSaved = false;
     bool connectionRestorePending = false;
-    uint32_t lastConnectionAttemptMs = 0;
+    uint32_t lastConnectionAttemptMs = 0, lastPortCheckMs = 0;
+    RecallMode recallMode = RecallMode::off;
+    int recallProgram = -1;
+    juce::MemoryBlock projectSound;
+    bool recallPending = false, capturePending = false, recallSettling = false;
+    uint32_t captureAfterSerial = 0, captureStartedMs = 0, recallStartedMs = 0;
+    juce::String recallStatus { "Automatic recall is off." };
     std::atomic<int> hardwareMidiChannel { 1 };
     std::atomic<int> pendingHardwareProgram { -1 };
     std::atomic<int> knownHardwareProgram { -1 };

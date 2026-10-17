@@ -308,6 +308,28 @@ BSIIControlAudioProcessorEditor::BSIIControlAudioProcessorEditor (BSIIControlAud
     loadPresetButton.onClick = [this] { selectPreset (presetBox.getSelectedId() - 1, true); };
     forgetPreset (false);
 
+    recallLabel.setText ("On reconnect", juce::dontSendNotification);
+    recallModeBox.addItem ("Off", 1);
+    recallModeBox.addItem ("Stored preset", 2);
+    recallModeBox.addItem ("Captured sound", 3);
+    recallModeBox.setSelectedId (static_cast<int> (processor.getProjectRecallInfo().mode) + 1, juce::dontSendNotification);
+    recallModeBox.setTooltip ("Once when loading this saved Set or reconnecting USB. Does not run on every Play. Stored preset uses the selected preset number; captured sound restores only the edit buffer.");
+    recallModeBox.onChange = [this]
+    {
+        processor.configureProjectRecall (static_cast<BSIIControlAudioProcessor::RecallMode> (recallModeBox.getSelectedId() - 1),
+                                          processor.getKnownHardwareProgram());
+        recallModeBox.setSelectedId (static_cast<int> (processor.getProjectRecallInfo().mode) + 1, juce::dontSendNotification);
+    };
+    captureProjectButton.setTooltip ("Read a fresh copy of the hardware edit buffer into this project. Choose Captured sound and save the Set to enable recall. No stored preset is overwritten.");
+    captureProjectButton.onClick = [this]
+    {
+        if (patchRequestPending || presetSync.pending())
+        { statusLabel.setText ("Wait for the preset/patch refresh before capturing.", juce::dontSendNotification); return; }
+        processor.captureProjectSound();
+    };
+    for (auto* component : std::initializer_list<juce::Component*> { &recallLabel, &recallModeBox, &captureProjectButton, &recallStatusLabel })
+        addAndMakeVisible (component);
+
     saveButton.onClick = [this] { saveSnapshot(); };
     loadButton.onClick = [this] { loadSnapshot(); };
     sendAllButton.onClick = [this] { sendAllStateToHardware(); };
@@ -448,6 +470,14 @@ void BSIIControlAudioProcessorEditor::resized()
     presetRow.removeFromLeft (8);
     presetHint.setBounds (presetRow);
     area.removeFromTop (8);
+    auto recallRow = area.removeFromTop (32);
+    recallLabel.setBounds (recallRow.removeFromLeft (100));
+    recallModeBox.setBounds (recallRow.removeFromLeft (160));
+    recallRow.removeFromLeft (8);
+    captureProjectButton.setBounds (recallRow.removeFromLeft (180));
+    recallRow.removeFromLeft (8);
+    recallStatusLabel.setBounds (recallRow);
+    area.removeFromTop (8);
     auto stateRow = area.removeFromTop (32);
     saveButton.setBounds (stateRow.removeFromLeft (150));
     stateRow.removeFromLeft (8);
@@ -527,6 +557,15 @@ void BSIIControlAudioProcessorEditor::timerCallback()
             : "No patch reply received. In Standalone Settings, enable Bass Station II under Active MIDI inputs, then try Get Patch again.",
             juce::dontSendNotification);
     }
+
+    const auto recall = processor.getProjectRecallInfo();
+    recallStatusLabel.setText (recall.status, juce::dontSendNotification);
+    recallStatusLabel.setTooltip (recall.status);
+    recallModeBox.setSelectedId (static_cast<int> (recall.mode) + 1, juce::dontSendNotification);
+    captureProjectButton.setEnabled (! recall.capturing && ! patchRequestPending && ! presetSync.pending());
+    recallModeBox.setEnabled (! recall.capturing);
+    presetBox.setEnabled (! recall.capturing);
+    getPatchButton.setEnabled (! recall.capturing);
 
     const auto program = processor.consumeHardwareProgram();
     if (program >= 0) selectPreset (program, false);
@@ -655,13 +694,15 @@ void BSIIControlAudioProcessorEditor::forgetPreset (bool forgetProcessor)
 
 void BSIIControlAudioProcessorEditor::selectPreset (int program, bool sendToHardware)
 {
-    if (program < 0 || program > 127) return;
+    if (program < 0 || program > 127 || processor.getProjectRecallInfo().capturing) return;
     if (sendToHardware)
     {
         if (! reopenSelectedMidiOutput()) return;
         midiOutput->sendMessageNow (juce::MidiMessage::programChange (midiChannel, program));
     }
     processor.rememberHardwareProgram (program);
+    if (sendToHardware && processor.getProjectRecallInfo().mode == BSIIControlAudioProcessor::RecallMode::preset)
+        processor.configureProjectRecall (BSIIControlAudioProcessor::RecallMode::preset, program);
     presetSync.select (program, juce::Time::getMillisecondCounter());
     presetBox.setSelectedId (program + 1, juce::dontSendNotification);
     previousPresetButton.setEnabled (program > 0);
@@ -672,7 +713,7 @@ void BSIIControlAudioProcessorEditor::selectPreset (int program, bool sendToHard
 
 void BSIIControlAudioProcessorEditor::requestPatchFromHardware()
 {
-    if (patchRequestPending) return;
+    if (patchRequestPending || processor.getProjectRecallInfo().capturing) return;
     if (! reopenSelectedMidiOutput (true))
     {
         statusLabel.setText ("Cannot request patch: Bass Station II MIDI output is not open.", juce::dontSendNotification);

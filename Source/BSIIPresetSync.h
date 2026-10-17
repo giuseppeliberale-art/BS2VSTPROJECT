@@ -17,6 +17,7 @@ public:
         return true;
     }
     void forget() { preset = -1; ++generation; queued = false; }
+    bool pending() const { return queued; }
     bool ready (uint32_t now) const { return queued && now - changedAt >= 200u; }
     void requestStarted() { requestedGeneration = generation; queued = false; }
     bool responseCurrent() const { return requestedGeneration == generation && ! queued; }
