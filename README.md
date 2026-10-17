@@ -128,8 +128,9 @@ not measure acoustic accuracy or establish complete instrument/DAW coverage.
 See the [coverage audit](docs/validation-coverage.md) for the detailed control
 inventory and [current handover](docs/project-status.md) for newer results and limits.
 
-Known limits include approximate Coarse display rounding, remaining live preset
-channel/paused-RX spot checks, device reconnect behavior and AU/VST3 host testing.
+Known limits include approximate Coarse display rounding, broader MIDI-channel
+coverage, device reconnect behavior and AU/VST3 host testing. Preset following with
+paused RX, mismatched channels and restored channel matching has been checked.
 Trigger edits in either envelope page currently apply to both envelopes, matching
 the chosen front-panel workflow; independent mixed-trigger sound-engine behavior
 has not been established. See [trigger findings](docs/trigger-behavior-research.md).

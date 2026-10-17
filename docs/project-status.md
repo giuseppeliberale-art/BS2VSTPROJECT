@@ -9,7 +9,7 @@ Updated 2026-10-17. Read this first; use evidence links below for details.
 - LATEST RUNNING APP: `/private/tmp/BSII-Control-label-fix/BSII Control.app`.
   Temporary location may disappear after cleanup/reboot. Build alone does not update it.
   Older Downloads app / earlier temp copies must not be launched alongside it.
-- Synth firmware: user reports4.14 with AFX overlay. Hardware now on preset2 after preset-sync validation. Read-only backup saved in
+- Synth firmware: user reports4.14 with AFX overlay. Hardware now on preset23 after preset-sync validation. Read-only backup saved in
   `midi-lab-results/20261017-065533-backup-4c8a19/baseline.syx`.
 - App Live RX running. MIDI recorder stopped. User prefers one physical instruction
   at a time, explicit hardware/app location, concise nontechnical communication.
@@ -61,7 +61,7 @@ Updated 2026-10-17. Read this first; use evidence links below for details.
 ## Next scope
 
 All actionable fixes from the completed manual pass are addressed. User may spot-check
-new UI. Next: remaining preset channel/paused-RX spot checks, then Arp/Seq. Missing also LFO speed/sync divisions,
+new UI. Next: early AU/VST3 host smoke test, then Arp/Seq. Missing also LFO speed/sync divisions,
 mod-wheel direct filter and LFO2→filter routes, paraphonic mode, oscillator error,
 independent sub tuning, glide divergence, globals/tuning. Verify remote support before
 implementation. User explicitly wants AFX LAST. Preset work is now implemented below; remaining features have not started.
@@ -110,8 +110,10 @@ Generate current76-control registry via `lab.py reference`.
   `preset-one.bsiistate`.
 - User selected HARDWARE preset2. App selector followed to2 and automatically
   received/decoded154-byte patch. Exposed values matched preset1. Both directions
-  checked; channel filtering/paused RX and induced late hardware replies remain
-  untested live. See docs/preset-validation.md. Hardware now on preset2.
+  checked. Follow-up checks passed: paused RX ignored preset21; Get Patch still
+  decoded while paused; app channel2 ignored hardware channel1 preset22; restoring
+  app channel1 followed preset23 with automatic decode. Matching channels2–16 and
+  induced late hardware replies remain untested. See docs/preset-validation.md.
 
 ## Label encoding fix
 
@@ -120,4 +122,5 @@ Old build reproduced garbled ASCII interpretation; fresh signed standalone verif
 all six affected button labels and title through full accessibility text and visual
 inspection. Existing7 regression groups passed (20261017-170201-48080).
 No MIDI was sent for this check; sound controls restored from app state on restart.
-Feature/GUI redesign work remains paused apart from this requested display fix.
+GUI redesign remains deferred until features are complete. Preset checks resumed
+at the user's request and are now complete; recorder stopped, Live RX running.
