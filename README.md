@@ -35,7 +35,9 @@ version labels still show earlier numbers.
 
 The Arp/Seq page adds On, Latch, Octaves, Direction/Play/Record, Rhythm and Seq Retrig alongside Swing. Get Patch now reads all six controls from the captured SysEx fields. Send All includes them, except that it will not arm Record mode; select Record explicitly when needed. Their emitted encodings were captured from firmware 4.14, and selected live changes have been checked both ways in Ableton. Basic Play/Record mode changes have also been checked; sequence-content editing remains unverified. An initial reception hiccup did not reproduce after restarting Ableton, and its cause is unknown. See [Arp/Seq research and evidence](docs/arp-seq-research.md).
 
-This is a partial instrument editor. Sequence-step editing, verified sequence-slot selection, LFO sync divisions, several modulation routes and newer firmware functions remain on the roadmap. **AFX mode is planned last.**
+The LFO page includes independent Speed/Sync selectors and all 35 clock divisions for both LFOs. Live MIDI routes and SysEx storage were verified against hardware captures for all values. These controls support automation, saved sessions and Get Patch; audible clock-sync and manual hosted checks remain pending. See [LFO sync evidence](docs/lfo-sync-research.md).
+
+This is a partial instrument editor. Sequence-step editing, verified sequence-slot selection, several modulation routes and newer firmware functions remain on the roadmap. **AFX mode is planned last.**
 
 ## Build on macOS
 

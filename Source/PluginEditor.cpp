@@ -158,6 +158,10 @@ ChoiceControl::ChoiceControl (juce::AudioProcessorValueTreeState& state,
         combo.setTooltip ("Record arms hardware sequence recording: incoming notes can replace sequence data. Send All will not arm Record; select it explicitly here or on the hardware.");
     if (parameterId == "arpOctaves")
         combo.setTooltip ("Arpeggiator octave span (1-4). The hardware shares this selector with SEQ in Play/Record; sequence-slot playback contents have not been verified.");
+    if (parameterId == "lfo1Sync" || parameterId == "lfo2Sync")
+        combo.setTooltip ("Speed uses the normal LFO Speed value; Sync uses Division and the synth's internal or external MIDI clock.");
+    if (parameterId == "lfo1Division" || parameterId == "lfo2Division")
+        combo.setTooltip ("Clock division used in Sync mode. Beat values use quarter-note beats; the normal Speed setting is retained separately.");
 
     attachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment> (state, spec.id, combo);
 }
@@ -1039,6 +1043,10 @@ bool BSIIControlAudioProcessorEditor::decodeSysExIntoEditor (const juce::MemoryB
     set ("lfo2Slew", decoded.lfo2Slew);
     set ("lfo2Speed", decoded.lfo2Speed);
     set ("lfo2KeySync", decoded.lfo2KeySync);
+    set ("lfo1Sync", decoded.lfo1Sync);
+    set ("lfo2Sync", decoded.lfo2Sync);
+    set ("lfo1Division", decoded.lfo1Division);
+    set ("lfo2Division", decoded.lfo2Division);
 
     set ("arpSwing", decoded.arpSwing);
     set ("arpOn", decoded.arpOn);

@@ -137,6 +137,12 @@ int main (int argc, char** argv)
         set ("arpMode", 5); pump(); cc (118, 5);
         set ("arpRhythm", 31); pump(); cc (119, 31);
         set ("seqRetrig", 0); pump(); nrpn (106, 0);
+        ok &= processor.getParameters().getParameter ("seqRetrig")->getParameterIndex() == 81;
+        ok &= processor.getParameters().getParameter ("lfo1Sync")->getParameterIndex() == 82;
+        set ("lfo1Sync", 1); pump(); nrpn (88, 1);
+        set ("lfo2Sync", 1); pump(); nrpn (92, 1);
+        set ("lfo1Division", 25); pump(); nrpn (87, 25);
+        set ("lfo2Division", 34); pump(); nrpn (91, 34);
         set ("filterCutoff", 128); pump(); cc (16, 64); cc (48, 0);
         set ("ampTrigger", 0); pump(); nrpn (73, 1); nrpn (105, 1);
         ok &= processor.getParameters().getRawParameterValue ("modTrigger")->load() == 0;
@@ -156,6 +162,10 @@ int main (int argc, char** argv)
         ok &= processor.getParameters().getRawParameterValue ("modTrigger")->load() == 2;
         ok &= processor.getParameters().getRawParameterValue ("arpOctaves")->load() == 3;
         ok &= processor.getParameters().getRawParameterValue ("arpRhythm")->load() == 31;
+        ok &= processor.getParameters().getRawParameterValue ("lfo1Sync")->load() == 1;
+        ok &= processor.getParameters().getRawParameterValue ("lfo2Sync")->load() == 1;
+        ok &= processor.getParameters().getRawParameterValue ("lfo1Division")->load() == 25;
+        ok &= processor.getParameters().getRawParameterValue ("lfo2Division")->load() == 34;
         set ("filterResonance", 50);
         {
             BSIIControlAudioProcessor::ScopedMidiSilence silence (processor);
@@ -175,6 +185,15 @@ int main (int argc, char** argv)
         processor.processBlock (audio, incoming); pump();
         for (const auto [id, value] : { std::pair {"arpOn", 0}, {"arpLatch", 0}, {"arpOctaves", 1}, {"arpMode", 4}, {"arpRhythm", 0}, {"seqRetrig", 1} })
             ok &= processor.getParameters().getRawParameterValue (id)->load() == value;
+        incoming.clear();
+        for (const auto [address, value] : { std::pair {88, 0}, {92, 0}, {87, 34}, {91, 25} })
+            for (const auto [controller, data] : { std::pair {99, 0}, {98, address}, {6, value} })
+                incoming.addEvent (juce::MidiMessage::controllerEvent (1, controller, data), incoming.getNumEvents());
+        processor.processBlock (audio, incoming); pump();
+        ok &= processor.getParameters().getRawParameterValue ("lfo1Sync")->load() == 0;
+        ok &= processor.getParameters().getRawParameterValue ("lfo2Sync")->load() == 0;
+        ok &= processor.getParameters().getRawParameterValue ("lfo1Division")->load() == 34;
+        ok &= processor.getParameters().getRawParameterValue ("lfo2Division")->load() == 25;
         processor.setHardwareMidiChannel (2);
         processor.setLiveMidiRxEnabled (false);
         editor.reset();
@@ -256,6 +275,8 @@ int main (int argc, char** argv)
         ok &= edits.count == 0 && decoded.valid
             && juce::roundToInt (receiver.getParameters().getRawParameterValue ("filterResonance")->load()) == decoded.filterResonance;
         for (const auto [id, value] : { std::pair {"arpOn", decoded.arpOn}, {"arpLatch", decoded.arpLatch}, {"arpOctaves", decoded.arpOctaves}, {"arpMode", decoded.arpMode}, {"arpRhythm", decoded.arpRhythm}, {"seqRetrig", decoded.seqRetrig} })
+            if (value >= 0) ok &= juce::roundToInt (receiver.getParameters().getRawParameterValue (id)->load()) == value;
+        for (const auto [id, value] : { std::pair {"lfo1Sync", decoded.lfo1Sync}, {"lfo2Sync", decoded.lfo2Sync}, {"lfo1Division", decoded.lfo1Division}, {"lfo2Division", decoded.lfo2Division} })
             if (value >= 0) ok &= juce::roundToInt (receiver.getParameters().getRawParameterValue (id)->load()) == value;
         incoming.clear();
         incoming.addEvent (juce::MidiMessage::controllerEvent (1, 82, 60), 0);

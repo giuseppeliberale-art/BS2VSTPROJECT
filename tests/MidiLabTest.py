@@ -66,6 +66,27 @@ class MidiLabTests(unittest.TestCase):
         rows=lab.Decoder().feed([0xB0,111,0,119,32])
         self.assertTrue(all(not r['controls'][0]['inRange'] for r in rows))
 
+    def test_lfo_sync_incoming_routes_and_labels(self):
+        rows=lab.Decoder().feed([0xB0,99,0,98,88,6,1,98,92,6,0,98,87,6,25,98,91,6,34])
+        controls=[r['controls'][0] for r in rows if 'controls' in r]
+        self.assertEqual([(c['id'],c['choice']) for c in controls], [
+            ('lfo1Sync','Sync'),('lfo2Sync','Speed'),('lfo1Division','1/4'),('lfo2Division','1/32 triplet')])
+        rows=lab.Decoder().feed([0xB0,99,0,98,87,6,35])
+        self.assertFalse([r for r in rows if 'controls' in r][0]['controls'][0]['inRange'])
+
+    @unittest.skipUnless(os.environ.get('BSII_PATCH_INSPECT'), 'Inspector built by validation routine')
+    def test_all_lfo_sync_hardware_captures(self):
+        directory=ROOT/'tests/lfo-sync-fixtures'
+        for prefix, field, count in [('lfo1-sync','lfo1Sync',2), ('lfo2-sync','lfo2Sync',2),
+                                     ('lfo1-division','lfo1Division',35), ('lfo2-division','lfo2Division',35)]:
+            for value in range(count):
+                with self.subTest(field=field, value=value):
+                    result=subprocess.run([os.environ['BSII_PATCH_INSPECT'],str(directory/f'{prefix}-{value}.syx')],capture_output=True,text=True,check=True)
+                    decoded=json.loads(result.stdout)
+                    self.assertTrue(decoded['valid'])
+                    self.assertEqual(decoded['fields'][field],value)
+        self.assertEqual((directory/'before.syx').read_bytes(),(directory/'after.syx').read_bytes())
+
     def test_report_does_not_claim_hardware_or_ui_pass(self):
         with tempfile.TemporaryDirectory() as tmp:
             path=Path(tmp); source=path/'capture.txt'
