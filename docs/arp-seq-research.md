@@ -64,7 +64,7 @@ Capture `midi-lab-results/20261018-003407-record-e5f199/events.jsonl` recorded C
 
 ## Implementation status
 
-Six live-only choices appended after the existing 76 host parameters, preserving their indices, IDs and ranges. New Arp / Seq page includes existing Swing (unchanged ID/range), On, Latch, Octaves, Direction / Seq Mode, Rhythm and Seq Retrig. All six new controls support the existing automation, MIDI reception and saved-session parameter paths. Hardware receive behavior remains pending testing. Get Patch does not populate these six controls: no SysEx offsets have been guessed. Send All deliberately skips them to avoid replaying stale mode/latch values or arming Record during bulk patch recall. Their values remain in DAW state and parameter snapshots; captured raw sound recall remains lossless, subject to the instrument's actual patch contents. Tempo, step editing and remote sequence-slot selection remain unimplemented/unverified.
+Six live-only choices appended after the existing 76 host parameters, preserving their indices, IDs and ranges. New Arp / Seq page includes existing Swing (unchanged ID/range), On, Latch, Octaves, Direction / Seq Mode, Rhythm and Seq Retrig. All six new controls support the existing automation, MIDI reception and saved-session parameter paths. Hardware receive checks are recorded below; these do not establish SysEx storage. Get Patch does not populate these six controls: no SysEx offsets have been guessed. Send All deliberately skips them to avoid replaying stale mode/latch values or arming Record during bulk patch recall. Their values remain in DAW state and parameter snapshots; captured raw sound recall remains lossless, subject to the instrument's actual patch contents. Tempo, step editing and remote sequence-slot selection remain unimplemented/unverified.
 
 ### Corrected Direction labels
 
@@ -72,4 +72,23 @@ The user corrected the physical clockwise order to Up, Dn, UpDn1, UpDn2, Played,
 
 ## Local validation and installed build
 
-2026-10-18: standalone/AU/VST3 Release builds PASS. Seven registered offline CTest groups PASS, including all 13 MIDI Lab checks. Native processor integration PASS with added Arp/Seq CC/NRPN output, incoming editor/APVTS updates without MIDI echo, saved values and stable pre-existing host indices. Native SysEx input regression PASS. Installed AU/VST3 signatures verified and AU validator PASS; previous bundles retained locally in `validation-results/20261018-003852-4230/before/`. No hardware values were sent by these virtual-port checks. User closed Ableton before installation. Manual Ableton/hardware behavior for these newly exposed controls remains pending.
+2026-10-18: standalone/AU/VST3 Release builds PASS. Seven registered offline CTest groups PASS, including all 13 MIDI Lab checks. Native processor integration PASS with added Arp/Seq CC/NRPN output, incoming editor/APVTS updates without MIDI echo, saved values and stable pre-existing host indices. Native SysEx input regression PASS. Installed AU/VST3 signatures verified and AU validator PASS; previous bundles retained locally in `validation-results/20261018-003852-4230/before/`. No hardware values were sent by these virtual-port checks. User closed Ableton before installation. Subsequent manual Ableton/hardware checks are recorded below.
+
+## Manual Ableton / hardware checks — 2026-10-18
+
+User-reported checks on the installed build from commit 680c7f9:
+
+| Control | Hardware → app | App → hardware |
+|---|---|---|
+| Rhythm | Full 1–32 sweep followed correctly after startup hiccup below | Changing 1 to 32 audibly changed the running arp |
+| Octaves | Hardware 1 reflected as app 1 | App 1 to 4 audibly expanded the arpeggio span |
+| Direction | Hardware Random reflected as app Random | Up to Down audibly changed ascending to descending |
+| Arp On | Hardware On reflected as app On | App Off stopped the repeating arp |
+| Latch | Hardware Off reflected as app Off, arp stopped | App On sustained the arp after releasing keys |
+| Seq Retrig | Hardware Off and On both reflected correctly | App Off and On both confirmed by reopening the hardware Function setting without changing its value |
+
+Do not describe the untested reverse transitions or all eight Direction modes as manually verified. Play/Record emitted encodings are captured, but their receive/sequence behavior is still untested.
+
+Initial Rhythm check failed: hardware at 32, app at 1, CC RX reportedly waiting. Hardware Cutoff then worked; user reported Rhythm began following after moving Cutoff. No root cause established. Cold-start retest pending; this must not be classified as fixed.
+
+Feedback correction: incoming MIDI does not automatically make the hardware LCD display the edited parameter. Rhythm, octave span and direction sends were checked audibly. Seq Retrig was checked by explicitly reopening its on-key settings page after each app edit.
