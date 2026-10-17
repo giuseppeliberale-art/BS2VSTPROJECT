@@ -116,7 +116,7 @@ private:
     bool midiIsSilenced() const;
     static thread_local ScopedMidiSilence* midiSilence;
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
-    void parseIncomingMidi (const juce::MidiBuffer&, bool acceptSysEx = true);
+    void parseIncomingMidi (const juce::MidiBuffer&, bool acceptSysEx = true, bool directControls = false);
     void receiveSysEx (const juce::MidiMessage&);
     void publishNRPN (int channel, int nrpnMSB, int nrpnLSB, int value);
 

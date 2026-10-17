@@ -92,15 +92,20 @@ use the hardware's save procedure when you intend to save into its preset memory
 ### Early Ableton VST3 setup
 
 Enable VST3 system folders in Live's Plug-Ins settings, then load
-**GutzDev → BSII Control** on a MIDI track. Enable Bass Station II's input Track
-port and arm the track with Monitor Auto, or use Monitor In, for live controls.
+**GutzDev → BSII Control** on a MIDI track. Keep the plugin activated in Live.
+For MIDI notes, use External Instrument before BSII Control and configure the
+track input/monitoring as needed. Hardware controls now use the plugin's direct
+input, independently of instrument placement; host input is a fallback when no
+unique direct input is available.
 Select the hardware output/channel in the plugin, then save the DAW Set. Host
 state now includes that connection, channel and Live RX setting so the processor
 can reconnect without opening the editor. Older Sets need one save with the new
 build after choosing the output. With recall set to Off, reconnection does not automatically send a patch;
-the user confirmed this reconnects successfully after an Ableton restart. Patch replies use a separate
-direct SysEx input because Live's ordinary track path does not supply them.
-Input/output names must match uniquely. These are early tests, not complete DAW
+the user confirmed this reconnects successfully after an Ableton restart. Patch
+replies, live CC/NRPN controls and hardware preset changes use a direct MIDI input.
+Input/output names must match uniquely. When direct input is active, duplicate
+DAW-routed controls are not decoded again. Live RX pause and selected-channel
+filtering still apply; notes, clock and other performance traffic keep their DAW route. These are early tests, not complete DAW
 support; see [plugin smoke-test results](docs/plugin-smoke-test.md).
 
 ### Optional project sound recall

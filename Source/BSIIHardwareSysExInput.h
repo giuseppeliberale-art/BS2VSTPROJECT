@@ -10,8 +10,9 @@ namespace bsii
 class HardwareSysExInput : private juce::MidiInputCallback
 {
 public:
-    explicit HardwareSysExInput (std::function<void(const juce::MidiMessage&)> receive)
-        : receiver (std::move (receive)) {}
+    explicit HardwareSysExInput (std::function<void(const juce::MidiMessage&)> receive,
+                                 bool includeLiveControls = false)
+        : receiver (std::move (receive)), liveControls (includeLiveControls) {}
     ~HardwareSysExInput() override { disconnect(); }
 
     bool connect (const juce::String& outputName)
@@ -45,10 +46,13 @@ private:
     }
     void handleIncomingMidiMessage (juce::MidiInput*, const juce::MidiMessage& message) override
     {
-        // Keep ordinary live controls on the existing DAW route, avoiding duplicates.
-        if (message.isSysEx()) receiver (message);
+        // Never intercept notes, clock, pitch wheel or other performance traffic.
+        // Plugin instances may opt into controls independent of the device chain.
+        if (message.isSysEx() || (liveControls && (message.isController() || message.isProgramChange())))
+            receiver (message);
     }
     std::function<void(const juce::MidiMessage&)> receiver;
+    const bool liveControls;
     std::unique_ptr<juce::MidiInput> input;
     std::atomic<bool> open { false };
 };

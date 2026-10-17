@@ -225,3 +225,36 @@ Seven offline groups and Release Standalone/VST3/AU builds PASS. Updated VST3/AU
 installed with prior bundles backed up; strict/deep signatures and AU validator
 PASS. Pending: user Ableton retest of preset selection during recorded playback. Existing flat automation segments and multiple
 instances are not established by a host-notification regression alone.
+
+
+## Live controls after External Instrument
+
+Following the recall build, user reported CC RX waiting on the original track
+with External Instrument before BSII Control. Track input was explicitly Bass
+Station II/All Channels/Monitor In and device activator was on. Direct passive
+capture recorded2,414 valid Cutoff updates in0–255 (4828CC messages) in
+`midi-lab-results/20261017-234406-record-dbfb81/`. An earlier15-second capture
+missed the user's action and is not evidence of hardware failure. On a new MIDI-only
+track with BSII Control, user confirmed live reception worked. This isolates the
+host/device-chain path rather than the synth transmission or control decoding.
+
+Plugin direct input now opts into CC and Program Change as well as SysEx. The
+existing processor decoder handles CC/pairedCC/NRPN/channel/pause rules. While the
+direct port is open, host-routed control duplicates are not decoded; host MIDI
+buffer pass-through and note routing are retained. If direct connection is missing
+or ambiguous, host decoding remains available. Standalone retains hosted Active
+MIDI Inputs. The input helper still defaults to SysEx-only for callers/tests that
+request only patch reception. No hardware input callback touches the UI or sends
+MIDI output. Known hardware preset identity can now update without host-forwarded
+Program Change, but editor-driven patch refresh behavior itself is unchanged.
+
+Local validation PASS: expanded processor native test receives controls without
+host MIDI or editor, decodes CC/pairedCC/NRPN and Program Change, ignores host
+duplicates, preserves host MIDI buffer pass-through, respects pause/selected
+channel, retains SysEx while paused, and falls back after direct disconnect.
+Existing processor automation, connection, host-notification and project recall
+checks remain passing. SysEx-only helper regression PASS. All seven offline groups
+and Release Standalone/VST3/AU builds PASS. Updated VST3/AU installed after user
+saved/closed Live, prior bundles retained in ignored before directory under
+validation-results/20261017-direct-controls/. Strict signatures and AU validator
+PASS. Pending: user hardware test on the original External Instrument chain.

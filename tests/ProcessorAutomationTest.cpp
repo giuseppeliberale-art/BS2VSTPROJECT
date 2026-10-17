@@ -41,6 +41,48 @@ int main (int argc, char** argv)
         input->stop();
         return log.replaceWithText (capture.lines.joinIntoString ("\n")) ? 0 : 2;
     }
+    if (argc == 4 && juce::String (argv[1]) == "--controls-source")
+    {
+        auto output = juce::MidiOutput::createNewDevice (argv[2]);
+        if (! output) return 2;
+        const juce::File command (argv[3]);
+        juce::String previous;
+        auto cc = [&] (int channel, int controller, int value)
+        { output->sendMessageNow (juce::MidiMessage::controllerEvent (channel, controller, value)); };
+        for (int n = 0; n < 3000; ++n)
+        {
+            const auto action = command.loadFileAsString();
+            if (action == "stop") return 0;
+            if (action.isNotEmpty() && action != previous)
+            {
+                previous = action;
+                if (action == "live")
+                {
+                    output->sendMessageNow (juce::MidiMessage::programChange (1, 23));
+                    cc (1, 82, 55); cc (1, 16, 60); cc (1, 48, 64);
+                    cc (1, 99, 0); cc (1, 98, 72); cc (1, 6, 1);
+                    output->sendMessageNow (juce::MidiMessage::noteOn (1, 60, static_cast<juce::uint8> (100)));
+                    output->sendMessageNow (juce::MidiMessage::pitchWheel (1, 9000));
+                    output->sendMessageNow (juce::MidiMessage::midiClock());
+                }
+                if (action == "paused")
+                {
+                    cc (1, 82, 66);
+                    output->sendMessageNow (juce::MidiMessage::programChange (1, 30));
+                    const juce::uint8 bytes[] { 0, 0x20, 0x29, 0, 0x33, 0 };
+                    output->sendMessageNow (juce::MidiMessage::createSysExMessage (bytes, sizeof (bytes)));
+                }
+                if (action == "channel")
+                {
+                    output->sendMessageNow (juce::MidiMessage::programChange (1, 20)); cc (1, 82, 70);
+                    output->sendMessageNow (juce::MidiMessage::programChange (2, 24)); cc (2, 82, 77);
+                }
+                command.withFileExtension ("done").replaceWithText (action);
+            }
+            pump (10);
+        }
+        return 2;
+    }
     const auto name = "BSII isolated automation " + juce::Uuid().toString();
     const auto log = juce::File::getSpecialLocation (juce::File::tempDirectory)
         .getNonexistentChildFile ("bsii-automation", ".txt");
@@ -296,6 +338,72 @@ int main (int argc, char** argv)
         pump (3100); // Timeout keeps the previous captured patch.
         ok &= ! capture.getProjectRecallInfo().capturing && capture.getProjectRecallInfo().hasCapture;
     }
+    {
+        const auto sourceName = "BSII direct controls " + juce::Uuid().toString();
+        const auto command = log.withFileExtension ("command");
+        const auto done = command.withFileExtension ("done");
+        juce::ChildProcess source;
+        ok &= source.start (juce::StringArray {
+            juce::File::getSpecialLocation (juce::File::currentExecutableFile).getFullPathName(),
+            "--controls-source", sourceName, command.getFullPathName() });
+        BSIIControlAudioProcessor direct;
+        bool connected = false;
+        for (int n = 0; n < 100 && ! connected; ++n)
+        {
+            connected = direct.connectHardwareSysExInput (sourceName);
+            if (! connected) pump (20);
+        }
+        ok &= connected;
+        auto phase = [&] (const juce::String& action)
+        {
+            command.replaceWithText (action);
+            for (int n = 0; n < 100 && done.loadFileAsString() != action; ++n) pump (20);
+            pump (100);
+            ok &= done.loadFileAsString() == action;
+        };
+        auto index = [&] (const char* id)
+        {
+            const auto& specs = bsii::parameterSpecs();
+            for (size_t n = 0; n < specs.size(); ++n)
+                if (juce::String (specs[n].id) == id) return static_cast<int> (n);
+            return -1;
+        };
+        phase ("live");
+        ok &= direct.consumeHardwareProgram() == 23;
+        ok &= direct.consumeHardwareValue (index ("filterResonance")) == 55;
+        ok &= direct.consumeHardwareValue (index ("filterCutoff")) == 121;
+        ok &= direct.consumeChoiceWireValue (0) == 1;
+        const auto serial = direct.getLatestReceivedMidi().serial;
+        ok &= serial == 6; // Notes/wheel/clock are not controller input.
+        juce::AudioBuffer<float> audio (2, 64);
+        juce::MidiBuffer duplicate;
+        duplicate.addEvent (juce::MidiMessage::programChange (1, 99), 0);
+        duplicate.addEvent (juce::MidiMessage::controllerEvent (1, 82, 99), 1);
+        duplicate.addEvent (juce::MidiMessage::noteOn (1, 60, static_cast<juce::uint8> (100)), 2);
+        direct.processBlock (audio, duplicate);
+        ok &= duplicate.getNumEvents() == 3 && direct.getLatestReceivedMidi().serial == serial;
+        ok &= direct.consumeHardwareValue (index ("filterResonance")) == bsii::noHardwareValue;
+        ok &= direct.consumeHardwareProgram() == -1;
+        direct.setLiveMidiRxEnabled (false);
+        phase ("paused");
+        ok &= direct.getLatestReceivedMidi().serial == serial && direct.getLatestSysEx().serial == 1;
+        ok &= direct.consumeHardwareProgram() == -1;
+        direct.setHardwareMidiChannel (2);
+        direct.setLiveMidiRxEnabled (true);
+        phase ("channel");
+        ok &= direct.consumeHardwareProgram() == 24;
+        ok &= direct.consumeHardwareValue (index ("filterResonance")) == 77;
+        direct.connectHardwareSysExInput ({});
+        duplicate.clear();
+        duplicate.addEvent (juce::MidiMessage::programChange (2, 25), 0);
+        duplicate.addEvent (juce::MidiMessage::controllerEvent (2, 82, 88), 1);
+        direct.processBlock (audio, duplicate);
+        ok &= direct.consumeHardwareProgram() == 25;
+        ok &= direct.consumeHardwareValue (index ("filterResonance")) == 88;
+        command.replaceWithText ("stop");
+        source.waitForProcessToFinish (3000);
+        command.deleteFile(); done.deleteFile();
+    }
     log.withFileExtension ("stop").replaceWithText ("stop");
     sink.waitForProcessToFinish (5000);
     const auto actual = juce::StringArray::fromLines (log.loadFileAsString());
@@ -303,6 +411,6 @@ int main (int argc, char** argv)
     if (actual != expected)
         std::cerr << "Expected:\n" << expected.joinIntoString ("\n") << "\nActual:\n" << actual.joinIntoString ("\n") << "\n";
     log.deleteFile(); log.withFileExtension ("stop").deleteFile();
-    std::cout << (ok ? "PASS" : "FAIL") << " processor automation before/after editor, native CC/paired CC/NRPN, linked triggers, silent receive/recall, channel persistence, saved connection, patch-refresh notifications, capture validation and project recall before automation\n";
+    std::cout << (ok ? "PASS" : "FAIL") << " processor automation before/after editor, native CC/paired CC/NRPN, linked triggers, silent receive/recall, channel persistence, saved connection, patch-refresh notifications, capture/recall plus direct live controls, duplicate filtering, pause/channel and host fallback\n";
     return ok ? 0 : 1;
 }

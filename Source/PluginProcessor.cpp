@@ -10,7 +10,16 @@ BSIIControlAudioProcessor::BSIIControlAudioProcessor()
         .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
         .withOutput ("Output", juce::AudioChannelSet::stereo(), true)),
       apvts (*this, nullptr, "STATE", createParameterLayout()),
-      directSysExInput ([this] (const juce::MidiMessage& message) { receiveSysEx (message); })
+      directSysExInput ([this] (const juce::MidiMessage& message)
+      {
+          if (message.isSysEx()) receiveSysEx (message);
+          else
+          {
+              juce::MidiBuffer controls;
+              controls.addEvent (message, 0);
+              parseIncomingMidi (controls, false, true);
+          }
+      }, true)
 {
     clearPendingMidi();
     for (auto& value : pendingHardwareValues) value.store (bsii::noHardwareValue, std::memory_order_relaxed);
@@ -376,7 +385,7 @@ void BSIIControlAudioProcessor::receiveSysEx (const juce::MidiMessage& message)
     lastSysExSerial.fetch_add (1, std::memory_order_release);
 }
 
-void BSIIControlAudioProcessor::parseIncomingMidi (const juce::MidiBuffer& midiMessages, bool acceptSysEx)
+void BSIIControlAudioProcessor::parseIncomingMidi (const juce::MidiBuffer& midiMessages, bool acceptSysEx, bool directControls)
 {
     const auto wantedChannel = hardwareMidiChannel.load (std::memory_order_relaxed);
     const auto& params = bsii::parameterSpecs();
@@ -389,11 +398,15 @@ void BSIIControlAudioProcessor::parseIncomingMidi (const juce::MidiBuffer& midiM
         if (message.isSysEx())
         {
             // A host may also forward this reply. Prefer the direct port to
-            // avoid processing the same dump twice; CC/program reception stays hosted.
+            // avoid processing the same dump twice.
             if (acceptSysEx) receiveSysEx (message);
             continue;
         }
 
+        // One authoritative control source: direct port when connected, host
+        // route otherwise (including standalone). Do not decode host duplicates.
+        // Check per message so a port change cannot retain a whole stale block.
+        if (directControls != directSysExInput.isOpen()) continue;
         if (! liveMidiRxEnabled.load (std::memory_order_relaxed))
             continue;
 

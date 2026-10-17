@@ -119,3 +119,16 @@ before flushing queued parameter changes. It never runs on each Play. The accept
 patch format only addresses the temporary edit buffer. No stored preset save command
 is introduced. Local native/offline checks, all format builds and AU validation
 pass; manual hardware acceptance remains pending. See project-sound-recall.md.
+
+
+### Hardware controls independent of the host device chain
+
+Plugin direct MIDI input now accepts CC/NRPN and Program Change alongside SysEx.
+This follows a user-isolated receive failure after External Instrument, while
+reception on a MIDI-only track and native hardware capture both worked. The host
+control decoder is skipped while direct input is open, avoiding duplicate updates;
+missing/ambiguous direct inputs retain host fallback. Live RX pause, selected-channel
+rules and standalone Active MIDI Inputs are retained. Notes, pitch wheel and clock
+are excluded from direct input and keep their existing host route. Expanded native
+regression, original SysEx-only test, offline suite, format builds and AU validation
+pass. Original-chain hardware acceptance remains pending.

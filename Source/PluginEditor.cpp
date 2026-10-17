@@ -670,8 +670,8 @@ bool BSIIControlAudioProcessorEditor::reopenSelectedMidiOutput (bool forceReopen
         processor.rememberHardwareMidiOutput (selectedDeviceIdentifier, deviceName);
         const bool inputReady = processor.connectHardwareSysExInput (deviceName);
         const auto receiveHint = processor.usesDirectHardwareSysEx()
-            ? (inputReady ? ". Patch RX connected directly; live CC/NRPN uses the DAW track input."
-                          : ". Patch RX unavailable: no unique matching hardware MIDI input. Check USB and Refresh MIDI.")
+            ? (inputReady ? ". Patch and live control RX connected directly."
+                          : ". Direct RX unavailable: no unique matching MIDI input. Live controls use the DAW input.")
             : ". RX requires Bass Station II enabled under Settings -> Active MIDI inputs.";
         statusLabel.setText ("TX connected to " + deviceName + receiveHint, juce::dontSendNotification);
         return true;

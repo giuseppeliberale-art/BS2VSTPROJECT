@@ -196,3 +196,21 @@ Recall build validation: seven offline groups and expanded native processor test
 PASS. Release Standalone/VST3/AU build and installed AU/signature checks PASS.
 Updated plugins installed; previous bundles retained in ignored validation-results.
 User's manual stored-preset/captured-sound recall acceptance is still pending.
+
+
+## Direct live-control reception
+
+A later live-input failure remained with the original External Instrument chain,
+but worked in a new MIDI-only track. Fresh passive capture confirmed2,414 valid
+hardware Cutoff updates. Plugin input now receives CC/NRPN and Program Change
+directly, alongside SysEx, independent of chain placement. Host control decoding
+is the fallback; duplicate decoding is suppressed while direct input is open.
+Notes/clock/wheel route is unchanged. Standalone Active MIDI Inputs is unchanged.
+Original-chain user retest is pending. See plugin-smoke-test.md for evidence.
+
+
+Direct-control validation/install complete: expanded native processor regression,
+original SysEx-only helper test, seven offline groups, all three format builds,
+installed signatures and AU validation PASS. Temporary virtual ports only; no
+physical synth output was sent by these regressions. Manual original-chain user
+retest pending. Prior installed builds retained under ignored validation-results.
