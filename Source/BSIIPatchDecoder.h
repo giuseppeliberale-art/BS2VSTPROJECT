@@ -30,6 +30,7 @@ namespace bsii
         int lfo1Wave=-1, lfo1Delay=-1, lfo1Slew=-1, lfo1Speed=-1, lfo1KeySync=-1;
         int lfo2Wave=-1, lfo2Delay=-1, lfo2Slew=-1, lfo2Speed=-1, lfo2KeySync=-1;
         int arpSwing=-1, modWhLfo1Pitch=-1, modWhOsc2Pitch=-1, aftertouchFilter=-1, aftertouchLfo1=-1, aftertouchLfo2Spd=-1;
+        int arpOn=-1, arpLatch=-1, arpOctaves=-1, arpMode=-1, arpRhythm=-1, seqRetrig=-1;
         int oscSyncRaw=-1;
         int oscFilterMod=-1, distortion=-1, vcaLimit=-1;
     };
@@ -141,6 +142,17 @@ namespace bsii
                             0, 2, out.ampTrigger, out);
         acceptVerified (((b[98] & 0x1F) << 2) | ((b[99] >> 5) & 0x03), 0, 127, out.osc1ModEnvPitch, out);
         acceptVerified (extractField (b, 101, 0x03, 0x7C), 0, 127, out.osc1ModEnvPW, out);
+
+        // Arp/Seq fields measured from labelled hardware patch captures (4.14).
+        acceptVerified (extractField (b, 77, 0x08), 0, 1, out.arpOn, out);
+        acceptVerified (extractField (b, 77, 0x10), 0, 1, out.arpLatch, out);
+        acceptVerified (extractField (b, 77, 0x20), 0, 1, out.seqRetrig, out);
+        // Wire/storage octave is 1-4; the host choice index is 0-3.
+        const int arpOctaveWire = extractField (b, 78, 0x1C);
+        if (arpOctaveWire >= 1 && arpOctaveWire <= 4)
+            acceptVerified (arpOctaveWire - 1, 0, 3, out.arpOctaves, out);
+        acceptVerified (extractField (b, 79, 0x0E), 0, 7, out.arpMode, out);
+        acceptVerified (extractField (b, 80, 0x1F), 0, 31, out.arpRhythm, out);
 
         // ---- Candidate fields from the historical packed-patch map ----
         // Each field is range-checked independently. Nothing here can invalidate

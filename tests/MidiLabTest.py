@@ -17,10 +17,8 @@ class MidiLabTests(unittest.TestCase):
         ids = {item['id'] for item in lab.registry()}
         import re
         mapped = set(re.findall(r'\{"([^"]+)"', (ROOT/'Source/BSIIPatchFields.h').read_text()))
-        live = set(re.findall(r'"([^"]+)"', (ROOT/'Source/BSIIMidi.h').read_text().split('liveMidiOnlyIds[] {')[1].split('};')[0]))
-        self.assertEqual(ids, mapped | live)
-        self.assertFalse(mapped & live)
-        self.assertEqual({c['id'] for c in lab.registry() if c['patchMapped']}, mapped)
+        self.assertEqual(ids, mapped)
+        self.assertTrue(all(c['patchMapped'] for c in lab.registry()))
         self.assertEqual(next(c for c in lab.registry() if c['id']=='bendAmount')['minimum'], -24)
 
     def test_running_status_fragmentation_clock_and_program(self):
@@ -87,7 +85,9 @@ class MidiLabTests(unittest.TestCase):
         expected={p.attrib['id']:float(p.attrib['value']) for p in ET.parse(ROOT/'tests/state-fixtures/baseline.bsiistate').getroot() if 'value' in p.attrib}
         self.assertTrue(decoded['valid'])
         self.assertEqual(set(decoded['fields']),{c['id'] for c in lab.registry() if c['patchMapped']})
-        self.assertTrue(all(expected[k]==v for k,v in decoded['fields'].items()))
+        legacy={k:v for k,v in expected.items() if k in decoded['fields']}
+        self.assertEqual(len(legacy),76) # Old XML also retains obsolete raw aliases.
+        self.assertTrue(all(decoded['fields'][k]==v for k,v in legacy.items()))
 
     @unittest.skipUnless(os.environ.get('BSII_PATCH_INSPECT'), 'Inspector built by validation routine')
     def test_actual_decoder_rejects_truncated_patch(self):
@@ -96,6 +96,37 @@ class MidiLabTests(unittest.TestCase):
             result=subprocess.run([os.environ['BSII_PATCH_INSPECT'],str(p)],capture_output=True,text=True)
             self.assertNotEqual(result.returncode,0)
             self.assertFalse(json.loads(result.stdout)['valid'])
+
+    @unittest.skipUnless(os.environ.get('BSII_PATCH_INSPECT'), 'Inspector built by validation routine')
+    def test_labelled_arp_seq_hardware_patch_captures(self):
+        folder=ROOT/'tests/arp-seq-fixtures'
+        manifest=json.loads((folder/'manifest.json').read_text())
+        result=subprocess.run([os.environ['BSII_PATCH_INSPECT'],*[str(folder/r['file']) for r in manifest]],capture_output=True,text=True,check=True)
+        decoded=[json.loads(line) for line in result.stdout.splitlines()]
+        self.assertEqual(len(decoded),len(manifest))
+        coverage={}
+        for row,patch in zip(manifest,decoded):
+            self.assertTrue(patch['valid'])
+            for ident,value in row['expected_choice_indices'].items():
+                self.assertEqual(patch['fields'][ident],value,(row['file'],ident))
+                coverage.setdefault(ident,set()).add(value)
+        self.assertEqual(coverage,dict(arpOn={0,1},arpLatch={0,1},arpOctaves={0,1,2,3},arpMode=set(range(8)),arpRhythm={0,16,31},seqRetrig={0,1}))
+
+    @unittest.skipUnless(os.environ.get('BSII_PATCH_INSPECT'), 'Inspector built by validation routine')
+    def test_arp_fields_ignore_neighbours_and_reject_invalid_octaves(self):
+        source=bytearray((ROOT/'tests/arp-seq-fixtures/seq-retrig-on.syx').read_bytes())
+        ids=['arpOn','arpLatch','arpOctaves','arpMode','arpRhythm','seqRetrig']
+        def decode(path):
+            result=subprocess.run([os.environ['BSII_PATCH_INSPECT'],str(path)],capture_output=True,text=True,check=True)
+            return json.loads(result.stdout)['fields']
+        with tempfile.TemporaryDirectory() as tmp:
+            path=Path(tmp)/'test.syx';path.write_bytes(source);before=decode(path)
+            source[77]^=0x47;source[78]^=0x63;source[79]^=0x71;source[80]^=0x60
+            path.write_bytes(source);after=decode(path)
+            self.assertEqual({k:before[k] for k in ids},{k:after[k] for k in ids})
+            for raw in (0,5,6,7):
+                source[78]=(source[78]&~0x1c)|(raw<<2);path.write_bytes(source)
+                self.assertEqual(decode(path)['arpOctaves'],-1)
 
     def test_channel_filter_cannot_pass_on_wrong_channel(self):
         with tempfile.TemporaryDirectory() as tmp:

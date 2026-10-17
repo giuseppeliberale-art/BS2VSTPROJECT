@@ -81,6 +81,12 @@ namespace bsii
         {"ampFixed", &bsii::DecodedPatchFields::ampFixed},
         {"modFixed", &bsii::DecodedPatchFields::modFixed},
         {"lfo1KeySync", &bsii::DecodedPatchFields::lfo1KeySync},
-        {"lfo2KeySync", &bsii::DecodedPatchFields::lfo2KeySync}
+        {"lfo2KeySync", &bsii::DecodedPatchFields::lfo2KeySync},
+        {"arpOn", &bsii::DecodedPatchFields::arpOn},
+        {"arpLatch", &bsii::DecodedPatchFields::arpLatch},
+        {"arpOctaves", &bsii::DecodedPatchFields::arpOctaves},
+        {"arpMode", &bsii::DecodedPatchFields::arpMode},
+        {"arpRhythm", &bsii::DecodedPatchFields::arpRhythm},
+        {"seqRetrig", &bsii::DecodedPatchFields::seqRetrig}
     };
 }

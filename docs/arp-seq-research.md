@@ -62,7 +62,7 @@ Initial capture `midi-lab-results/20261018-003026-record-99c112/events.jsonl` re
 
 Capture `midi-lab-results/20261018-003407-record-e5f199/events.jsonl` recorded CC118 values 6, 7, 6, 5 during Random → Record → Play → Random. Intermediate Record was crossed while returning. The raw values are retained, but these initial instructions used the wrong physical Play/Record order; this capture alone did not establish their labels. See corrected capture below. No notes or Rest/Legato actions were requested.
 
-## Implementation status
+## Initial live-only implementation (superseded below)
 
 Six live-only choices appended after the existing 76 host parameters, preserving their indices, IDs and ranges. New Arp / Seq page includes existing Swing (unchanged ID/range), On, Latch, Octaves, Direction / Seq Mode, Rhythm and Seq Retrig. All six new controls support the existing automation, MIDI reception and saved-session parameter paths. Hardware receive checks are recorded below; these do not establish SysEx storage. Get Patch does not populate these six controls: no SysEx offsets have been guessed. Send All deliberately skips them to avoid replaying stale mode/latch values or arming Record during bulk patch recall. Their values remain in DAW state and parameter snapshots; captured raw sound recall remains lossless, subject to the instrument's actual patch contents. Tempo, step editing and remote sequence-slot selection remain unimplemented/unverified.
 
@@ -102,3 +102,38 @@ Feedback correction: incoming MIDI does not automatically make the hardware LCD 
 - Hardware Direction Play changed the app from Record to Play.
 
 Feedback correction: Play/Record have no dedicated LED indicators. The Play test used audible sequence playback; Record used the hardware's explicit `rec` mode display. Sequence-slot selection, note/rest/tie recording, random-access step editing and sequence-content persistence remain untested.
+
+## Controlled SysEx discovery — in progress
+
+Hardware changes followed by requested 154-byte edit-buffer dumps, with Ableton playback stopped. Retained fixtures and the ordered change log are in `tests/arp-seq-fixtures/manifest.json`; expected values are APVTS choice indices, not necessarily MIDI raw values.
+
+- Rhythm: byte 80 (zero-based) changed 31 → 0 → 16 for displayed 32 → 1 → 17. Candidate field low five bits; other Rhythm values and shared upper bits still need checking.
+- Arp On: byte 77 toggled 40 → 32 → 40 for On → Off → On, XOR 8 only.
+- Latch: byte 77 toggled 40 → 56 → 40 for Off → On → Off, XOR 16 only.
+- Octaves/SEQ selector in Play: byte 78 changed 4 → 16 when selecting 4. Changing Direction Play → Up altered only byte 79, 12 → 0, leaving byte 78 at 16. In Up mode Octaves 4 → 1 → 2 → 3 stored 16 → 4 → 8 → 12 in byte 78, supporting a three-bit field shifted left two. Octave choice index is decoded raw minus one. This does not independently validate audible sequence-slot contents or their persistence.
+- Direction: Play → Up changed byte 79 from 12 → 0. Other modes still need controlled SysEx samples.
+
+These findings have not yet been added to the decoder; no guessed offsets or sequence-note payload edits have been used.
+
+### Complete Direction SysEx captures
+
+All eight settings now have labelled hardware captures: Up, Down, UpDn1, UpDn2, Played, Random, Play, Record store byte 79 values 0, 2, 4, 6, 8, 10, 12, 14 respectively. Each successive change altered only that byte. The candidate field is `(byte[79] >> 1) & 7`. Added seven fixtures to the existing manifest; Up was already captured. No keys or sequence-entry buttons were requested during Record. The subsequent controlled Seq Retrig comparison is recorded below.
+
+## SysEx readback implementation
+
+All six fields now feed Get Patch / imported-patch decoding and the shared inspector registry. The controlled fixtures are 22 original 154-byte hardware dumps, with labels and before/after differences preserved in the manifest. Seq Retrig Off changed byte 77 from 40 to 8; On restored 40 (mask 0x20, no other bytes changed). The final field map (zero-based bytes) is:
+
+| Field | Stored bits | Editor value |
+|---|---|---|
+| Arp On | byte 77 mask 0x08 | 0/1 |
+| Latch | byte 77 mask 0x10 | 0/1 |
+| Seq Retrig | byte 77 mask 0x20 | 0/1 |
+| Octaves/SEQ | byte 78 mask 0x1C | compacted raw 1–4 minus one; invalid values skipped |
+| Direction | byte 79 mask 0x0E | index 0–7 in corrected panel order |
+| Rhythm | byte 80 mask 0x1F | index 0–31, displayed 1–32 |
+
+Send All now includes these controls, but skips Direction when its value is Record so bulk recall does not arm sequence recording. Explicit mode edits remain available. Existing host IDs, indices and ranges are unchanged. Old 76-control snapshot fixtures continue to validate their original entries; they have not been retroactively populated with guessed values. New fixture tests check all four octaves, all eight modes, both binary states and Rhythm 1/17/32, as well as neighbouring-bit isolation and invalid stored octave rejection. Full 32-pattern SysEx sweeping and sequence-note payload interpretation are not claimed.
+
+### SysEx implementation validation / installation
+
+2026-10-18: Release standalone/AU/VST3 builds PASS. All seven CTest groups PASS after correcting the legacy fixture checks to distinguish their 76 mapped controls from obsolete raw aliases retained in their XML. All 15 MIDI Lab tests PASS, including all 22 labelled patch fixtures, neighbour-bit isolation and invalid-octave rejection. Native processor integration PASS, including host-silent application of the six Arp/Seq decoded values; direct native SysEx regression PASS. Installed AU/VST3 signatures and AU validator PASS. Prior plugin bundles retained in ignored `validation-results/20261018-011828-6393/before/`; failed initial fixture expectations and passing retests are retained in the same report directory. User saved and closed Ableton before installation. Manual hosted Get Patch validation with Live RX paused is the next acceptance check.

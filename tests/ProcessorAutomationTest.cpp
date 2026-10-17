@@ -244,7 +244,7 @@ int main (int argc, char** argv)
         pump();
         expected.add ("f0 00 20 29 00 33 00 40 f7");
         juce::MemoryBlock patch;
-        ok &= juce::File::getCurrentWorkingDirectory().getChildFile ("tests/state-fixtures/baseline.syx").loadFileAsData (patch);
+        ok &= juce::File::getCurrentWorkingDirectory().getChildFile ("tests/arp-seq-fixtures/seq-retrig-on.syx").loadFileAsData (patch);
         const auto decoded = bsii::decodePatchFields (patch);
         HostEdits edits;
         receiver.addListener (&edits);
@@ -255,6 +255,8 @@ int main (int argc, char** argv)
         if (edits.count != 0) std::cerr << "FAIL: patch refresh reported " << edits.count << " manual parameter edits to host\n";
         ok &= edits.count == 0 && decoded.valid
             && juce::roundToInt (receiver.getParameters().getRawParameterValue ("filterResonance")->load()) == decoded.filterResonance;
+        for (const auto [id, value] : { std::pair {"arpOn", decoded.arpOn}, {"arpLatch", decoded.arpLatch}, {"arpOctaves", decoded.arpOctaves}, {"arpMode", decoded.arpMode}, {"arpRhythm", decoded.arpRhythm}, {"seqRetrig", decoded.seqRetrig} })
+            if (value >= 0) ok &= juce::roundToInt (receiver.getParameters().getRawParameterValue (id)->load()) == value;
         incoming.clear();
         incoming.addEvent (juce::MidiMessage::controllerEvent (1, 82, 60), 0);
         incoming.addEvent (juce::MidiMessage::controllerEvent (1, 83, 1), 1);

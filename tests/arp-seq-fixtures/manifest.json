@@ -1,0 +1,305 @@
+[
+  {
+    "file": "initial.syx",
+    "source": "midi-lab-results/20261018-010303-backup-73d985/baseline.syx",
+    "expected_choice_indices": {
+      "arpRhythm": 31
+    },
+    "changes_from_previous": []
+  },
+  {
+    "file": "rhythm-1.syx",
+    "source": "midi-lab-results/20261018-010338-backup-093c11/baseline.syx",
+    "expected_choice_indices": {
+      "arpRhythm": 0
+    },
+    "changes_from_previous": [
+      {
+        "offset": 80,
+        "before": 31,
+        "after": 0
+      }
+    ]
+  },
+  {
+    "file": "rhythm-17.syx",
+    "source": "midi-lab-results/20261018-010414-backup-8e5945/baseline.syx",
+    "expected_choice_indices": {
+      "arpRhythm": 16
+    },
+    "changes_from_previous": [
+      {
+        "offset": 80,
+        "before": 0,
+        "after": 16
+      }
+    ]
+  },
+  {
+    "file": "arp-off.syx",
+    "source": "midi-lab-results/20261018-010455-backup-d93b87/baseline.syx",
+    "expected_choice_indices": {
+      "arpOn": 0
+    },
+    "changes_from_previous": [
+      {
+        "offset": 77,
+        "before": 40,
+        "after": 32
+      }
+    ]
+  },
+  {
+    "file": "arp-on.syx",
+    "source": "midi-lab-results/20261018-010521-backup-e7b37b/baseline.syx",
+    "expected_choice_indices": {
+      "arpOn": 1
+    },
+    "changes_from_previous": [
+      {
+        "offset": 77,
+        "before": 32,
+        "after": 40
+      }
+    ]
+  },
+  {
+    "file": "latch-on.syx",
+    "source": "midi-lab-results/20261018-010553-backup-13ad6e/baseline.syx",
+    "expected_choice_indices": {
+      "arpLatch": 1
+    },
+    "changes_from_previous": [
+      {
+        "offset": 77,
+        "before": 40,
+        "after": 56
+      }
+    ]
+  },
+  {
+    "file": "latch-off.syx",
+    "source": "midi-lab-results/20261018-010621-backup-7cf8e7/baseline.syx",
+    "expected_choice_indices": {
+      "arpLatch": 0
+    },
+    "changes_from_previous": [
+      {
+        "offset": 77,
+        "before": 56,
+        "after": 40
+      }
+    ]
+  },
+  {
+    "file": "play-selector-4.syx",
+    "source": "midi-lab-results/20261018-010711-backup-962aac/baseline.syx",
+    "expected_choice_indices": {
+      "arpMode": 6
+    },
+    "changes_from_previous": [
+      {
+        "offset": 78,
+        "before": 4,
+        "after": 16
+      }
+    ]
+  },
+  {
+    "file": "up-octaves-4.syx",
+    "source": "midi-lab-results/20261018-010754-backup-e3c8ac/baseline.syx",
+    "expected_choice_indices": {
+      "arpMode": 0,
+      "arpOctaves": 3
+    },
+    "changes_from_previous": [
+      {
+        "offset": 79,
+        "before": 12,
+        "after": 0
+      }
+    ]
+  },
+  {
+    "file": "up-octaves-1.syx",
+    "source": "midi-lab-results/20261018-010834-backup-51eaec/baseline.syx",
+    "expected_choice_indices": {
+      "arpOctaves": 0
+    },
+    "changes_from_previous": [
+      {
+        "offset": 78,
+        "before": 16,
+        "after": 4
+      }
+    ]
+  },
+  {
+    "file": "up-octaves-2.syx",
+    "source": "midi-lab-results/20261018-010903-backup-b8a14c/baseline.syx",
+    "expected_choice_indices": {
+      "arpOctaves": 1
+    },
+    "changes_from_previous": [
+      {
+        "offset": 78,
+        "before": 4,
+        "after": 8
+      }
+    ]
+  },
+  {
+    "file": "up-octaves-3.syx",
+    "source": "midi-lab-results/20261018-010927-backup-53907f/baseline.syx",
+    "expected_choice_indices": {
+      "arpOctaves": 2
+    },
+    "changes_from_previous": [
+      {
+        "offset": 78,
+        "before": 8,
+        "after": 12
+      }
+    ]
+  },
+  {
+    "file": "mode-down.syx",
+    "source": "midi-lab-results/20261018-011046-backup-21f66a/baseline.syx",
+    "expected_choice_indices": {
+      "arpMode": 1
+    },
+    "changes_from_previous": [
+      {
+        "offset": 79,
+        "before": 0,
+        "after": 2
+      }
+    ]
+  },
+  {
+    "file": "mode-updn1.syx",
+    "source": "midi-lab-results/20261018-011212-backup-f8de89/baseline.syx",
+    "expected_choice_indices": {
+      "arpMode": 2
+    },
+    "changes_from_previous": [
+      {
+        "offset": 79,
+        "before": 2,
+        "after": 4
+      }
+    ]
+  },
+  {
+    "file": "mode-updn2.syx",
+    "source": "midi-lab-results/20261018-011240-backup-24ef63/baseline.syx",
+    "expected_choice_indices": {
+      "arpMode": 3
+    },
+    "changes_from_previous": [
+      {
+        "offset": 79,
+        "before": 4,
+        "after": 6
+      }
+    ]
+  },
+  {
+    "file": "mode-played.syx",
+    "source": "midi-lab-results/20261018-011307-backup-9b8238/baseline.syx",
+    "expected_choice_indices": {
+      "arpMode": 4
+    },
+    "changes_from_previous": [
+      {
+        "offset": 79,
+        "before": 6,
+        "after": 8
+      }
+    ]
+  },
+  {
+    "file": "mode-random.syx",
+    "source": "midi-lab-results/20261018-011333-backup-289a82/baseline.syx",
+    "expected_choice_indices": {
+      "arpMode": 5
+    },
+    "changes_from_previous": [
+      {
+        "offset": 79,
+        "before": 8,
+        "after": 10
+      }
+    ]
+  },
+  {
+    "file": "mode-play.syx",
+    "source": "midi-lab-results/20261018-011359-backup-8f99d0/baseline.syx",
+    "expected_choice_indices": {
+      "arpMode": 6
+    },
+    "changes_from_previous": [
+      {
+        "offset": 79,
+        "before": 10,
+        "after": 12
+      }
+    ]
+  },
+  {
+    "file": "mode-record.syx",
+    "source": "midi-lab-results/20261018-011426-backup-315e90/baseline.syx",
+    "expected_choice_indices": {
+      "arpMode": 7
+    },
+    "changes_from_previous": [
+      {
+        "offset": 79,
+        "before": 12,
+        "after": 14
+      }
+    ]
+  },
+  {
+    "file": "up-before-retrig.syx",
+    "source": "midi-lab-results/20261018-011536-backup-a15fec/baseline.syx",
+    "expected_choice_indices": {
+      "arpMode": 0
+    },
+    "changes_from_previous": [
+      {
+        "offset": 79,
+        "before": 14,
+        "after": 0
+      }
+    ]
+  },
+  {
+    "file": "seq-retrig-off.syx",
+    "source": "midi-lab-results/20261018-011615-backup-292870/baseline.syx",
+    "expected_choice_indices": {
+      "seqRetrig": 0
+    },
+    "changes_from_previous": [
+      {
+        "offset": 77,
+        "before": 40,
+        "after": 8
+      }
+    ]
+  },
+  {
+    "file": "seq-retrig-on.syx",
+    "source": "midi-lab-results/20261018-011647-backup-436571/baseline.syx",
+    "expected_choice_indices": {
+      "seqRetrig": 1
+    },
+    "changes_from_previous": [
+      {
+        "offset": 77,
+        "before": 8,
+        "after": 40
+      }
+    ]
+  }
+]

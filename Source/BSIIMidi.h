@@ -163,32 +163,20 @@ namespace bsii
               { {0, "Off"}, {1, "On"} }, 1, true },
             // Append choices to preserve every existing host parameter index and ID.
             { "arpOn", "Arp On", "Arp / Seq", Protocol::cc7, 108, -1,
-              { {0, "Off"}, {1, "On"} }, 0, false },
+              { {0, "Off"}, {1, "On"} }, 0, true },
             { "arpLatch", "Latch", "Arp / Seq", Protocol::cc7, 109, -1,
-              { {0, "Off"}, {1, "On"} }, 0, false },
+              { {0, "Off"}, {1, "On"} }, 0, true },
             { "arpOctaves", "Octaves", "Arp / Seq", Protocol::cc7, 111, -1,
-              { {1, "1"}, {2, "2"}, {3, "3"}, {4, "4"} }, 0, false },
+              { {1, "1"}, {2, "2"}, {3, "3"}, {4, "4"} }, 0, true },
             { "arpMode", "Direction / Seq Mode", "Arp / Seq", Protocol::cc7, 118, -1,
               { {0, "Up"}, {1, "Down"}, {2, "UpDn1"}, {3, "UpDn2"},
-                {4, "Played"}, {5, "Random"}, {6, "Play"}, {7, "Record"} }, 0, false },
+                {4, "Played"}, {5, "Random"}, {6, "Play"}, {7, "Record"} }, 0, true },
             { "arpRhythm", "Rhythm", "Arp / Seq", Protocol::cc7, 119, -1,
-              { {0, "1"}, {1, "2"}, {2, "3"}, {3, "4"}, {4, "5"}, {5, "6"}, {6, "7"}, {7, "8"}, {8, "9"}, {9, "10"}, {10, "11"}, {11, "12"}, {12, "13"}, {13, "14"}, {14, "15"}, {15, "16"}, {16, "17"}, {17, "18"}, {18, "19"}, {19, "20"}, {20, "21"}, {21, "22"}, {22, "23"}, {23, "24"}, {24, "25"}, {25, "26"}, {26, "27"}, {27, "28"}, {28, "29"}, {29, "30"}, {30, "31"}, {31, "32"} }, 0, false },
+              { {0, "1"}, {1, "2"}, {2, "3"}, {3, "4"}, {4, "5"}, {5, "6"}, {6, "7"}, {7, "8"}, {8, "9"}, {9, "10"}, {10, "11"}, {11, "12"}, {12, "13"}, {13, "14"}, {14, "15"}, {15, "16"}, {16, "17"}, {17, "18"}, {18, "19"}, {19, "20"}, {20, "21"}, {21, "22"}, {22, "23"}, {23, "24"}, {24, "25"}, {25, "26"}, {26, "27"}, {27, "28"}, {28, "29"}, {29, "30"}, {30, "31"}, {31, "32"} }, 0, true },
             { "seqRetrig", "Seq Retrig", "Arp / Seq", Protocol::nrpn7, 0, 106,
-              { {0, "Off"}, {1, "On"} }, 1, false },
+              { {0, "Off"}, {1, "On"} }, 1, true },
         };
         return specs;
-    }
-
-    // These controls have captured live MIDI encodings but no established patch offsets.
-    inline constexpr const char* liveMidiOnlyIds[] {
-        "arpOn", "arpLatch", "arpOctaves", "arpMode", "arpRhythm", "seqRetrig"
-    };
-
-    inline bool isLiveMidiOnly (const juce::String& id)
-    {
-        for (const auto* candidate : liveMidiOnlyIds)
-            if (id == candidate) return true;
-        return false;
     }
 
     inline int clampMidiChannel (int channel) { return juce::jlimit (1, 16, channel); }

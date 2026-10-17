@@ -146,8 +146,7 @@ ChoiceControl::ChoiceControl (juce::AudioProcessorValueTreeState& state,
     const juce::String parameterId (spec.id);
     note.setText ((parameterId == "ampTrigger" || parameterId == "modTrigger")
                       ? "Shared: Amp + Mod"
-                      : (bsii::isLiveMidiOnly (parameterId) ? "Live MIDI only"
-                         : (spec.verifiedWireValues ? "MIDI verified" : "MIDI test")),
+                      : (spec.verifiedWireValues ? "MIDI verified" : "MIDI test"),
                   juce::dontSendNotification);
     note.setJustificationType (juce::Justification::centred);
     note.setColour (juce::Label::textColourId,
@@ -155,12 +154,10 @@ ChoiceControl::ChoiceControl (juce::AudioProcessorValueTreeState& state,
                                             : juce::Colours::orange.withAlpha (0.85f));
     addAndMakeVisible (note);
 
-    if (bsii::isLiveMidiOnly (parameterId))
-        combo.setTooltip ("Live MIDI control. Get Patch does not update this setting yet; Send All leaves it unchanged. Hardware-to-app mapping captured; app-to-hardware testing pending.");
     if (parameterId == "arpMode")
-        combo.setTooltip ("Record arms hardware sequence recording: incoming notes can replace sequence data. Get Patch does not update this control; Send All leaves it unchanged.");
+        combo.setTooltip ("Record arms hardware sequence recording: incoming notes can replace sequence data. Send All will not arm Record; select it explicitly here or on the hardware.");
     if (parameterId == "arpOctaves")
-        combo.setTooltip ("Arpeggiator octave span (1-4). Sequence-slot selection in Record/Play has not been verified. Get Patch does not update this control; Send All leaves it unchanged.");
+        combo.setTooltip ("Arpeggiator octave span (1-4). The hardware shares this selector with SEQ in Play/Record; sequence-slot playback contents have not been verified.");
 
     attachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment> (state, spec.id, combo);
 }
@@ -776,16 +773,15 @@ void BSIIControlAudioProcessorEditor::sendAllStateToHardware()
 
     for (size_t i = 0; i < choices.size(); ++i)
     {
-        // Patch reception cannot refresh these controls yet. Avoid sending stale
-        // mode/latch values, particularly Record, as part of a bulk patch recall.
-        if (bsii::isLiveMidiOnly (choices[i].id)) continue;
         const auto choiceIndex = juce::jlimit (0, static_cast<int> (choices[i].choices.size()) - 1,
                                               currentParameterValue (choices[i].id));
+        // Bulk sound recall must not arm recording of incoming sequence notes.
+        if (juce::String (choices[i].id) == "arpMode" && choiceIndex == 7) continue;
         bsii::sendChoice (*midiOutput, midiChannel, choices[i],
                           choices[i].choices[static_cast<size_t> (choiceIndex)].wireValue);
     }
 
-    statusLabel.setText ("Sent patch controls (Arp/Seq live-only settings unchanged) on MIDI channel " + juce::String (midiChannel) + ".",
+    statusLabel.setText ("Sent editor state (Send All never arms Record) on MIDI channel " + juce::String (midiChannel) + ".",
                          juce::dontSendNotification);
 }
 
@@ -1045,6 +1041,12 @@ bool BSIIControlAudioProcessorEditor::decodeSysExIntoEditor (const juce::MemoryB
     set ("lfo2KeySync", decoded.lfo2KeySync);
 
     set ("arpSwing", decoded.arpSwing);
+    set ("arpOn", decoded.arpOn);
+    set ("arpLatch", decoded.arpLatch);
+    set ("arpOctaves", decoded.arpOctaves);
+    set ("arpMode", decoded.arpMode);
+    set ("arpRhythm", decoded.arpRhythm);
+    set ("seqRetrig", decoded.seqRetrig);
     set ("modWhLfo1Pitch", decoded.modWhLfo1Pitch);
     set ("modWhOsc2Pitch", decoded.modWhOsc2Pitch);
     set ("aftertouchFilter", decoded.aftertouchFilter);

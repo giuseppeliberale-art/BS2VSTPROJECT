@@ -33,7 +33,7 @@ version labels still show earlier numbers.
 - **Clearer controls:** Sub Octave −1/−2 and Osc Sync Off/On switches, signed bend
   and modulation values, resizable pages and scrolling for smaller windows.
 
-The Arp/Seq page adds On, Latch, Octaves, Direction/Play/Record, Rhythm and Seq Retrig alongside Swing. The six new controls currently use live MIDI only: Get Patch does not refresh them, and Send All leaves them unchanged. Their emitted encodings were captured from firmware 4.14, and selected live changes have been checked both ways in Ableton. Basic Play/Record mode changes have also been checked; sequence-content editing remains unverified. An initial reception hiccup did not reproduce after restarting Ableton, and its cause is unknown. See [Arp/Seq research and evidence](docs/arp-seq-research.md).
+The Arp/Seq page adds On, Latch, Octaves, Direction/Play/Record, Rhythm and Seq Retrig alongside Swing. Get Patch now reads all six controls from the captured SysEx fields. Send All includes them, except that it will not arm Record mode; select Record explicitly when needed. Their emitted encodings were captured from firmware 4.14, and selected live changes have been checked both ways in Ableton. Basic Play/Record mode changes have also been checked; sequence-content editing remains unverified. An initial reception hiccup did not reproduce after restarting Ableton, and its cause is unknown. See [Arp/Seq research and evidence](docs/arp-seq-research.md).
 
 This is a partial instrument editor. Sequence-step editing, verified sequence-slot selection, LFO sync divisions, several modulation routes and newer firmware functions remain on the roadmap. **AFX mode is planned last.**
 
@@ -116,8 +116,7 @@ hardware sound, click **Capture Project Sound**, wait for success, choose Captur
 sound, then save your DAW Set. That capture stays fixed until you capture again.
 Recall runs once on session load/USB reconnection, including with the editor closed;
 it does not run on every Play or overwrite stored hardware presets. Wait for recall
-to finish before playback. Existing Sets default to Off. Hardware acceptance is
-pending; see [recall behavior and checks](docs/project-sound-recall.md).
+to finish before playback. Existing Sets default to Off. Stored-preset and captured-sound recall have passed manual Ableton checks; USB reconnect cases remain pending; see [recall behavior and checks](docs/project-sound-recall.md).
 
 ## Which save, load or transfer control should I use?
 
@@ -126,7 +125,7 @@ pending; see [recall behavior and checks](docs/project-sound-recall.md).
 | **Get Patch from BSII** | Reads the synth's current edit buffer and updates the editor's supported controls. |
 | **Save Snapshot…** | Saves the editor's parameter state as a `.bsiistate` file. Fetch the hardware patch first if you want its current values. |
 | **Load Snapshot…** | Loads a `.bsiistate` into the editor. It does not send that state to the synth automatically. |
-| **Send All → BSII** | Sends all exposed editor controls to the synth through live MIDI. This is not a full raw-patch transfer. |
+| **Send All → BSII** | Sends exposed editor controls through live MIDI, except that it never arms Record mode. This is not a full raw-patch transfer. |
 | **Import .syx → Editor** | Decodes a raw patch file into the editor without sending it to the synth. |
 | **Send .syx → BSII** | Sends the chosen SysEx file to the hardware. For the single-patch files used here, this replaces the current edit buffer. |
 | **Arm Patch Capture** | Arms receipt of the next manual dump. Perform the dump on the hardware, then save the received message. |
@@ -144,7 +143,7 @@ text to see the state.
 
 ## What has been tested?
 
-- The original **76 controls** have captured patch/decoder coverage; the six new Arp/Seq controls have incoming MIDI evidence only. The retained
+- All **82 controls** have captured patch/decoder coverage; the six Arp/Seq additions use 22 labelled hardware patches in `tests/arp-seq-fixtures/`. The retained
   fixture set includes **96 files and 9,251 patch messages**.
 - Manual checks have exercised supported controls in both directions, with fixes
   and retests recorded in the [manual test review](docs/manual-test-review.md).
@@ -154,7 +153,7 @@ text to see the state.
   selection, all 76 editor values matched the saved hardware patch:
   [preset validation](docs/preset-validation.md).
 - The current offline suite has **seven registered test groups**, including
-  13 Python checks for the MIDI Lab tools.
+  15 Python checks for the MIDI Lab tools.
 
 These checks establish specific MIDI, patch storage and editor behaviors. They do
 not measure acoustic accuracy or establish complete instrument/DAW coverage.
