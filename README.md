@@ -33,7 +33,7 @@ version labels still show earlier numbers.
 - **Clearer controls:** Sub Octave −1/−2 and Osc Sync Off/On switches, signed bend
   and modulation values, resizable pages and scrolling for smaller windows.
 
-The Arp/Seq page adds On, Latch, Octaves, Direction/Play/Record, Rhythm and Seq Retrig alongside Swing. The six new controls currently use live MIDI only: Get Patch does not refresh them, and Send All leaves them unchanged. Their emitted encodings were captured from firmware 4.14, and selected live changes have been checked both ways in Ableton. A reported initial reception hiccup remains under investigation; sequence Play/Record behavior is not yet verified. See [Arp/Seq research and evidence](docs/arp-seq-research.md).
+The Arp/Seq page adds On, Latch, Octaves, Direction/Play/Record, Rhythm and Seq Retrig alongside Swing. The six new controls currently use live MIDI only: Get Patch does not refresh them, and Send All leaves them unchanged. Their emitted encodings were captured from firmware 4.14, and selected live changes have been checked both ways in Ableton. Basic Play/Record mode changes have also been checked; sequence-content editing remains unverified. An initial reception hiccup did not reproduce after restarting Ableton, and its cause is unknown. See [Arp/Seq research and evidence](docs/arp-seq-research.md).
 
 This is a partial instrument editor. Sequence-step editing, verified sequence-slot selection, LFO sync divisions, several modulation routes and newer firmware functions remain on the roadmap. **AFX mode is planned last.**
 

@@ -87,8 +87,18 @@ User-reported checks on the installed build from commit 680c7f9:
 | Latch | Hardware Off reflected as app Off, arp stopped | App On sustained the arp after releasing keys |
 | Seq Retrig | Hardware Off and On both reflected correctly | App Off and On both confirmed by reopening the hardware Function setting without changing its value |
 
-Do not describe the untested reverse transitions or all eight Direction modes as manually verified. Play/Record emitted encodings are captured, but their receive/sequence behavior is still untested.
+Do not describe the untested reverse transitions or all eight Direction modes as manually verified. Play/Record emitted encodings are captured; subsequent basic mode checks are recorded below, with sequence-content tests still outstanding.
 
-Initial Rhythm check failed: hardware at 32, app at 1, CC RX reportedly waiting. Hardware Cutoff then worked; user reported Rhythm began following after moving Cutoff. No root cause established. Cold-start retest pending; this must not be classified as fixed.
+Initial Rhythm check failed: hardware at 32, app at 1, CC RX reportedly waiting. Hardware Cutoff then worked; user reported Rhythm began following after moving Cutoff. No root cause established. The subsequent cold-start retest passed (see below); the cause remains unknown and no fix is claimed.
 
 Feedback correction: incoming MIDI does not automatically make the hardware LCD display the edited parameter. Rhythm, octave span and direction sends were checked audibly. Seq Retrig was checked by explicitly reopening its on-key settings page after each app edit.
+
+### Follow-up startup and sequence-mode checks
+
+- User saved the Set, quit Ableton completely and reopened it. Hardware Rhythm followed immediately before touching Cutoff. The earlier reception hiccup did not reproduce; no code fix or root cause is claimed.
+- App Direction Play plus Arp On played the existing stored sequence when the user held one hardware key. App-to-hardware Play behavior confirmed for that slot.
+- Hardware Direction Up changed the app from Play to Up.
+- App Direction Record made the hardware display show `rec`. No notes were requested or reported entered. This confirms entering Record mode only, not sequence recording or preservation of sequence contents.
+- Hardware Direction Play changed the app from Record to Play.
+
+Feedback correction: Play/Record have no dedicated LED indicators. The Play test used audible sequence playback; Record used the hardware's explicit `rec` mode display. Sequence-slot selection, note/rest/tie recording, random-access step editing and sequence-content persistence remain untested.
