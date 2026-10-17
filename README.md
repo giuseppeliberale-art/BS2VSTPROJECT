@@ -7,8 +7,9 @@ The sound comes from the Bass Station II; this project does not emulate its audi
 
 **Current status:** working standalone editor under active development. The project
 also builds AU and VST3. An early VST3 check in Ableton Live 12.4.6 on Apple
-Silicon passed loading and hardware patch reception; AU passed Apple validation.
-DAW automation, full session recall and wider compatibility still need testing.
+Silicon passed loading, hardware patch reception, and host parameter edits with
+the editor closed; AU passed Apple validation. Recorded automation playback, full
+session recall and wider compatibility still need testing.
 Hardware checks have used a Bass Station II reported as running firmware **4.14**.
 
 The `v0.8.2` tag preserves the original project baseline. `main` includes the later

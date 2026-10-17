@@ -6,11 +6,13 @@
 #include "BSIIMidi.h"
 #include "BSIIHardwareSysExInput.h"
 
-class BSIIControlAudioProcessor : public juce::AudioProcessor
+class BSIIControlAudioProcessor : public juce::AudioProcessor,
+                                  private juce::AudioProcessorValueTreeState::Listener,
+                                  private juce::Timer
 {
 public:
     BSIIControlAudioProcessor();
-    ~BSIIControlAudioProcessor() override = default;
+    ~BSIIControlAudioProcessor() override;
 
     void prepareToPlay (double, int) override;
     void releaseResources() override;
@@ -40,6 +42,26 @@ public:
     bool usesDirectHardwareSysEx() const { return wrapperType != wrapperType_Standalone; }
     bool connectHardwareSysExInput (const juce::String& outputName)
     { return ! usesDirectHardwareSysEx() || directSysExInput.connect (outputName); }
+    // Message-thread access for explicit patch/preset commands. The processor
+    // retains the port when the editor is destroyed.
+    std::unique_ptr<juce::MidiOutput>& hardwareMidiOutput() { return midiOutput; }
+    int getHardwareMidiChannel() const { return hardwareMidiChannel.load(); }
+
+    // Reception/import/recall updates parameters without transmitting them.
+    // Thread-local scopes leave concurrent automation on other threads enabled.
+    class ScopedMidiSilence
+    {
+    public:
+        explicit ScopedMidiSilence (BSIIControlAudioProcessor&, bool discardPendingTrigger = true);
+        ~ScopedMidiSilence();
+    private:
+        BSIIControlAudioProcessor& processor;
+        ScopedMidiSilence* previous;
+        bool discardPendingTrigger;
+        friend class BSIIControlAudioProcessor;
+        JUCE_DECLARE_NON_COPYABLE (ScopedMidiSilence)
+    };
+    void clearPendingMidi(); // Message thread, before explicit full-state sends.
     void setHardwareMidiChannel (int channel);
     void setLiveMidiRxEnabled (bool enabled) { liveMidiRxEnabled.store (enabled, std::memory_order_relaxed); }
     bool isLiveMidiRxEnabled() const { return liveMidiRxEnabled.load (std::memory_order_relaxed); }
@@ -71,18 +93,26 @@ public:
     ReceivedSysEx getLatestSysEx() const;
 
 private:
+    void parameterChanged (const juce::String&, float) override;
+    void timerCallback() override;
+    bool midiIsSilenced() const;
+    static thread_local ScopedMidiSilence* midiSilence;
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
     void parseIncomingMidi (const juce::MidiBuffer&, bool acceptSysEx = true);
     void receiveSysEx (const juce::MidiMessage&);
     void publishNRPN (int channel, int nrpnMSB, int nrpnLSB, int value);
 
     juce::AudioProcessorValueTreeState apvts;
+    std::unique_ptr<juce::MidiOutput> midiOutput;
     std::atomic<int> hardwareMidiChannel { 1 };
     std::atomic<int> pendingHardwareProgram { -1 };
     std::atomic<bool> liveMidiRxEnabled { true };
 
     static constexpr size_t maxSpecs = 96;
     static constexpr size_t maxChoices = 48;
+    // Callbacks only publish atomics; native port I/O runs on the message thread.
+    std::array<std::atomic<int>, maxSpecs + maxChoices> pendingMidi {};
+    std::atomic<int> pendingTrigger { -1 };
     std::array<std::atomic<int>, maxSpecs> pendingHardwareValues {};
     std::array<std::atomic<int>, maxChoices> pendingChoiceWireValues {};
     std::array<std::atomic<int>, 128> pairedMSB {};

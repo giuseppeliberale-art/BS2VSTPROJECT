@@ -5,9 +5,8 @@
 
 ParameterControl::ParameterControl (juce::AudioProcessorValueTreeState& state,
                                     const bsii::ParameterSpec& parameterSpec,
-                                    int specIndexIn,
-                                    std::function<void(int, int)> valueChanged)
-    : index (specIndexIn), spec (parameterSpec), callback (std::move (valueChanged))
+                                    int specIndexIn)
+    : index (specIndexIn), spec (parameterSpec)
 {
     label.setText (spec.name, juce::dontSendNotification);
     label.setJustificationType (juce::Justification::centred);
@@ -100,8 +99,6 @@ ParameterControl::ParameterControl (juce::AudioProcessorValueTreeState& state,
     slider.onValueChange = [this]
     {
         updateDiscreteSwitch();
-        if (! applyingHardware && callback)
-            callback (index, juce::roundToInt (slider.getValue()));
     };
 }
 
@@ -129,15 +126,13 @@ void ParameterControl::resized()
 
 void ParameterControl::setFromHardware (int value)
 {
-    juce::ScopedValueSetter<bool> guard (applyingHardware, true);
     slider.setValue (value, juce::sendNotificationSync);
 }
 
 ChoiceControl::ChoiceControl (juce::AudioProcessorValueTreeState& state,
                               const bsii::ChoiceSpec& choiceSpec,
-                              int choiceIndexIn,
-                              std::function<void(int, int)> choiceChanged)
-    : index (choiceIndexIn), spec (choiceSpec), callback (std::move (choiceChanged))
+                              int choiceIndexIn)
+    : index (choiceIndexIn), spec (choiceSpec)
 {
     label.setText (spec.name, juce::dontSendNotification);
     label.setJustificationType (juce::Justification::centred);
@@ -159,11 +154,6 @@ ChoiceControl::ChoiceControl (juce::AudioProcessorValueTreeState& state,
     addAndMakeVisible (note);
 
     attachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment> (state, spec.id, combo);
-    combo.onChange = [this]
-    {
-        if (! applyingHardware && callback && combo.getSelectedId() > 0)
-            callback (index, combo.getSelectedId() - 1);
-    };
 }
 
 void ChoiceControl::resized()
@@ -181,7 +171,6 @@ bool ChoiceControl::setFromWireValue (int wireValue)
     {
         if (spec.choices[static_cast<size_t> (i)].wireValue == wireValue)
         {
-            juce::ScopedValueSetter<bool> guard (applyingHardware, true);
             combo.setSelectedId (i + 1, juce::sendNotificationSync);
             return true;
         }
@@ -264,7 +253,7 @@ void EditorPage::resized()
 }
 
 BSIIControlAudioProcessorEditor::BSIIControlAudioProcessorEditor (BSIIControlAudioProcessor& p)
-    : AudioProcessorEditor (&p), processor (p)
+    : AudioProcessorEditor (&p), processor (p), midiOutput (p.hardwareMidiOutput())
 {
     setResizable (true, true);
     setResizeLimits (760, 600, 1600, 1200);
@@ -288,18 +277,18 @@ BSIIControlAudioProcessorEditor::BSIIControlAudioProcessorEditor (BSIIControlAud
 
     for (int channel = 1; channel <= 16; ++channel)
         channelBox.addItem (juce::String (channel), channel);
-    channelBox.setSelectedId (1, juce::dontSendNotification);
-    processor.setHardwareMidiChannel (1);
+    midiChannel = processor.getHardwareMidiChannel();
+    channelBox.setSelectedId (midiChannel, juce::dontSendNotification);
     channelBox.onChange = [this]
     {
         midiChannel = juce::jmax (1, channelBox.getSelectedId());
         processor.setHardwareMidiChannel (midiChannel);
         forgetPreset();
-        std::fill (lastSentValues.begin(), lastSentValues.end(), bsii::noHardwareValue);
-        std::fill (lastSentChoiceIndices.begin(), lastSentChoiceIndices.end(), -1);
     };
 
     refreshButton.onClick = [this] { refreshMidiOutputs(); autoSelectBassStation(); };
+    pauseLiveRxButton.setToggleState (! processor.isLiveMidiRxEnabled(), juce::dontSendNotification);
+    setLiveRxPaused (! processor.isLiveMidiRxEnabled());
     pauseLiveRxButton.onClick = [this] { setLiveRxPaused (pauseLiveRxButton.getToggleState()); };
     midiOutputBox.onChange = [this] { selectMidiOutput (midiOutputBox.getSelectedId()); };
 
@@ -358,8 +347,6 @@ BSIIControlAudioProcessorEditor::BSIIControlAudioProcessorEditor (BSIIControlAud
     diagnosticLabel.setJustificationType (juce::Justification::centredLeft);
     diagnosticLabel.setText ("SysEx validation: no patch decoded yet.", juce::dontSendNotification);
 
-    lastSentValues.assign (bsii::parameterSpecs().size(), bsii::noHardwareValue);
-    lastSentChoiceIndices.assign (bsii::choiceSpecs().size(), -1);
     buildPages();
     refreshMidiOutputs();
     autoSelectBassStation();
@@ -370,7 +357,6 @@ BSIIControlAudioProcessorEditor::~BSIIControlAudioProcessorEditor()
 {
     stopTimer();
     fileChooser.reset();
-    midiOutput.reset();
 }
 
 void BSIIControlAudioProcessorEditor::buildPages()
@@ -400,8 +386,7 @@ void BSIIControlAudioProcessorEditor::buildPages()
             for (size_t i = 0; i < choices.size(); ++i)
             {
                 if (sectionName != choices[i].section) continue;
-                auto control = std::make_unique<ChoiceControl> (processor.getParameters(), choices[i], static_cast<int> (i),
-                    [this] (int choiceIndex, int selectedIndex) { sendChoiceValue (choiceIndex, selectedIndex); });
+                auto control = std::make_unique<ChoiceControl> (processor.getParameters(), choices[i], static_cast<int> (i));
                 section->addControl (control.get());
                 choiceControls.push_back (std::move (control));
             }
@@ -410,8 +395,7 @@ void BSIIControlAudioProcessorEditor::buildPages()
             {
                 if (sectionName != params[i].section
                     && ! (sectionName == "Osc 1" && juce::String (params[i].section) == "Master")) continue;
-                auto control = std::make_unique<ParameterControl> (processor.getParameters(), params[i], static_cast<int> (i),
-                    [this] (int specIndex, int value) { sendParameterValue (specIndex, value); });
+                auto control = std::make_unique<ParameterControl> (processor.getParameters(), params[i], static_cast<int> (i));
                 section->addControl (control.get());
                 parameterControls.push_back (std::move (control));
             }
@@ -550,6 +534,14 @@ void BSIIControlAudioProcessorEditor::refreshMidiOutputs()
 
 void BSIIControlAudioProcessorEditor::autoSelectBassStation()
 {
+    if (midiOutput != nullptr)
+        for (int i = 0; i < midiOutputs.size(); ++i)
+            if (midiOutputs[i].identifier == midiOutput->getIdentifier())
+            {
+                selectedDeviceIdentifier = midiOutputs[i].identifier;
+                midiOutputBox.setSelectedId (i + 1, juce::dontSendNotification);
+                return;
+            }
     for (int i = 0; i < midiOutputs.size(); ++i)
     {
         const auto name = midiOutputs[i].name.toLowerCase();
@@ -567,6 +559,7 @@ void BSIIControlAudioProcessorEditor::selectMidiOutput (int comboBoxId)
     if (! juce::isPositiveAndBelow (index, midiOutputs.size()))
     {
         forgetPreset();
+        processor.clearPendingMidi();
         midiOutput.reset();
         selectedDeviceIdentifier.clear();
         processor.connectHardwareSysExInput ({});
@@ -607,12 +600,11 @@ bool BSIIControlAudioProcessorEditor::reopenSelectedMidiOutput (bool forceReopen
         return false;
     }
 
+    processor.clearPendingMidi();
     midiOutput.reset();
     midiOutput = juce::MidiOutput::openDevice (selectedDeviceIdentifier);
     if (midiOutput != nullptr)
     {
-        std::fill (lastSentValues.begin(), lastSentValues.end(), bsii::noHardwareValue);
-        std::fill (lastSentChoiceIndices.begin(), lastSentChoiceIndices.end(), -1);
         const bool inputReady = processor.connectHardwareSysExInput (deviceName);
         const auto receiveHint = processor.usesDirectHardwareSysEx()
             ? (inputReady ? ". Patch RX connected directly; live CC/NRPN uses the DAW track input."
@@ -681,54 +673,6 @@ void BSIIControlAudioProcessorEditor::requestPatchFromHardware()
     statusLabel.setText (juce::String::fromUTF8 ("Requested current patch from Bass Station II…"), juce::dontSendNotification);
 }
 
-void BSIIControlAudioProcessorEditor::sendParameterValue (int specIndex, int value)
-{
-    if (suppressMidiSends) return;
-    const auto& specs = bsii::parameterSpecs();
-    if (midiOutput == nullptr || ! juce::isPositiveAndBelow (specIndex, static_cast<int> (specs.size()))) return;
-    if (lastSentValues[static_cast<size_t> (specIndex)] == value) return;
-    lastSentValues[static_cast<size_t> (specIndex)] = value;
-    bsii::sendParameter (*midiOutput, midiChannel, specs[static_cast<size_t> (specIndex)], value);
-}
-
-void BSIIControlAudioProcessorEditor::sendChoiceValue (int choiceIndex, int selectedChoiceIndex)
-{
-    if (suppressMidiSends) return;
-    const auto& specs = bsii::choiceSpecs();
-    if (! juce::isPositiveAndBelow (choiceIndex, static_cast<int> (specs.size()))) return;
-    const auto& spec = specs[static_cast<size_t> (choiceIndex)];
-    if (! juce::isPositiveAndBelow (selectedChoiceIndex, static_cast<int> (spec.choices.size()))) return;
-
-    // A front-panel-style trigger edit applies to both envelopes. Keep distinct
-    // stored parameters so patch reception and existing snapshots remain lossless.
-    const juce::String editedId (spec.id);
-    if (editedId == "ampTrigger" || editedId == "modTrigger")
-    {
-        const auto wireValue = spec.choices[static_cast<size_t> (selectedChoiceIndex)].wireValue;
-        for (size_t i = 0; i < specs.size(); ++i)
-        {
-            const juce::String id (specs[i].id);
-            if (id != "ampTrigger" && id != "modTrigger") continue;
-            // The receive-style setter updates the attachment without re-entering
-            // this callback. Synchronise the other page even without MIDI output.
-            for (auto& control : choiceControls)
-                if (control->choiceIndex() == static_cast<int> (i))
-                    control->setFromWireValue (wireValue);
-            if (midiOutput != nullptr)
-            {
-                bsii::sendChoice (*midiOutput, midiChannel, specs[i], wireValue);
-                lastSentChoiceIndices[i] = selectedChoiceIndex;
-            }
-        }
-        return;
-    }
-
-    if (midiOutput == nullptr) return;
-    if (lastSentChoiceIndices[static_cast<size_t> (choiceIndex)] == selectedChoiceIndex) return;
-    lastSentChoiceIndices[static_cast<size_t> (choiceIndex)] = selectedChoiceIndex;
-    bsii::sendChoice (*midiOutput, midiChannel, spec, spec.choices[static_cast<size_t> (selectedChoiceIndex)].wireValue);
-}
-
 int BSIIControlAudioProcessorEditor::currentParameterValue (const char* parameterId) const
 {
     if (auto* value = processor.getParameters().getRawParameterValue (parameterId))
@@ -744,6 +688,7 @@ void BSIIControlAudioProcessorEditor::sendAllStateToHardware()
         return;
     }
 
+    processor.clearPendingMidi();
     const auto& params = bsii::parameterSpecs();
     const auto& choices = bsii::choiceSpecs();
 
@@ -751,7 +696,6 @@ void BSIIControlAudioProcessorEditor::sendAllStateToHardware()
     {
         const auto value = currentParameterValue (params[i].id);
         bsii::sendParameter (*midiOutput, midiChannel, params[i], value);
-        lastSentValues[i] = value;
     }
 
     for (size_t i = 0; i < choices.size(); ++i)
@@ -760,7 +704,6 @@ void BSIIControlAudioProcessorEditor::sendAllStateToHardware()
                                               currentParameterValue (choices[i].id));
         bsii::sendChoice (*midiOutput, midiChannel, choices[i],
                           choices[i].choices[static_cast<size_t> (choiceIndex)].wireValue);
-        lastSentChoiceIndices[i] = choiceIndex;
     }
 
     statusLabel.setText ("Sent complete editor state to Bass Station II on MIDI channel " + juce::String (midiChannel) + ".",
@@ -922,7 +865,7 @@ bool BSIIControlAudioProcessorEditor::decodeSysExIntoEditor (const juce::MemoryB
         return false;
     }
 
-    juce::ScopedValueSetter<bool> guard (suppressMidiSends, true);
+    BSIIControlAudioProcessor::ScopedMidiSilence silence (processor);
 
     juce::StringArray changedFields;
     auto set = [this, &changedFields] (const char* id, int value)
@@ -1019,8 +962,6 @@ bool BSIIControlAudioProcessorEditor::decodeSysExIntoEditor (const juce::MemoryB
     set ("distortion", decoded.distortion);
     set ("vcaLimit", decoded.vcaLimit);
 
-    std::fill (lastSentValues.begin(), lastSentValues.end(), bsii::noHardwareValue);
-    std::fill (lastSentChoiceIndices.begin(), lastSentChoiceIndices.end(), -1);
     updateFilterModeUi();
 
     diagnosticLabel.setText (changedFields.isEmpty()
@@ -1090,7 +1031,7 @@ void BSIIControlAudioProcessorEditor::updateFilterModeUi()
 
     if (acid)
     {
-        juce::ScopedValueSetter<bool> guard (suppressMidiSends, true);
+        BSIIControlAudioProcessor::ScopedMidiSilence silence (processor);
         setEditorParameterValue ("filterShape", 0); // Acid is LP only
         setEditorParameterValue ("filterSlope", 1); // Acid is fixed 24 dB/oct
     }
@@ -1121,11 +1062,9 @@ bool BSIIControlAudioProcessorEditor::loadStateFromFile (const juce::File& file)
     if (! state.isValid() || ! state.hasType (processor.getParameters().state.getType()))
         return false;
 
-    juce::ScopedValueSetter<bool> guard (suppressMidiSends, true);
+    BSIIControlAudioProcessor::ScopedMidiSilence silence (processor);
     forgetPreset();
     processor.getParameters().replaceState (state);
-    std::fill (lastSentValues.begin(), lastSentValues.end(), bsii::noHardwareValue);
-    std::fill (lastSentChoiceIndices.begin(), lastSentChoiceIndices.end(), -1);
     return true;
 }
 
@@ -1182,12 +1121,12 @@ void BSIIControlAudioProcessorEditor::loadSnapshot()
 
 void BSIIControlAudioProcessorEditor::applyHardwareUpdates()
 {
+    BSIIControlAudioProcessor::ScopedMidiSilence silence (processor);
     for (auto& control : parameterControls)
     {
         const auto index = control->specIndex();
         const auto value = processor.consumeHardwareValue (index);
         if (value == bsii::noHardwareValue) continue;
-        lastSentValues[static_cast<size_t> (index)] = value;
         control->setFromHardware (value);
     }
 
@@ -1196,13 +1135,7 @@ void BSIIControlAudioProcessorEditor::applyHardwareUpdates()
         const auto index = control->choiceIndex();
         const auto wireValue = processor.consumeChoiceWireValue (index);
         if (wireValue < 0) continue;
-        if (control->setFromWireValue (wireValue))
-        {
-            const auto& spec = bsii::choiceSpecs()[static_cast<size_t> (index)];
-            for (int i = 0; i < static_cast<int> (spec.choices.size()); ++i)
-                if (spec.choices[static_cast<size_t> (i)].wireValue == wireValue)
-                    lastSentChoiceIndices[static_cast<size_t> (index)] = i;
-        }
+        control->setFromWireValue (wireValue);
     }
 }
 

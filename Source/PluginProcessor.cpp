@@ -11,11 +11,101 @@ BSIIControlAudioProcessor::BSIIControlAudioProcessor()
       apvts (*this, nullptr, "STATE", createParameterLayout()),
       directSysExInput ([this] (const juce::MidiMessage& message) { receiveSysEx (message); })
 {
+    clearPendingMidi();
     for (auto& value : pendingHardwareValues) value.store (bsii::noHardwareValue, std::memory_order_relaxed);
     for (auto& value : pendingChoiceWireValues) value.store (-1, std::memory_order_relaxed);
     for (auto& value : pairedMSB) value.store (-1, std::memory_order_relaxed);
     for (auto& value : currentNrpnMSB) value.store (-1, std::memory_order_relaxed);
     for (auto& value : currentNrpnLSB) value.store (-1, std::memory_order_relaxed);
+    for (const auto& spec : bsii::parameterSpecs()) apvts.addParameterListener (spec.id, this);
+    for (const auto& spec : bsii::choiceSpecs()) apvts.addParameterListener (spec.id, this);
+    startTimerHz (100);
+
+}
+
+BSIIControlAudioProcessor::~BSIIControlAudioProcessor()
+{
+    stopTimer();
+    for (const auto& spec : bsii::parameterSpecs()) apvts.removeParameterListener (spec.id, this);
+    for (const auto& spec : bsii::choiceSpecs()) apvts.removeParameterListener (spec.id, this);
+}
+
+thread_local BSIIControlAudioProcessor::ScopedMidiSilence* BSIIControlAudioProcessor::midiSilence = nullptr;
+
+BSIIControlAudioProcessor::ScopedMidiSilence::ScopedMidiSilence (BSIIControlAudioProcessor& p, bool discard)
+    : processor (p), previous (midiSilence), discardPendingTrigger (discard) { midiSilence = this; }
+BSIIControlAudioProcessor::ScopedMidiSilence::~ScopedMidiSilence() { midiSilence = previous; }
+
+bool BSIIControlAudioProcessor::midiIsSilenced() const
+{
+    for (auto* scope = midiSilence; scope != nullptr; scope = scope->previous)
+        if (&scope->processor == this) return true;
+    return false;
+}
+
+void BSIIControlAudioProcessor::clearPendingMidi()
+{
+    for (auto& value : pendingMidi) value.store (bsii::noHardwareValue);
+    pendingTrigger.store (-1);
+}
+
+void BSIIControlAudioProcessor::parameterChanged (const juce::String& id, float newValue)
+{
+    const auto value = juce::roundToInt (newValue);
+    const bool silent = midiIsSilenced();
+    const auto& params = bsii::parameterSpecs();
+    for (size_t i = 0; i < params.size(); ++i)
+        if (id == params[i].id)
+        {
+            pendingMidi[i].store (silent ? bsii::noHardwareValue : value);
+            return;
+        }
+    const auto& choices = bsii::choiceSpecs();
+    for (size_t i = 0; i < choices.size(); ++i)
+        if (id == choices[i].id)
+        {
+            if (id == "ampTrigger" || id == "modTrigger")
+            {
+                // Both controls represent the shared front-panel Triggering edit.
+                // Imported patches retain their distinct stored trigger fields.
+                if (! silent) pendingTrigger.store (value);
+                else if (midiSilence->discardPendingTrigger) pendingTrigger.store (-1);
+            }
+            else pendingMidi[maxSpecs + i].store (silent ? bsii::noHardwareValue : value);
+            return;
+        }
+}
+
+void BSIIControlAudioProcessor::timerCallback()
+{
+    const auto channel = hardwareMidiChannel.load();
+    const auto& params = bsii::parameterSpecs();
+    for (size_t i = 0; i < params.size(); ++i)
+    {
+        const auto value = pendingMidi[i].exchange (bsii::noHardwareValue);
+        if (midiOutput && value != bsii::noHardwareValue)
+            bsii::sendParameter (*midiOutput, channel, params[i], value);
+    }
+    const auto& choices = bsii::choiceSpecs();
+    for (size_t i = 0; i < choices.size(); ++i)
+    {
+        const auto value = pendingMidi[maxSpecs + i].exchange (bsii::noHardwareValue);
+        if (midiOutput && juce::isPositiveAndBelow (value, static_cast<int> (choices[i].choices.size())))
+            bsii::sendChoice (*midiOutput, channel, choices[i], choices[i].choices[static_cast<size_t> (value)].wireValue);
+    }
+    const auto trigger = pendingTrigger.exchange (-1);
+    if (trigger >= 0)
+    {
+        ScopedMidiSilence silence (*this, false);
+        for (const auto& spec : choices)
+            if ((juce::String (spec.id) == "ampTrigger" || juce::String (spec.id) == "modTrigger")
+                && juce::isPositiveAndBelow (trigger, static_cast<int> (spec.choices.size())))
+            {
+                auto* parameter = apvts.getParameter (spec.id);
+                parameter->setValueNotifyingHost (parameter->convertTo0to1 (static_cast<float> (trigger)));
+                if (midiOutput) bsii::sendChoice (*midiOutput, channel, spec, spec.choices[static_cast<size_t> (trigger)].wireValue);
+            }
+    }
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout
@@ -216,6 +306,7 @@ void BSIIControlAudioProcessor::parseIncomingMidi (const juce::MidiBuffer& midiM
 
 void BSIIControlAudioProcessor::setHardwareMidiChannel (int channel)
 {
+    clearPendingMidi();
     hardwareMidiChannel.store (juce::jlimit (1, 16, channel), std::memory_order_relaxed);
     pendingHardwareProgram.store (-1);
 }
@@ -267,6 +358,8 @@ void BSIIControlAudioProcessor::getStateInformation (juce::MemoryBlock& destData
 
 void BSIIControlAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
+    ScopedMidiSilence silence (*this);
+    clearPendingMidi();
     if (auto xml = getXmlFromBinary (data, sizeInBytes))
         apvts.replaceState (juce::ValueTree::fromXml (*xml));
 }

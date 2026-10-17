@@ -80,3 +80,16 @@ down. Standalone input configuration remains unchanged. Connection and timeout
 messages distinguish plugin and standalone. Verified with an isolated virtual-port
 test and successful154-byte Get Patch in Ableton Live12.4.6, including paused RX.
 See plugin-smoke-test.md for evidence and remaining host integration work.
+
+
+### Processor-owned parameter MIDI output
+
+Host parameter edits continue sending after closing the editor. The processor owns
+the native output and coalesces APVTS changes on a 100 Hz message-thread timer;
+GUI controls no longer send their own duplicate messages. Scoped suppression keeps
+hardware reception, patch imports and state recall silent. Shared Trigger edits
+work in the processor too, while imported mixed trigger fields stay lossless.
+Channel and Live RX state survive editor recreation within the same instance.
+Verified with isolated native MIDI regression and actual Ableton Resonance readback
+with the editor closed. Full session connection recall and recorded automation
+playback remain pending; this does not establish broad DAW compatibility.

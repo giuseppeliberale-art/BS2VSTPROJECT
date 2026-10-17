@@ -12,8 +12,7 @@ class ParameterControl : public juce::Component
 public:
     ParameterControl (juce::AudioProcessorValueTreeState& state,
                       const bsii::ParameterSpec& parameterSpec,
-                      int index,
-                      std::function<void(int, int)> valueChanged);
+                      int index);
     void resized() override;
     void setFromHardware (int value);
     int specIndex() const { return index; }
@@ -27,8 +26,6 @@ private:
     bool isOctaveSwitch = false;
     bool isSyncSwitch = false;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> attachment;
-    std::function<void(int, int)> callback;
-    bool applyingHardware = false;
 };
 
 class ChoiceControl : public juce::Component
@@ -36,8 +33,7 @@ class ChoiceControl : public juce::Component
 public:
     ChoiceControl (juce::AudioProcessorValueTreeState& state,
                    const bsii::ChoiceSpec& choiceSpec,
-                   int index,
-                   std::function<void(int, int)> choiceChanged);
+                   int index);
     void resized() override;
     bool setFromWireValue (int wireValue);
     int choiceIndex() const { return index; }
@@ -49,8 +45,6 @@ private:
     juce::ComboBox combo;
     juce::Label note;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> attachment;
-    std::function<void(int, int)> callback;
-    bool applyingHardware = false;
 };
 
 class ParameterSection : public juce::Component
@@ -96,8 +90,6 @@ private:
     void requestPatchFromHardware();
     void selectPreset (int program, bool sendToHardware);
     void forgetPreset();
-    void sendParameterValue (int specIndex, int value);
-    void sendChoiceValue (int choiceIndex, int selectedChoiceIndex);
     void sendAllStateToHardware();
     void saveSnapshot();
     void loadSnapshot();
@@ -143,7 +135,7 @@ private:
     std::vector<std::unique_ptr<EditorPage>> pages;
 
     juce::Array<juce::MidiDeviceInfo> midiOutputs;
-    std::unique_ptr<juce::MidiOutput> midiOutput;
+    std::unique_ptr<juce::MidiOutput>& midiOutput;
     juce::String selectedDeviceIdentifier;
     std::unique_ptr<juce::FileChooser> fileChooser;
 
@@ -157,9 +149,6 @@ private:
     uint32_t patchRequestStartSerial = 0;
     uint32_t patchRequestStartedMs = 0;
     uint32_t lastReconnectAttemptMs = 0;
-    std::vector<int> lastSentValues;
-    std::vector<int> lastSentChoiceIndices;
-    bool suppressMidiSends = false;
     bool liveRxPaused = false;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BSIIControlAudioProcessorEditor)

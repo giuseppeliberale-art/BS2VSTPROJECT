@@ -138,5 +138,15 @@ User confirmed fixed Get Patch; agent verified154-byte reply and paused-RX Get
 Patch. Live RX restored running. Current synth sound was not restored over user
 edits. This update contains source/tests/docs; installed VST3/AU contain the fix.
 Build all3 formats and existing7 CTest groups pass; isolated virtual MIDI test passes.
-Next: headless host automation and full session/hardware recall, still unverified.
+Host-parameter/editor-lifetime failure reproduced and fixed: processor now owns
+MIDI output and dispatches APVTS changes independently of the editor. Native
+processor regression passed, including silent receive/recall and editor recreation.
+Ableton hardware retest passed: editor closed, host Resonance30, patch readback30.
+Restored0 while still closed; all decoded fields match the pre-test backup.
+Updated Standalone/VST3/AU build, seven offline groups and AU validation passed.
+Installed VST3/AU updated, backups retained. Test Set saved with Resonance0.
+Next: recorded automation playback and full session/connection/hardware recall.
+Port selection still initially needs the editor; connection persistence across
+reloading a Set is not implemented. Hardware live-state application and automatic
+preset refresh still involve the editor.
 See docs/plugin-smoke-test.md. Do not claim full AU/VST3 compatibility yet.

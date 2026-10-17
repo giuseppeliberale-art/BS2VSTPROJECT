@@ -103,3 +103,62 @@ Updated AU also passed auval after installation of the direct-input fix. VST3
 hardware receipt was rechecked in the floating editor and Live RX left running.
 No result yet for host automation with the editor closed or complete hardware
 state restoration on session reload; those remain the next tests.
+
+## Host parameter sending with the editor closed
+
+The original build reproduced an editor-lifetime failure:
+
+- Physical sound backed up in `midi-lab-results/20261017-181533-backup-435929/`;
+  decoded Resonance was 0.
+- Plugin UI edit to 10 reached hardware (181710-backup-0be993).
+- Ableton's exposed Resonance parameter set to 20 reached hardware while the
+  editor existed (181802-backup-713ec2).
+- Closed the editor using Live's Show/Hide Plug-In Window checkbox, then set
+  Live's parameter to 30. Readback remained 20 (181848-backup-6efffe): FAIL.
+  Merely hiding all plugin windows with a keyboard shortcut does not destroy
+  the editor and is not equivalent to this test.
+- Reopened the editor and restored Resonance to 0. Readback confirmed 0
+  (182135-backup-b82dec). No stored preset was overwritten.
+
+Cause: the editor owned the native MIDI output, and only Slider/ComboBox callbacks
+transmitted parameter changes. The processor now retains the output and listens
+to APVTS changes. Callbacks publish atomics; a message-thread timer sends the latest
+pending value for each parameter at up to 100 Hz. This is coalesced hardware
+control, not sample-accurate MIDI scheduling. Linked Trigger edits are handled in
+that same processor path. Reception, patch imports, snapshot loads and host-state
+recall use scoped suppression so parameter notifications do not echo to hardware.
+MIDI channel and Live RX selection survive editor destruction/recreation within
+an instance. Port discovery still initially happens when opening the editor.
+Full session connection persistence and automatic hardware recall remain separate
+work; receiving/applying live controls and preset refresh still involve the editor.
+
+A macOS-only native regression target uses the actual processor/APVTS and an
+isolated external virtual MIDI sink, with no messages sent to the physical synth:
+
+```sh
+cmake --build build --config Release --target BSIIProcessorAutomationTest -- CODE_SIGNING_ALLOWED=NO
+build/Release/BSIIProcessorAutomationTest
+```
+
+It checks sends before any editor exists and after destruction, a worker-thread
+parameter change, CC/paired-CC/NRPN bytes, shared Trigger edits, silent received
+values and host-state recall, retained mixed stored Trigger fields, and channel/RX
+selection across editor recreation. Like the direct SysEx test, it is not part of
+the offline CTest suite because native MIDI services are required.
+
+
+Retest results (2026-10-17):
+
+- Native processor regression PASS; seven offline CTest groups PASS.
+- Standalone/VST3/AU Release build PASS. Reinstalled local VST3/AU with prior
+  bundles backed up in ignored before-processor-automation/. Strict/deep signatures
+  and updated AU validator PASS.
+- Saved Set reopened in Live. Opened the editor once to initialise its selected
+  hardware port, then closed it with Show/Hide Plug-In Window=0. Host Resonance30
+  reached the synth: decoded patch readback30 in 183028-backup-c8f33e. PASS.
+- Reset host Resonance0 while the editor remained closed. Readback0 in
+  183045-backup-40dea6. All decoded patch fields matched the pre-test backup.
+  Saved the test Set, leaving Resonance0 and editor closed.
+- This verifies host parameter control after editor destruction, not recorded
+  envelope playback, initial port connection without ever opening an editor,
+  full Set recall to hardware, multiple instances, or other DAW/OS combinations.
