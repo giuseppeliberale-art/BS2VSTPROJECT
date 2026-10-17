@@ -5,6 +5,15 @@ Edit the connected synth from your Mac, follow hardware knob movements in the ap
 fetch its current patch, and save editor snapshots or raw SysEx files.
 The sound comes from the Bass Station II; this project does not emulate its audio engine.
 
+## Download the test build
+
+[Download the VST3 and AU prerelease](https://github.com/rydeen-hrmntcs/BS2VSTPROJECT/releases/tag/v0.8.2-preview.20261018).
+
+**Apple Silicon Macs running macOS 27.0 or newer only.** Bass Station II hardware
+is required. These are early test builds, locally signed and not notarized;
+macOS may block downloaded copies on another Mac. The release includes installation
+instructions, known limitations and SHA-256 checksums.
+
 **Current status:** working standalone editor under active development. The project
 also builds AU and VST3. An early VST3 check in Ableton Live 12.4.6 on Apple
 Silicon passed loading, hardware patch reception, and host parameter edits with
@@ -14,12 +23,13 @@ compatibility still need testing.
 Hardware checks have used a Bass Station II reported as running firmware **4.14**.
 
 The `v0.8.2` tag preserves the original project baseline. `main` includes the later
-fixes and features described below; it is not a new tagged release. Some app/build
+fixes and features described below. The download above is a prerelease snapshot,
+not a stable release. Some app/build
 version labels still show earlier numbers.
 
 ## Available features
 
-- **82 controls** across Osc 1, Osc 2, Mixer, Filter, LFO/Glide,
+- **86 controls** across Osc 1, Osc 2, Mixer, Filter, LFO/Glide,
   Amp Env, Mod Env, FX/Performance and Arp/Seq pages.
 - **Live MIDI in both directions:** app edits send CC/NRPN messages, and supported
   hardware changes update the editor while Live RX is running.
