@@ -4,6 +4,7 @@
 #include <array>
 #include <atomic>
 #include "BSIIMidi.h"
+#include "BSIIHardwareSysExInput.h"
 
 class BSIIControlAudioProcessor : public juce::AudioProcessor
 {
@@ -36,6 +37,9 @@ public:
 
     juce::AudioProcessorValueTreeState& getParameters() { return apvts; }
 
+    bool usesDirectHardwareSysEx() const { return wrapperType != wrapperType_Standalone; }
+    bool connectHardwareSysExInput (const juce::String& outputName)
+    { return ! usesDirectHardwareSysEx() || directSysExInput.connect (outputName); }
     void setHardwareMidiChannel (int channel);
     void setLiveMidiRxEnabled (bool enabled) { liveMidiRxEnabled.store (enabled, std::memory_order_relaxed); }
     bool isLiveMidiRxEnabled() const { return liveMidiRxEnabled.load (std::memory_order_relaxed); }
@@ -68,7 +72,8 @@ public:
 
 private:
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
-    void parseIncomingMidi (const juce::MidiBuffer&);
+    void parseIncomingMidi (const juce::MidiBuffer&, bool acceptSysEx = true);
+    void receiveSysEx (const juce::MidiMessage&);
     void publishNRPN (int channel, int nrpnMSB, int nrpnLSB, int value);
 
     juce::AudioProcessorValueTreeState apvts;
@@ -98,6 +103,9 @@ private:
     mutable juce::CriticalSection sysExLock;
     juce::MemoryBlock lastSysExData;
     std::atomic<uint32_t> lastSysExSerial { 0 };
+
+    // Declared last: stop native callbacks before destroying receive state.
+    bsii::HardwareSysExInput directSysExInput;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BSIIControlAudioProcessor)
 };

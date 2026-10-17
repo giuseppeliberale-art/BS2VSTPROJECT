@@ -6,9 +6,9 @@ Updated 2026-10-17. Read this first; use evidence links below for details.
 
 - Repo: BS2VSTPROJECT, main. Manual-test fixes landed in776d44c; this update
   adds MIDI Lab and preset selection/sync. Original v0.8.2 tag stays immutable.
-- LATEST RUNNING APP: `/private/tmp/BSII-Control-label-fix/BSII Control.app`.
-  Temporary location may disappear after cleanup/reboot. Build alone does not update it.
-  Older Downloads app / earlier temp copies must not be launched alongside it.
+- Active host: Ableton Live12.4.6 with the installed user-library BSII Control VST3.
+  Standalone is closed. The old label-fix temp app predates the direct SysEx fix;
+  build output contains the updated standalone. Do not launch old copies for retests.
 - Synth firmware: user reports4.14 with AFX overlay. Hardware now on preset23 after preset-sync validation. Read-only backup saved in
   `midi-lab-results/20261017-065533-backup-4c8a19/baseline.syx`.
 - App Live RX running. MIDI recorder stopped. User prefers one physical instruction
@@ -61,7 +61,7 @@ Updated 2026-10-17. Read this first; use evidence links below for details.
 ## Next scope
 
 All actionable fixes from the completed manual pass are addressed. User may spot-check
-new UI. Next: early AU/VST3 host smoke test, then Arp/Seq. Missing also LFO speed/sync divisions,
+new UI. Next: host automation with editor open/closed and session recall checks, then Arp/Seq. Missing also LFO speed/sync divisions,
 mod-wheel direct filter and LFO2→filter routes, paraphonic mode, oscillator error,
 independent sub tuning, glide divergence, globals/tuning. Verify remote support before
 implementation. User explicitly wants AFX LAST. Preset work is now implemented below; remaining features have not started.
@@ -124,3 +124,19 @@ inspection. Existing7 regression groups passed (20261017-170201-48080).
 No MIDI was sent for this check; sound controls restored from app state on restart.
 GUI redesign remains deferred until features are complete. Preset checks resumed
 at the user's request and are now complete; recorder stopped, Live RX running.
+
+## Early Ableton plugin check and SysEx fix
+
+Ableton Live12.4.6 (Apple Silicon), VST3 installed under user Library/Audio/Plug-Ins.
+AU installed too; initial and updated auval both passed.
+VST3 loaded on MIDI track1 in the saved BSII VST3 Smoke Test Set under ignored
+validation-results/20261017-ableton-smoke/. Standalone app is closed.
+Live input/output Track enabled; Sync/Remote off. Hardware live CC worked, but
+Get Patch initially timed out because reply reception depended on host MIDI.
+Added processor-owned SysEx-only input with unambiguous output-name matching.
+User confirmed fixed Get Patch; agent verified154-byte reply and paused-RX Get
+Patch. Live RX restored running. Current synth sound was not restored over user
+edits. This update contains source/tests/docs; installed VST3/AU contain the fix.
+Build all3 formats and existing7 CTest groups pass; isolated virtual MIDI test passes.
+Next: headless host automation and full session/hardware recall, still unverified.
+See docs/plugin-smoke-test.md. Do not claim full AU/VST3 compatibility yet.

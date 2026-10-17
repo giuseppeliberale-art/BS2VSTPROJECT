@@ -74,6 +74,13 @@ if(BSII_BUILD_TESTS)
     target_compile_definitions(BSIIPatchInspect PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0)
     target_link_libraries(BSIIPatchInspect PRIVATE juce::juce_core)
 
+    # Explicit native-port integration check; not part of offline CTest.
+    add_executable(BSIIDirectSysExTest tests/DirectSysExTest.cpp)
+    target_include_directories(BSIIDirectSysExTest PRIVATE Source)
+    target_compile_features(BSIIDirectSysExTest PRIVATE cxx_std_20)
+    target_compile_definitions(BSIIDirectSysExTest PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_MODAL_LOOPS_PERMITTED=1)
+    target_link_libraries(BSIIDirectSysExTest PRIVATE juce::juce_audio_devices)
+
     add_executable(BSIIMidiRoutingTest tests/MidiRoutingTest.cpp)
     target_include_directories(BSIIMidiRoutingTest PRIVATE Source)
     target_compile_features(BSIIMidiRoutingTest PRIVATE cxx_std_20)

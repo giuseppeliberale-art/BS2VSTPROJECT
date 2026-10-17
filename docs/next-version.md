@@ -69,3 +69,14 @@ Labels containing arrows, ellipses and the title dash now explicitly use UTF-8
 conversion. JUCE's ASCII string constructor previously interpreted individual
 UTF-8 bytes as characters, producing garbled symbols. This affects presentation
 only; MIDI routes, parameter state and patch data are unchanged.
+
+## Plugin patch reception independent of host SysEx filtering
+
+VST3/AU instances now open a direct SysEx-only hardware input matched to the
+selected output name. Host-routed notes/CC/NRPN/Program Change retain their
+existing path; duplicate host dumps are skipped while direct input is active.
+The input belongs to the processor and closes before its receive state is torn
+down. Standalone input configuration remains unchanged. Connection and timeout
+messages distinguish plugin and standalone. Verified with an isolated virtual-port
+test and successful154-byte Get Patch in Ableton Live12.4.6, including paused RX.
+See plugin-smoke-test.md for evidence and remaining host integration work.

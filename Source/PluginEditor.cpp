@@ -522,8 +522,10 @@ void BSIIControlAudioProcessorEditor::timerCallback()
     if (patchRequestPending && nowMs - patchRequestStartedMs > 2500u)
     {
         patchRequestPending = false;
-        statusLabel.setText ("No patch reply received. In Standalone Settings, ensure Bass Station II is enabled under Active MIDI inputs, then try Get Patch again.",
-                             juce::dontSendNotification);
+        statusLabel.setText (processor.usesDirectHardwareSysEx()
+            ? "No patch reply received. Check the synth USB connection, click Refresh MIDI, then try Get Patch again."
+            : "No patch reply received. In Standalone Settings, enable Bass Station II under Active MIDI inputs, then try Get Patch again.",
+            juce::dontSendNotification);
     }
 
     const auto program = processor.consumeHardwareProgram();
@@ -567,6 +569,7 @@ void BSIIControlAudioProcessorEditor::selectMidiOutput (int comboBoxId)
         forgetPreset();
         midiOutput.reset();
         selectedDeviceIdentifier.clear();
+        processor.connectHardwareSysExInput ({});
         statusLabel.setText ("No MIDI output selected.", juce::dontSendNotification);
         return;
     }
@@ -599,6 +602,7 @@ bool BSIIControlAudioProcessorEditor::reopenSelectedMidiOutput (bool forceReopen
 
     if (! found)
     {
+        processor.connectHardwareSysExInput ({});
         midiOutput.reset();
         return false;
     }
@@ -609,11 +613,16 @@ bool BSIIControlAudioProcessorEditor::reopenSelectedMidiOutput (bool forceReopen
     {
         std::fill (lastSentValues.begin(), lastSentValues.end(), bsii::noHardwareValue);
         std::fill (lastSentChoiceIndices.begin(), lastSentChoiceIndices.end(), -1);
-        statusLabel.setText ("TX connected to " + deviceName + ". RX requires Bass Station II enabled under Settings -> Active MIDI inputs.",
-                             juce::dontSendNotification);
+        const bool inputReady = processor.connectHardwareSysExInput (deviceName);
+        const auto receiveHint = processor.usesDirectHardwareSysEx()
+            ? (inputReady ? ". Patch RX connected directly; live CC/NRPN uses the DAW track input."
+                          : ". Patch RX unavailable: no unique matching hardware MIDI input. Check USB and Refresh MIDI.")
+            : ". RX requires Bass Station II enabled under Settings -> Active MIDI inputs.";
+        statusLabel.setText ("TX connected to " + deviceName + receiveHint, juce::dontSendNotification);
         return true;
     }
 
+    processor.connectHardwareSysExInput ({});
     statusLabel.setText ("Could not open " + deviceName + ".", juce::dontSendNotification);
     return false;
 }
@@ -649,6 +658,14 @@ void BSIIControlAudioProcessorEditor::requestPatchFromHardware()
     if (! reopenSelectedMidiOutput (true))
     {
         statusLabel.setText ("Cannot request patch: Bass Station II MIDI output is not open.", juce::dontSendNotification);
+        return;
+    }
+
+    if (processor.usesDirectHardwareSysEx()
+        && ! processor.connectHardwareSysExInput (midiOutput->getName()))
+    {
+        statusLabel.setText ("Cannot request patch: no unique matching hardware MIDI input. Check USB and click Refresh MIDI.",
+                             juce::dontSendNotification);
         return;
     }
 

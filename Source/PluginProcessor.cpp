@@ -8,7 +8,8 @@ BSIIControlAudioProcessor::BSIIControlAudioProcessor()
     : AudioProcessor (BusesProperties()
         .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
         .withOutput ("Output", juce::AudioChannelSet::stereo(), true)),
-      apvts (*this, nullptr, "STATE", createParameterLayout())
+      apvts (*this, nullptr, "STATE", createParameterLayout()),
+      directSysExInput ([this] (const juce::MidiMessage& message) { receiveSysEx (message); })
 {
     for (auto& value : pendingHardwareValues) value.store (bsii::noHardwareValue, std::memory_order_relaxed);
     for (auto& value : pendingChoiceWireValues) value.store (-1, std::memory_order_relaxed);
@@ -58,7 +59,7 @@ void BSIIControlAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 {
     juce::ScopedNoDenormals noDenormals;
     juce::ignoreUnused (buffer);
-    parseIncomingMidi (midiMessages);
+    parseIncomingMidi (midiMessages, ! directSysExInput.isOpen());
     bsii::finishIncomingMidi (midiMessages, wrapperType == wrapperType_Standalone);
 }
 
@@ -96,7 +97,14 @@ void BSIIControlAudioProcessor::publishNRPN (int channel, int nrpnMSB, int nrpnL
     }
 }
 
-void BSIIControlAudioProcessor::parseIncomingMidi (const juce::MidiBuffer& midiMessages)
+void BSIIControlAudioProcessor::receiveSysEx (const juce::MidiMessage& message)
+{
+    const juce::ScopedLock lock (sysExLock);
+    lastSysExData = juce::MemoryBlock (message.getRawData(), static_cast<size_t> (message.getRawDataSize()));
+    lastSysExSerial.fetch_add (1, std::memory_order_release);
+}
+
+void BSIIControlAudioProcessor::parseIncomingMidi (const juce::MidiBuffer& midiMessages, bool acceptSysEx)
 {
     const auto wantedChannel = hardwareMidiChannel.load (std::memory_order_relaxed);
     const auto& params = bsii::parameterSpecs();
@@ -108,12 +116,9 @@ void BSIIControlAudioProcessor::parseIncomingMidi (const juce::MidiBuffer& midiM
 
         if (message.isSysEx())
         {
-            const juce::ScopedLock lock (sysExLock);
-            lastSysExData.setSize (static_cast<size_t> (message.getRawDataSize()), false);
-            if (message.getRawDataSize() > 0)
-                std::memcpy (lastSysExData.getData(), message.getRawData(),
-                             static_cast<size_t> (message.getRawDataSize()));
-            lastSysExSerial.fetch_add (1, std::memory_order_release);
+            // A host may also forward this reply. Prefer the direct port to
+            // avoid processing the same dump twice; CC/program reception stays hosted.
+            if (acceptSysEx) receiveSysEx (message);
             continue;
         }
 

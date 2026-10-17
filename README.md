@@ -6,8 +6,9 @@ fetch its current patch, and save editor snapshots or raw SysEx files.
 The sound comes from the Bass Station II; this project does not emulate its audio engine.
 
 **Current status:** working standalone editor under active development. The project
-also defines AU and VST3 builds, but the latest changes have been validated in the
-standalone app; DAW compatibility and session recall still need testing.
+also builds AU and VST3. An early VST3 check in Ableton Live 12.4.6 on Apple
+Silicon passed loading and hardware patch reception; AU passed Apple validation.
+DAW automation, full session recall and wider compatibility still need testing.
 Hardware checks have used a Bass Station II reported as running firmware **4.14**.
 
 The `v0.8.2` tag preserves the original project baseline. `main` includes the later
@@ -85,6 +86,16 @@ receiving a hardware preset change establishes the number.
 **Selecting a preset replaces the synth's temporary sound.** Save any edits you
 want to keep first. The preset selector does not overwrite a stored preset slot;
 use the hardware's save procedure when you intend to save into its preset memory.
+
+### Early Ableton VST3 setup
+
+Enable VST3 system folders in Live's Plug-Ins settings, then load
+**GutzDev → BSII Control** on a MIDI track. Enable Bass Station II's input Track
+port and arm the track with Monitor Auto, or use Monitor In, for live controls.
+Select the hardware output/channel in the plugin. Patch replies use a separate
+direct SysEx input because Live's ordinary track path does not supply them.
+Input/output names must match uniquely. These are early tests, not complete DAW
+support; see [plugin smoke-test results](docs/plugin-smoke-test.md).
 
 ## Which save, load or transfer control should I use?
 
