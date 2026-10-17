@@ -89,7 +89,7 @@ private:
     bool reopenSelectedMidiOutput (bool forceReopen = false);
     void requestPatchFromHardware();
     void selectPreset (int program, bool sendToHardware);
-    void forgetPreset();
+    void forgetPreset (bool forgetProcessor = true);
     void sendAllStateToHardware();
     void saveSnapshot();
     void loadSnapshot();
@@ -97,8 +97,8 @@ private:
     void saveLastSysEx();
     void sendSysExFileToHardware();
     void importSysExToEditor();
-    bool decodeSysExIntoEditor (const juce::MemoryBlock& data, const juce::String& sourceName);
-    bool setEditorParameterValue (const char* parameterId, int value);
+    bool decodeSysExIntoEditor (const juce::MemoryBlock& data, const juce::String& sourceName, bool notifyHost = true);
+    bool setEditorParameterValue (const char* parameterId, int value, bool notifyHost = true);
     void updateSysExDisplay();
     static juce::String hexPreview (const juce::MemoryBlock&, int maxBytes = 28);
     bool saveStateToFile (const juce::File& file);

@@ -167,22 +167,36 @@ BSIIControlAudioProcessor::createParameterLayout()
 {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
 
+    using Parameter = juce::AudioProcessorValueTreeState::Parameter;
+    using Attributes = juce::AudioProcessorValueTreeStateParameterAttributes;
+    // APVTS::Parameter updates its adapter even for setValue(), allowing hardware
+    // reception to update state without reporting a manual edit to the DAW.
     for (const auto& spec : bsii::parameterSpecs())
     {
-        layout.add (std::make_unique<juce::AudioParameterInt> (
+        auto parameter = std::make_unique<Parameter> (
             juce::ParameterID { spec.id, 1 }, spec.name,
-            spec.minimum, spec.maximum, spec.defaultValue));
+            juce::NormalisableRange<float> (static_cast<float> (spec.minimum), static_cast<float> (spec.maximum), 1.0f),
+            static_cast<float> (spec.defaultValue), Attributes().withDiscrete (true)
+                .withStringFromValueFunction ([] (float v, int) { return juce::String (juce::roundToInt (v)); })
+                .withValueFromStringFunction ([] (const juce::String& text) { return text.getFloatValue(); }));
+        static_cast<juce::AudioProcessorParameter*> (parameter.get())->setValue (parameter->getDefaultValue());
+        layout.add (std::move (parameter));
     }
 
     for (const auto& spec : bsii::choiceSpecs())
     {
         juce::StringArray choices;
-        for (const auto& choice : spec.choices)
-            choices.add (choice.label);
-
-        layout.add (std::make_unique<juce::AudioParameterChoice> (
-            juce::ParameterID { spec.id, 1 }, spec.name, choices,
-            juce::jlimit (0, juce::jmax (0, choices.size() - 1), spec.defaultChoiceIndex)));
+        for (const auto& choice : spec.choices) choices.add (choice.label);
+        auto parameter = std::make_unique<Parameter> (
+            juce::ParameterID { spec.id, 1 }, spec.name,
+            juce::NormalisableRange<float> (0.0f, static_cast<float> (choices.size() - 1), 1.0f),
+            static_cast<float> (spec.defaultChoiceIndex), Attributes().withDiscrete (true)
+                .withStringFromValueFunction ([choices] (float v, int)
+                { return choices[juce::jlimit (0, choices.size() - 1, juce::roundToInt (v))]; })
+                .withValueFromStringFunction ([choices] (const juce::String& text)
+                { return static_cast<float> (juce::jmax (0, choices.indexOf (text))); }));
+        static_cast<juce::AudioProcessorParameter*> (parameter.get())->setValue (parameter->getDefaultValue());
+        layout.add (std::move (parameter));
     }
 
     return layout;
@@ -274,6 +288,7 @@ void BSIIControlAudioProcessor::parseIncomingMidi (const juce::MidiBuffer& midiM
             for (auto& value : pendingHardwareValues) value.store (bsii::noHardwareValue);
             for (auto& value : pendingChoiceWireValues) value.store (-1);
             for (auto& value : pairedMSB) value.store (-1);
+            knownHardwareProgram.store (message.getProgramChangeNumber());
             pendingHardwareProgram.store (message.getProgramChangeNumber(), std::memory_order_release);
             continue;
         }
@@ -361,6 +376,7 @@ void BSIIControlAudioProcessor::parseIncomingMidi (const juce::MidiBuffer& midiM
 void BSIIControlAudioProcessor::setHardwareMidiChannel (int channel)
 {
     clearPendingMidi();
+    if (hardwareMidiChannel.load() != juce::jlimit (1, 16, channel)) knownHardwareProgram.store (-1);
     hardwareMidiChannel.store (juce::jlimit (1, 16, channel), std::memory_order_relaxed);
     pendingHardwareProgram.store (-1);
 }

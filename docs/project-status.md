@@ -160,3 +160,17 @@ connection was absent before that first editor open. Added host-state persistenc
 for the selected output, channel and Live RX, restored from the processor timer.
 Legacy Sets need one save with the updated build after choosing their MIDI output.
 Pending: manual restart test of the updated build with editor kept closed.
+
+
+## Preset refresh and DAW automation
+
+User confirmed automatic saved-connection restart worked in Ableton. Subsequent
+plugin preset selection disabled automation. Native editor-response regression
+reproduced 76 manual-edit notifications during patch reception; fixed to zero.
+Received patches update APVTS and views without manual DAW edit notifications;
+ordinary physical live edits and explicit UI/import edits retain notifications.
+Parameter IDs, ordering, ranges and discrete choice labels are preserved. Known
+preset identity is now processor-owned across editor recreation, provided the DAW
+actually forwards Program Change. Seven offline groups, native integration,
+all format builds and installed AU validation pass. User's Ableton preset-change
+playback retest is pending; flat automation segments are not yet verified.

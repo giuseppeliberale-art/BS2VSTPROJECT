@@ -195,3 +195,33 @@ CTest groups PASS; Release Standalone/VST3/AU build PASS. Updated local VST3/AU
 installed after user saved/closed Live; prior bundles retained under ignored
 before-saved-connection/. Strict/deep code signatures and AU validator PASS.
 Manual Ableton restart with editor kept closed remains pending.
+
+
+## Saved-connection host confirmation and preset-refresh automation fix
+
+User confirmed the saved-connection restart test passed: notes, Cutoff and
+Resonance automation worked after reopening the Set without opening the editor.
+
+User then reported that selecting a preset in the plugin disabled Ableton
+parameter automation until manually re-enabled, while changing presets on the
+hardware with the editor closed did not. A native regression drove the actual
+Get Patch response path through the editor and captured 76 manual parameter-edit
+notifications to the host from one patch refresh (FAIL).
+
+Patch reception now updates APVTS state and editor views without host manual-edit
+notifications. Numeric/choice IDs, order, ranges, defaults, discrete steps and
+choice text remain unchanged; APVTS::Parameter supplies its own state-adapter hook
+for host-silent setValue updates. Explicit editor/import edits and physical live
+control edits still notify the host. MIDI suppression during patch reception is
+retained. Preset identity is retained in the processor across editor recreation,
+but only for Program Change messages actually received through the DAW track;
+this does not add direct Program Change reception or query unknown preset identity.
+
+Local validation PASS: the actual editor patch-response path generated zero
+host manual-edit notifications, updated APVTS values and allowed subsequent
+parameter sends. Physical live controls and manual parameter edits retained host
+notifications. Preset identity survived editor recreation in the native test.
+Seven offline groups and Release Standalone/VST3/AU builds PASS. Updated VST3/AU
+installed with prior bundles backed up; strict/deep signatures and AU validator
+PASS. Pending: user Ableton retest of preset selection during recorded playback. Existing flat automation segments and multiple
+instances are not established by a host-notification regression alone.

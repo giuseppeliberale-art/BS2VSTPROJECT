@@ -98,7 +98,7 @@ Select the hardware output/channel in the plugin, then save the DAW Set. Host
 state now includes that connection, channel and Live RX setting so the processor
 can reconnect without opening the editor. Older Sets need one save with the new
 build after choosing the output. Reconnection does not automatically send a patch;
-the new behavior still needs the manual Ableton restart retest. Patch replies use a separate
+the user confirmed this reconnects successfully after an Ableton restart. Patch replies use a separate
 direct SysEx input because Live's ordinary track path does not supply them.
 Input/output names must match uniquely. These are early tests, not complete DAW
 support; see [plugin smoke-test results](docs/plugin-smoke-test.md).

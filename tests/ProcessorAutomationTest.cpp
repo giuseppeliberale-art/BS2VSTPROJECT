@@ -1,11 +1,18 @@
 #include <CoreFoundation/CoreFoundation.h>
 #include "PluginProcessor.h"
+#include "BSIIPatchDecoder.h"
 #include <iostream>
 #include <thread>
 
 namespace
 {
 void pump (int ms = 100) { CFRunLoopRunInMode (kCFRunLoopDefaultMode, ms / 1000.0, false); }
+struct HostEdits : juce::AudioProcessorListener
+{
+    int count = 0;
+    void audioProcessorParameterChanged (juce::AudioProcessor*, int, float) override { ++count; }
+    void audioProcessorChanged (juce::AudioProcessor*, const ChangeDetails&) override {}
+};
 struct Capture : juce::MidiInputCallback
 {
     juce::CriticalSection lock;
@@ -153,6 +160,61 @@ int main (int argc, char** argv)
             pump();
             ok &= fresh.hardwareMidiOutput() == nullptr; // Do not select a different synth.
         }
+    }
+    {
+        juce::AudioProcessor::setTypeOfNextNewPlugin (juce::AudioProcessor::wrapperType_Standalone);
+        BSIIControlAudioProcessor receiver;
+        juce::AudioProcessor::setTypeOfNextNewPlugin (juce::AudioProcessor::wrapperType_Undefined);
+        for (const auto& port : juce::MidiOutput::getAvailableDevices())
+            if (port.name == name) receiver.hardwareMidiOutput() = juce::MidiOutput::openDevice (port.identifier);
+        auto editor = std::unique_ptr<juce::AudioProcessorEditor> (receiver.createEditor());
+        auto* resonance = receiver.getParameters().getParameter ("filterResonance");
+        resonance->setValueNotifyingHost (resonance->convertTo0to1 (99));
+        pump();
+        auto addCC = [&] (int value)
+        {
+            auto message = juce::MidiMessage::controllerEvent (1, 82, value);
+            expected.add (juce::String::toHexString (message.getRawData(), message.getRawDataSize()));
+        };
+        addCC (99);
+        for (auto* child : editor->getChildren())
+            if (auto* button = dynamic_cast<juce::TextButton*> (child))
+                if (button->getButtonText() == "Get Patch from BSII") button->triggerClick();
+        pump();
+        expected.add ("f0 00 20 29 00 33 00 40 f7");
+        juce::MemoryBlock patch;
+        ok &= juce::File::getCurrentWorkingDirectory().getChildFile ("tests/state-fixtures/baseline.syx").loadFileAsData (patch);
+        const auto decoded = bsii::decodePatchFields (patch);
+        HostEdits edits;
+        receiver.addListener (&edits);
+        juce::MidiBuffer incoming;
+        incoming.addEvent (juce::MidiMessage (patch.getData(), static_cast<int> (patch.getSize()), 0.0), 0);
+        juce::AudioBuffer<float> audio (2, 64);
+        receiver.processBlock (audio, incoming); pump (200);
+        if (edits.count != 0) std::cerr << "FAIL: patch refresh reported " << edits.count << " manual parameter edits to host\n";
+        ok &= edits.count == 0 && decoded.valid
+            && juce::roundToInt (receiver.getParameters().getRawParameterValue ("filterResonance")->load()) == decoded.filterResonance;
+        incoming.clear();
+        incoming.addEvent (juce::MidiMessage::controllerEvent (1, 82, 60), 0);
+        incoming.addEvent (juce::MidiMessage::controllerEvent (1, 83, 1), 1);
+        receiver.processBlock (audio, incoming); pump();
+        ok &= edits.count == 2 // Physical knob edits retain their host notifications.
+            && juce::roundToInt (receiver.getParameters().getRawParameterValue ("filterResonance")->load()) == 60
+            && juce::roundToInt (receiver.getParameters().getRawParameterValue ("filterType")->load()) == 1;
+        resonance->setValueNotifyingHost (resonance->convertTo0to1 (23)); pump(); addCC (23);
+        ok &= edits.count == 3; // Ordinary user edits still notify the host.
+        receiver.removeListener (&edits);
+        editor.reset();
+        incoming.clear();
+        incoming.addEvent (juce::MidiMessage::programChange (1, 23), 0);
+        receiver.processBlock (audio, incoming);
+        ok &= receiver.consumeHardwareProgram() == 23;
+        editor.reset (receiver.createEditor());
+        bool presetShown = false;
+        for (auto* child : editor->getChildren())
+            if (auto* combo = dynamic_cast<juce::ComboBox*> (child))
+                if (combo->getNumItems() == 128) presetShown = combo->getSelectedId() == 24;
+        ok &= presetShown && receiver.getKnownHardwareProgram() == 23;
     }
     log.withFileExtension ("stop").replaceWithText ("stop");
     sink.waitForProcessToFinish (5000);
