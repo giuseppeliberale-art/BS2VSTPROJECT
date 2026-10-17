@@ -17,7 +17,10 @@ class MidiLabTests(unittest.TestCase):
         ids = {item['id'] for item in lab.registry()}
         import re
         mapped = set(re.findall(r'\{"([^"]+)"', (ROOT/'Source/BSIIPatchFields.h').read_text()))
-        self.assertEqual(ids, mapped)
+        live = set(re.findall(r'"([^"]+)"', (ROOT/'Source/BSIIMidi.h').read_text().split('liveMidiOnlyIds[] {')[1].split('};')[0]))
+        self.assertEqual(ids, mapped | live)
+        self.assertFalse(mapped & live)
+        self.assertEqual({c['id'] for c in lab.registry() if c['patchMapped']}, mapped)
         self.assertEqual(next(c for c in lab.registry() if c['id']=='bendAmount')['minimum'], -24)
 
     def test_running_status_fragmentation_clock_and_program(self):
@@ -50,10 +53,20 @@ class MidiLabTests(unittest.TestCase):
         self.assertEqual(d.feed([0xF0,0,0x20]),[])
         rows=d.feed([0xF8,0x29,0xF7,0xB0,108,1])
         self.assertEqual(rows[0]['bytes'],[0xF0,0,0x20,0x29,0xF7])
-        self.assertEqual(rows[1]['discovery'],'arpOn')
-        self.assertNotIn('controls',rows[1])
+        self.assertEqual(rows[1]['controls'][0]['id'],'arpOn')
+        self.assertEqual(rows[1]['controls'][0]['choice'],'On')
         d.feed([0xF0,0,0x20]); d.finish()
         self.assertEqual(d.warnings['unfinished SysEx'],1)
+
+    def test_captured_arp_seq_routes_and_boundaries(self):
+        rows=lab.Decoder().feed([0xB0,108,1,109,0,111,4,118,6,118,7,119,0,119,31,99,0,98,106,6,1])
+        controls=[r['controls'][0] for r in rows if 'controls' in r]
+        self.assertEqual([(c['id'],c['choice']) for c in controls], [
+            ('arpOn','On'),('arpLatch','Off'),('arpOctaves','4'),
+            ('arpMode','Play'),('arpMode','Record'),('arpRhythm','1'),
+            ('arpRhythm','32'),('seqRetrig','On')])
+        rows=lab.Decoder().feed([0xB0,111,0,119,32])
+        self.assertTrue(all(not r['controls'][0]['inRange'] for r in rows))
 
     def test_report_does_not_claim_hardware_or_ui_pass(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -73,7 +86,7 @@ class MidiLabTests(unittest.TestCase):
         import xml.etree.ElementTree as ET
         expected={p.attrib['id']:float(p.attrib['value']) for p in ET.parse(ROOT/'tests/state-fixtures/baseline.bsiistate').getroot() if 'value' in p.attrib}
         self.assertTrue(decoded['valid'])
-        self.assertEqual(set(decoded['fields']),{c['id'] for c in lab.registry()})
+        self.assertEqual(set(decoded['fields']),{c['id'] for c in lab.registry() if c['patchMapped']})
         self.assertTrue(all(expected[k]==v for k,v in decoded['fields'].items()))
 
     @unittest.skipUnless(os.environ.get('BSII_PATCH_INSPECT'), 'Inspector built by validation routine')

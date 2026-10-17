@@ -128,6 +128,15 @@ int main (int argc, char** argv)
         pump();
         set ("filterResonance", 20); pump(); cc (82, 20); // No stale sent-value cache.
         set ("osc1Wave", 1); pump(); nrpn (72, 1);
+        // Existing host indices must survive appending the live-only Arp/Seq choices.
+        ok &= processor.getParameters().getParameter ("lfo2KeySync")->getParameterIndex() == 75;
+        ok &= processor.getParameters().getParameter ("arpOn")->getParameterIndex() == 76;
+        set ("arpOn", 1); pump(); cc (108, 1);
+        set ("arpLatch", 1); pump(); cc (109, 1);
+        set ("arpOctaves", 3); pump(); cc (111, 4);
+        set ("arpMode", 5); pump(); cc (118, 5);
+        set ("arpRhythm", 31); pump(); cc (119, 31);
+        set ("seqRetrig", 0); pump(); nrpn (106, 0);
         set ("filterCutoff", 128); pump(); cc (16, 64); cc (48, 0);
         set ("ampTrigger", 0); pump(); nrpn (73, 1); nrpn (105, 1);
         ok &= processor.getParameters().getRawParameterValue ("modTrigger")->load() == 0;
@@ -145,6 +154,8 @@ int main (int argc, char** argv)
         ok &= processor.getParameters().getRawParameterValue ("filterResonance")->load() == 42;
         ok &= processor.getParameters().getRawParameterValue ("ampTrigger")->load() == 1;
         ok &= processor.getParameters().getRawParameterValue ("modTrigger")->load() == 2;
+        ok &= processor.getParameters().getRawParameterValue ("arpOctaves")->load() == 3;
+        ok &= processor.getParameters().getRawParameterValue ("arpRhythm")->load() == 31;
         set ("filterResonance", 50);
         {
             BSIIControlAudioProcessor::ScopedMidiSilence silence (processor);
@@ -157,6 +168,13 @@ int main (int argc, char** argv)
         juce::AudioBuffer<float> audio (2, 64);
         processor.processBlock (audio, incoming); pump();
         ok &= processor.getParameters().getRawParameterValue ("filterResonance")->load() == 60;
+        // Incoming captured encodings update the attached editor/APVTS without MIDI echo.
+        incoming.clear();
+        for (const auto [controller, value] : { std::pair {108, 0}, {109, 0}, {111, 2}, {118, 4}, {119, 0}, {99, 0}, {98, 106}, {6, 1} })
+            incoming.addEvent (juce::MidiMessage::controllerEvent (1, controller, value), incoming.getNumEvents());
+        processor.processBlock (audio, incoming); pump();
+        for (const auto [id, value] : { std::pair {"arpOn", 0}, {"arpLatch", 0}, {"arpOctaves", 1}, {"arpMode", 4}, {"arpRhythm", 0}, {"seqRetrig", 1} })
+            ok &= processor.getParameters().getRawParameterValue (id)->load() == value;
         processor.setHardwareMidiChannel (2);
         processor.setLiveMidiRxEnabled (false);
         editor.reset();

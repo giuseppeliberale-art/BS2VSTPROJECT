@@ -146,13 +146,21 @@ ChoiceControl::ChoiceControl (juce::AudioProcessorValueTreeState& state,
     const juce::String parameterId (spec.id);
     note.setText ((parameterId == "ampTrigger" || parameterId == "modTrigger")
                       ? "Shared: Amp + Mod"
-                      : (spec.verifiedWireValues ? "MIDI verified" : "MIDI test"),
+                      : (bsii::isLiveMidiOnly (parameterId) ? "Live MIDI only"
+                         : (spec.verifiedWireValues ? "MIDI verified" : "MIDI test")),
                   juce::dontSendNotification);
     note.setJustificationType (juce::Justification::centred);
     note.setColour (juce::Label::textColourId,
                     spec.verifiedWireValues ? juce::Colours::lightgreen.withAlpha (0.75f)
                                             : juce::Colours::orange.withAlpha (0.85f));
     addAndMakeVisible (note);
+
+    if (bsii::isLiveMidiOnly (parameterId))
+        combo.setTooltip ("Live MIDI control. Get Patch does not update this setting yet; Send All leaves it unchanged. Hardware-to-app mapping captured; app-to-hardware testing pending.");
+    if (parameterId == "arpMode")
+        combo.setTooltip ("Record arms hardware sequence recording: incoming notes can replace sequence data. Get Patch does not update this control; Send All leaves it unchanged.");
+    if (parameterId == "arpOctaves")
+        combo.setTooltip ("Arpeggiator octave span (1-4). Sequence-slot selection in Record/Play has not been verified. Get Patch does not update this control; Send All leaves it unchanged.");
 
     attachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment> (state, spec.id, combo);
 }
@@ -394,7 +402,8 @@ void BSIIControlAudioProcessorEditor::buildPages()
         { "LFO", { "LFO / Glide" } },
         { "Amp Env", { "Amp Env" } },
         { "Mod Env", { "Mod Env" } },
-        { "FX + Perf", { "FX / Perf" } }
+        { "FX + Perf", { "FX / Perf" } },
+        { "Arp / Seq", { "Arp / Seq" } }
     };
 
     const auto& params = bsii::parameterSpecs();
@@ -767,13 +776,16 @@ void BSIIControlAudioProcessorEditor::sendAllStateToHardware()
 
     for (size_t i = 0; i < choices.size(); ++i)
     {
+        // Patch reception cannot refresh these controls yet. Avoid sending stale
+        // mode/latch values, particularly Record, as part of a bulk patch recall.
+        if (bsii::isLiveMidiOnly (choices[i].id)) continue;
         const auto choiceIndex = juce::jlimit (0, static_cast<int> (choices[i].choices.size()) - 1,
                                               currentParameterValue (choices[i].id));
         bsii::sendChoice (*midiOutput, midiChannel, choices[i],
                           choices[i].choices[static_cast<size_t> (choiceIndex)].wireValue);
     }
 
-    statusLabel.setText ("Sent complete editor state to Bass Station II on MIDI channel " + juce::String (midiChannel) + ".",
+    statusLabel.setText ("Sent patch controls (Arp/Seq live-only settings unchanged) on MIDI channel " + juce::String (midiChannel) + ".",
                          juce::dontSendNotification);
 }
 

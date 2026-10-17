@@ -19,8 +19,8 @@ version labels still show earlier numbers.
 
 ## Available features
 
-- **76 sound controls** across Osc 1, Osc 2, Mixer, Filter, LFO/Glide,
-  Amp Env, Mod Env and FX/Performance pages.
+- **82 controls** across Osc 1, Osc 2, Mixer, Filter, LFO/Glide,
+  Amp Env, Mod Env, FX/Performance and Arp/Seq pages.
 - **Live MIDI in both directions:** app edits send CC/NRPN messages, and supported
   hardware changes update the editor while Live RX is running.
 - **Preset selection, 0–127:** select a number, step with Previous/Next, or reload
@@ -33,9 +33,9 @@ version labels still show earlier numbers.
 - **Clearer controls:** Sub Octave −1/−2 and Osc Sync Off/On switches, signed bend
   and modulation values, resizable pages and scrolling for smaller windows.
 
-This is a partial instrument editor. Arp Swing is available, but the remaining
-Arp/Seq controls, LFO sync divisions, several modulation routes and newer firmware
-functions are still on the roadmap. **AFX mode is planned last.**
+The Arp/Seq page adds On, Latch, Octaves, Direction/Play/Record, Rhythm and Seq Retrig alongside Swing. The six new controls currently use live MIDI only: Get Patch does not refresh them, and Send All leaves them unchanged. Their emitted encodings were captured from firmware 4.14; hardware receive tests are pending. See [Arp/Seq research and evidence](docs/arp-seq-research.md).
+
+This is a partial instrument editor. Sequence-step editing, verified sequence-slot selection, LFO sync divisions, several modulation routes and newer firmware functions remain on the roadmap. **AFX mode is planned last.**
 
 ## Build on macOS
 
@@ -144,7 +144,7 @@ text to see the state.
 
 ## What has been tested?
 
-- All **76 exposed controls** have captured patch/decoder coverage. The retained
+- The original **76 controls** have captured patch/decoder coverage; the six new Arp/Seq controls have incoming MIDI evidence only. The retained
   fixture set includes **96 files and 9,251 patch messages**.
 - Manual checks have exercised supported controls in both directions, with fixes
   and retests recorded in the [manual test review](docs/manual-test-review.md).
@@ -154,7 +154,7 @@ text to see the state.
   selection, all 76 editor values matched the saved hardware patch:
   [preset validation](docs/preset-validation.md).
 - The current offline suite has **seven registered test groups**, including
-  12 Python checks for the MIDI Lab tools.
+  13 Python checks for the MIDI Lab tools.
 
 These checks establish specific MIDI, patch storage and editor behaviors. They do
 not measure acoustic accuracy or establish complete instrument/DAW coverage.

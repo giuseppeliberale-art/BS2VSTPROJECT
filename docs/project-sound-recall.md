@@ -1,6 +1,6 @@
 # Project sound recall
 
-Implemented 17 October 2026. Manual hardware/DAW acceptance is pending.
+Implemented 17 October 2026. The user confirmed stored-preset recall and captured-sound recall in Ableton; additional reconnect cases remain pending.
 
 Local validation: all seven offline CTest groups PASS; native processor integration
 PASS (fresh capture, stale-receipt exclusion, saved raw-patch roundtrip, one-shot
@@ -9,8 +9,7 @@ refusal, missing capture, and timeout preserving the previous capture). Existing
 processor automation/connection/host-notification checks remain passing. Release
 Standalone/VST3/AU builds, installed signature verification and AU validation PASS.
 Updated VST3/AU installed after the user saved/closed Live; prior bundles retained
-in ignored `validation-results/20261017-project-recall/before/`. USB power/reconnect
-and actual hardware sound recall have not yet been manually validated.
+in ignored `validation-results/20261017-project-recall/before/`. Stored-preset and captured-sound recall were subsequently confirmed by the user in Ableton. Cutoff automation was temporarily disabled to make the captured-sound check clear. USB power/reconnect remains unverified.
 
 ## Behavior
 

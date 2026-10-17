@@ -21,8 +21,7 @@ RESULTS = ROOT / 'midi-lab-results'
 SIGNED = {'velocityAmp', 'velocityMod', 'modWhLfo1Pitch', 'modWhOsc2Pitch',
           'aftertouchFilter', 'aftertouchLfo1', 'aftertouchLfo2Spd'}
 # Documented discovery routes, not yet implemented/verified app controls.
-DISCOVERY = {108: 'arpOn', 109: 'arpLatch', 111: 'arpOctaves',
-             118: 'arpMode', 119: 'arpRhythm'}
+DISCOVERY = {}
 
 
 def registry():
@@ -39,6 +38,9 @@ def registry():
     declared = len(re.findall(r'\{\s*"[^"]+",\s*"[^"]+",\s*"[^"]+",\s*Protocol::', source))
     if not result or len(result) != declared or len({r['id'] for r in result}) != len(result):
         raise ValueError('Control registry extraction failed; source format changed')
+    mapped = set(re.findall(r'\{"([^"]+)"', (ROOT / 'Source/BSIIPatchFields.h').read_text()))
+    for control in result:
+        control['patchMapped'] = control['id'] in mapped
     return result
 
 
@@ -317,11 +319,11 @@ def sweep(control, directory):
 def write_reference(directory):
     controls = registry()
     (directory / 'controls.json').write_text(json.dumps(controls, indent=2) + '\n')
-    lines = ['# Implemented BSII control reference', '', 'Generated from Source/BSIIMidi.h. Values are storage values, not necessarily display units.', '', '| ID | Group | Protocol | Route | Range / choices |', '|---|---|---|---|---|']
+    lines = ['# Implemented BSII control reference', '', 'Generated from Source/BSIIMidi.h. Values are storage values, not necessarily display units.', '', '| ID | Group | Protocol | Route | Range / choices | Patch readback |', '|---|---|---|---|---|---|']
     for c in controls:
         route = f"{c['msb']}:{c['lsb']}" if c['lsb'] >= 0 else str(c['msb'])
         values = str(c.get('choices', f"{c.get('minimum')}…{c.get('maximum')}"))
-        lines.append(f"| {c['id']} | {c['section']} | {c['protocol']} | {route} | {values} |")
+        lines.append(f"| {c['id']} | {c['section']} | {c['protocol']} | {route} | {values} | {c['patchMapped']} |")
     (directory / 'controls.md').write_text('\n'.join(lines) + '\n')
     print(f'{len(controls)} controls. Reference: {directory / "controls.md"}')
 

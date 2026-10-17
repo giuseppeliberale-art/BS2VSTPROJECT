@@ -10,7 +10,7 @@ Default mode listens for30seconds without creating a MIDI output port. It saves
 original packet bytes, decoded events and a short report in ignored
 `midi-lab-results/`. It identifies implemented controls from `Source/BSIIMidi.h`,
 including paired8-bit CC and NRPN, and records raw Program Change numbers.
-Arp CC108/109/111/118/119 are labelled documented discovery routes, not app passes.
+Arp CC108/109/111/118/119 and Seq Retrig NRPN0:106 are now recognized live-only controls. Generated references mark patch readback coverage separately: their SysEx offsets are not established. Recognition is not a hardware receive or UI pass.
 Unmapped messages remain in the evidence rather than disappearing.
 
 Reports say OBSERVED / NOT OBSERVED, not 'UI passed' or 'sounds correct'. Optional
