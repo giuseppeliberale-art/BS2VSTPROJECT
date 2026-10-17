@@ -46,6 +46,8 @@ public:
     // retains the port when the editor is destroyed.
     std::unique_ptr<juce::MidiOutput>& hardwareMidiOutput() { return midiOutput; }
     int getHardwareMidiChannel() const { return hardwareMidiChannel.load(); }
+    void rememberHardwareMidiOutput (const juce::String& identifier, const juce::String& name);
+    bool hasSavedHardwareConnection() const;
 
     // Reception/import/recall updates parameters without transmitting them.
     // Thread-local scopes leave concurrent automation on other threads enabled.
@@ -95,6 +97,7 @@ public:
 private:
     void parameterChanged (const juce::String&, float) override;
     void timerCallback() override;
+    void restoreHardwareConnection();
     bool midiIsSilenced() const;
     static thread_local ScopedMidiSilence* midiSilence;
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
@@ -104,6 +107,11 @@ private:
 
     juce::AudioProcessorValueTreeState apvts;
     std::unique_ptr<juce::MidiOutput> midiOutput;
+    mutable juce::CriticalSection connectionLock;
+    juce::String savedOutputIdentifier, savedOutputName;
+    bool connectionSaved = false;
+    bool connectionRestorePending = false;
+    uint32_t lastConnectionAttemptMs = 0;
     std::atomic<int> hardwareMidiChannel { 1 };
     std::atomic<int> pendingHardwareProgram { -1 };
     std::atomic<bool> liveMidiRxEnabled { true };

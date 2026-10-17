@@ -93,3 +93,16 @@ Channel and Live RX state survive editor recreation within the same instance.
 Verified with isolated native MIDI regression and actual Ableton Resonance readback
 with the editor closed. Full session connection recall and recorded automation
 playback remain pending; this does not establish broad DAW compatibility.
+
+
+### Saved MIDI connection
+
+Host sessions now include selected MIDI output identifier/name, channel and Live
+RX. State loading schedules native connection from the processor timer, independent
+of editor creation, and retries unavailable saved ports. A changed identifier may
+use one exact name match; ambiguous/missing matches never select another synth.
+Connection restore sends no initial patch. Portable snapshots remain parameter-only.
+Existing Sets need a save with the updated build after selecting the output.
+Local regression covers a real processor save/new-instance restore without editor,
+channel3 MIDI dispatch, obsolete identifiers and missing-device handling. Manual
+Ableton restart verification is still pending.

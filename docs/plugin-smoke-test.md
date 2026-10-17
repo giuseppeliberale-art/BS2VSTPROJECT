@@ -162,3 +162,36 @@ Retest results (2026-10-17):
 - This verifies host parameter control after editor destruction, not recorded
   envelope playback, initial port connection without ever opening an editor,
   full Set recall to hardware, multiple instances, or other DAW/OS combinations.
+
+
+## Recorded playback and saved connection follow-up
+
+User tested an Ableton External Instrument sending notes to Bass Station II on
+channel1, with BSII Control Cutoff and Resonance automation. User reported both
+automated controls working during playback. After saving, quitting Live and
+reopening the Set, automation required opening the plugin editor once; after
+opening and closing it, the user confirmed notes and both automation lanes worked.
+This is user-reported hardware playback evidence, not an independently captured
+MIDI trace. External Instrument's audio return was not validated in this test.
+
+A fresh-processor native regression reproduced the connection failure without
+creating an editor: restored connection metadata left the output closed and the
+expected channel3 Resonance45 message was absent. Connection persistence now
+stores output identifier/name, channel and Live RX setting in host state. Restore
+schedules native MIDI opening on the processor's message-thread timer, with a
+one-second retry for missing devices. An obsolete identifier falls back only to
+one exact name match. An unavailable saved port does not auto-select another synth.
+Patch snapshots remain separate, and loading a Set does not send a patch/Send All.
+
+Older Sets contain no connection metadata. With the updated build, open the editor
+once to select the hardware, close it, then save the Set again. Subsequent loads
+can reopen that saved connection without the editor. A new manual Ableton restart
+check is required before calling this fixed in the host.
+
+
+Local validation of saved-connection change: fresh-instance roundtrip regression
+PASS, including exact-name fallback and missing-device refusal; existing seven
+CTest groups PASS; Release Standalone/VST3/AU build PASS. Updated local VST3/AU
+installed after user saved/closed Live; prior bundles retained under ignored
+before-saved-connection/. Strict/deep code signatures and AU validator PASS.
+Manual Ableton restart with editor kept closed remains pending.

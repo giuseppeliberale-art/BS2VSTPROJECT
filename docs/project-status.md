@@ -150,3 +150,13 @@ Port selection still initially needs the editor; connection persistence across
 reloading a Set is not implemented. Hardware live-state application and automatic
 preset refresh still involve the editor.
 See docs/plugin-smoke-test.md. Do not claim full AU/VST3 compatibility yet.
+
+
+## Saved MIDI connection (follow-up)
+
+User reports Cutoff/Resonance automation plus External Instrument notes working,
+including after reopening a Set once the editor had been opened once. Automatic
+connection was absent before that first editor open. Added host-state persistence
+for the selected output, channel and Live RX, restored from the processor timer.
+Legacy Sets need one save with the updated build after choosing their MIDI output.
+Pending: manual restart test of the updated build with editor kept closed.

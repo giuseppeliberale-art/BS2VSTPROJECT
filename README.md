@@ -8,8 +8,9 @@ The sound comes from the Bass Station II; this project does not emulate its audi
 **Current status:** working standalone editor under active development. The project
 also builds AU and VST3. An early VST3 check in Ableton Live 12.4.6 on Apple
 Silicon passed loading, hardware patch reception, and host parameter edits with
-the editor closed; AU passed Apple validation. Recorded automation playback, full
-session recall and wider compatibility still need testing.
+the editor closed; AU passed Apple validation. User testing also confirmed Cutoff
+and Resonance automation playback. Full hardware-state recall and wider
+compatibility still need testing.
 Hardware checks have used a Bass Station II reported as running firmware **4.14**.
 
 The `v0.8.2` tag preserves the original project baseline. `main` includes the later
@@ -93,7 +94,11 @@ use the hardware's save procedure when you intend to save into its preset memory
 Enable VST3 system folders in Live's Plug-Ins settings, then load
 **GutzDev → BSII Control** on a MIDI track. Enable Bass Station II's input Track
 port and arm the track with Monitor Auto, or use Monitor In, for live controls.
-Select the hardware output/channel in the plugin. Patch replies use a separate
+Select the hardware output/channel in the plugin, then save the DAW Set. Host
+state now includes that connection, channel and Live RX setting so the processor
+can reconnect without opening the editor. Older Sets need one save with the new
+build after choosing the output. Reconnection does not automatically send a patch;
+the new behavior still needs the manual Ableton restart retest. Patch replies use a separate
 direct SysEx input because Live's ordinary track path does not supply them.
 Input/output names must match uniquely. These are early tests, not complete DAW
 support; see [plugin smoke-test results](docs/plugin-smoke-test.md).

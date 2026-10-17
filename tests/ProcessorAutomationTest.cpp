@@ -43,6 +43,7 @@ int main (int argc, char** argv)
 
     bool ok = true;
     juce::StringArray expected;
+    juce::MemoryBlock savedSession;
     {
         BSIIControlAudioProcessor processor;
         for (int n = 0; n < 100 && ! processor.hardwareMidiOutput(); ++n)
@@ -113,6 +114,45 @@ int main (int argc, char** argv)
         ok &= processor.getHardwareMidiChannel() == 2 && ! processor.isLiveMidiRxEnabled();
         editor.reset();
         set ("filterResonance", 44); pump(); cc (82, 44, 2);
+        processor.rememberHardwareMidiOutput (processor.hardwareMidiOutput()->getIdentifier(), name);
+        processor.setHardwareMidiChannel (3);
+        processor.getStateInformation (savedSession);
+    }
+    {
+        BSIIControlAudioProcessor fresh;
+        juce::String portId;
+        for (const auto& port : juce::MidiOutput::getAvailableDevices())
+            if (port.name == name) portId = port.identifier;
+        fresh.setStateInformation (savedSession.getData(), static_cast<int> (savedSession.getSize()));
+        pump (200);
+        const bool connected = fresh.hardwareMidiOutput() != nullptr;
+        if (! connected) std::cerr << "FAIL: saved output did not reconnect without editor\n";
+        ok &= connected && fresh.getHardwareMidiChannel() == 3 && ! fresh.isLiveMidiRxEnabled();
+        auto* resonance = fresh.getParameters().getParameter ("filterResonance");
+        resonance->setValueNotifyingHost (resonance->convertTo0to1 (45));
+        pump();
+        auto message = juce::MidiMessage::controllerEvent (3, 82, 45);
+        expected.add (juce::String::toHexString (message.getRawData(), message.getRawDataSize()));
+        juce::MemoryBlock roundtrip;
+        fresh.getStateInformation (roundtrip);
+        auto xml = juce::AudioProcessor::getXmlFromBinary (roundtrip.getData(), static_cast<int> (roundtrip.getSize()));
+        ok &= xml && xml->getStringAttribute ("bsiiMidiOutputId") == portId;
+        if (xml)
+        {
+            xml->setAttribute ("bsiiMidiOutputId", "obsolete endpoint identifier");
+            juce::MemoryBlock renamed;
+            juce::AudioProcessor::copyXmlToBinary (*xml, renamed);
+            fresh.setStateInformation (renamed.getData(), static_cast<int> (renamed.getSize()));
+            pump (200);
+            ok &= fresh.hardwareMidiOutput() && fresh.hardwareMidiOutput()->getIdentifier() == portId;
+            xml->setAttribute ("bsiiMidiOutputName", "missing saved device");
+            juce::AudioProcessor::copyXmlToBinary (*xml, renamed);
+            fresh.setStateInformation (renamed.getData(), static_cast<int> (renamed.getSize()));
+            pump (200);
+            auto editor = std::unique_ptr<juce::AudioProcessorEditor> (fresh.createEditor());
+            pump();
+            ok &= fresh.hardwareMidiOutput() == nullptr; // Do not select a different synth.
+        }
     }
     log.withFileExtension ("stop").replaceWithText ("stop");
     sink.waitForProcessToFinish (5000);
@@ -121,6 +161,6 @@ int main (int argc, char** argv)
     if (actual != expected)
         std::cerr << "Expected:\n" << expected.joinIntoString ("\n") << "\nActual:\n" << actual.joinIntoString ("\n") << "\n";
     log.deleteFile(); log.withFileExtension ("stop").deleteFile();
-    std::cout << (ok ? "PASS" : "FAIL") << " processor automation before/after editor, native CC/paired CC/NRPN, linked triggers, silent receive/recall, channel persistence\n";
+    std::cout << (ok ? "PASS" : "FAIL") << " processor automation before/after editor, native CC/paired CC/NRPN, linked triggers, silent receive/recall, channel persistence, saved connection without editor and exact-name fallback\n";
     return ok ? 0 : 1;
 }

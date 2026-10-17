@@ -20,7 +20,6 @@ BSIIControlAudioProcessor::BSIIControlAudioProcessor()
     for (const auto& spec : bsii::parameterSpecs()) apvts.addParameterListener (spec.id, this);
     for (const auto& spec : bsii::choiceSpecs()) apvts.addParameterListener (spec.id, this);
     startTimerHz (100);
-
 }
 
 BSIIControlAudioProcessor::~BSIIControlAudioProcessor()
@@ -76,8 +75,63 @@ void BSIIControlAudioProcessor::parameterChanged (const juce::String& id, float 
         }
 }
 
+void BSIIControlAudioProcessor::rememberHardwareMidiOutput (const juce::String& identifier,
+                                                          const juce::String& name)
+{
+    const juce::ScopedLock lock (connectionLock);
+    savedOutputIdentifier = identifier;
+    savedOutputName = name;
+    connectionSaved = true;
+    connectionRestorePending = false;
+}
+
+bool BSIIControlAudioProcessor::hasSavedHardwareConnection() const
+{
+    const juce::ScopedLock lock (connectionLock);
+    return connectionSaved;
+}
+
+void BSIIControlAudioProcessor::restoreHardwareConnection()
+{
+    // State may arrive on a host worker thread. Native port discovery/opening
+    // stays on this message-thread timer, before dispatching pending automation.
+    const juce::ScopedLock lock (connectionLock);
+    if (! connectionRestorePending) return;
+    const auto now = juce::Time::getMillisecondCounter();
+    if (lastConnectionAttemptMs != 0 && now - lastConnectionAttemptMs < 1000u) return;
+    lastConnectionAttemptMs = now;
+    midiOutput.reset();
+    connectHardwareSysExInput ({});
+    if (savedOutputIdentifier.isEmpty() && savedOutputName.isEmpty())
+    {
+        connectionRestorePending = false;
+        return;
+    }
+    const auto devices = juce::MidiOutput::getAvailableDevices();
+    juce::String identifier;
+    for (const auto& device : devices)
+        if (device.identifier == savedOutputIdentifier) { identifier = device.identifier; break; }
+    if (identifier.isEmpty() && savedOutputName.isNotEmpty())
+    {
+        // OS identifiers may change after reconnecting USB. Fall back only to
+        // one exact name match; never choose a different or ambiguous device.
+        int matches = 0;
+        for (const auto& device : devices)
+            if (device.name == savedOutputName) { identifier = device.identifier; ++matches; }
+        if (matches != 1) identifier.clear();
+    }
+    if (identifier.isEmpty()) return; // Retry when the saved hardware appears.
+    midiOutput = juce::MidiOutput::openDevice (identifier);
+    if (! midiOutput) return;
+    savedOutputIdentifier = identifier;
+    savedOutputName = midiOutput->getName();
+    connectHardwareSysExInput (savedOutputName);
+    connectionRestorePending = false;
+}
+
 void BSIIControlAudioProcessor::timerCallback()
 {
+    restoreHardwareConnection();
     const auto channel = hardwareMidiChannel.load();
     const auto& params = bsii::parameterSpecs();
     for (size_t i = 0; i < params.size(); ++i)
@@ -353,15 +407,42 @@ juce::AudioProcessorEditor* BSIIControlAudioProcessor::createEditor()
 
 void BSIIControlAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
-    if (auto xml = apvts.copyState().createXml()) copyXmlToBinary (*xml, destData);
+    auto state = apvts.copyState();
+    {
+        const juce::ScopedLock lock (connectionLock);
+        state.setProperty ("bsiiConnectionSaved", connectionSaved, nullptr);
+        state.setProperty ("bsiiMidiOutputId", savedOutputIdentifier, nullptr);
+        state.setProperty ("bsiiMidiOutputName", savedOutputName, nullptr);
+        state.setProperty ("bsiiMidiChannel", hardwareMidiChannel.load(), nullptr);
+        state.setProperty ("bsiiLiveRxEnabled", liveMidiRxEnabled.load(), nullptr);
+    }
+    if (auto xml = state.createXml()) copyXmlToBinary (*xml, destData);
 }
 
 void BSIIControlAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
+    auto xml = getXmlFromBinary (data, sizeInBytes);
+    if (! xml) return;
+    auto state = juce::ValueTree::fromXml (*xml);
+    if (! state.isValid() || ! state.hasType (apvts.state.getType())) return;
     ScopedMidiSilence silence (*this);
     clearPendingMidi();
-    if (auto xml = getXmlFromBinary (data, sizeInBytes))
-        apvts.replaceState (juce::ValueTree::fromXml (*xml));
+    if (static_cast<bool> (state.getProperty ("bsiiConnectionSaved", false)))
+    {
+        const juce::ScopedLock lock (connectionLock);
+        savedOutputIdentifier = state.getProperty ("bsiiMidiOutputId").toString();
+        savedOutputName = state.getProperty ("bsiiMidiOutputName").toString();
+        connectionSaved = true;
+        connectionRestorePending = true;
+        lastConnectionAttemptMs = 0;
+        setHardwareMidiChannel (static_cast<int> (state.getProperty ("bsiiMidiChannel", 1)));
+        setLiveMidiRxEnabled (static_cast<bool> (state.getProperty ("bsiiLiveRxEnabled", true)));
+    }
+    // Connection metadata belongs to host sessions, not portable patch snapshots.
+    for (const auto* property : { "bsiiConnectionSaved", "bsiiMidiOutputId", "bsiiMidiOutputName",
+                                 "bsiiMidiChannel", "bsiiLiveRxEnabled" })
+        state.removeProperty (property, nullptr);
+    apvts.replaceState (state);
 }
 
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()

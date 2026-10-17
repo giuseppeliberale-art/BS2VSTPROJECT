@@ -495,6 +495,20 @@ void BSIIControlAudioProcessorEditor::timerCallback()
             autoSelectBassStation();
     }
 
+    if (midiChannel != processor.getHardwareMidiChannel())
+    {
+        midiChannel = processor.getHardwareMidiChannel();
+        channelBox.setSelectedId (midiChannel, juce::dontSendNotification);
+        forgetPreset();
+    }
+    if (liveRxPaused == processor.isLiveMidiRxEnabled())
+        setLiveRxPaused (! processor.isLiveMidiRxEnabled());
+    if (midiOutput != nullptr && selectedDeviceIdentifier != midiOutput->getIdentifier())
+    {
+        forgetPreset();
+        autoSelectBassStation();
+    }
+
     const auto nowMs = juce::Time::getMillisecondCounter();
     if (midiOutput == nullptr && selectedDeviceIdentifier.isNotEmpty()
         && nowMs - lastReconnectAttemptMs > 2000u)
@@ -542,6 +556,12 @@ void BSIIControlAudioProcessorEditor::autoSelectBassStation()
                 midiOutputBox.setSelectedId (i + 1, juce::dontSendNotification);
                 return;
             }
+    if (processor.hasSavedHardwareConnection())
+    {
+        statusLabel.setText ("Saved MIDI output is reconnecting. If unavailable, connect the hardware or select an output.",
+                             juce::dontSendNotification);
+        return;
+    }
     for (int i = 0; i < midiOutputs.size(); ++i)
     {
         const auto name = midiOutputs[i].name.toLowerCase();
@@ -562,6 +582,7 @@ void BSIIControlAudioProcessorEditor::selectMidiOutput (int comboBoxId)
         processor.clearPendingMidi();
         midiOutput.reset();
         selectedDeviceIdentifier.clear();
+        processor.rememberHardwareMidiOutput ({}, {});
         processor.connectHardwareSysExInput ({});
         statusLabel.setText ("No MIDI output selected.", juce::dontSendNotification);
         return;
@@ -605,6 +626,7 @@ bool BSIIControlAudioProcessorEditor::reopenSelectedMidiOutput (bool forceReopen
     midiOutput = juce::MidiOutput::openDevice (selectedDeviceIdentifier);
     if (midiOutput != nullptr)
     {
+        processor.rememberHardwareMidiOutput (selectedDeviceIdentifier, deviceName);
         const bool inputReady = processor.connectHardwareSysExInput (deviceName);
         const auto receiveHint = processor.usesDirectHardwareSysEx()
             ? (inputReady ? ". Patch RX connected directly; live CC/NRPN uses the DAW track input."
