@@ -137,3 +137,20 @@ Send All now includes these controls, but skips Direction when its value is Reco
 ### SysEx implementation validation / installation
 
 2026-10-18: Release standalone/AU/VST3 builds PASS. All seven CTest groups PASS after correcting the legacy fixture checks to distinguish their 76 mapped controls from obsolete raw aliases retained in their XML. All 15 MIDI Lab tests PASS, including all 22 labelled patch fixtures, neighbour-bit isolation and invalid-octave rejection. Native processor integration PASS, including host-silent application of the six Arp/Seq decoded values; direct native SysEx regression PASS. Installed AU/VST3 signatures and AU validator PASS. Prior plugin bundles retained in ignored `validation-results/20261018-011828-6393/before/`; failed initial fixture expectations and passing retests are retained in the same report directory. User saved and closed Ableton before installation. Manual hosted Get Patch validation with Live RX paused is the next acceptance check.
+
+### Manual hosted Get Patch acceptance — PASS
+
+On the installed 83f7679 build, the user paused Live RX and confirmed that Get Patch updated each of the six new controls after hardware edits:
+
+| Control | Confirmed displayed result after Get Patch |
+|---|---|
+| Rhythm | 32 |
+| Octaves | 4 |
+| Direction | Random |
+| Latch | On |
+| Arp On | On (hardware was initially Off, so the requested change was reversed) |
+| Seq Retrig | Off |
+
+The initial reported octave inconsistency was clarified by the user: the selector was correct; the diagnostic at the bottom displayed the internal zero-based choice index 0–3. Index 3 corresponds to displayed Octaves 4. This was not a confirmed octave-readback defect.
+
+These are specific manual SysEx readback checks in Ableton with live CC/NRPN application paused. They do not add sequence-note editing, verify every possible combination, or establish full sequence-slot content recall. Resume Live RX after testing for normal hardware following.
