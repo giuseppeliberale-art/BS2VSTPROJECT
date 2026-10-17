@@ -127,14 +127,14 @@ private:
     bsii::PresetSync presetSync;
     juce::TextButton refreshButton { "Refresh MIDI" };
     juce::ToggleButton pauseLiveRxButton { "Live RX is running" };
-    juce::TextButton saveButton { "Save Snapshot…" };
-    juce::TextButton loadButton { "Load Snapshot…" };
-    juce::TextButton sendAllButton { "Send All → BSII" };
+    juce::TextButton saveButton { juce::String::fromUTF8 ("Save Snapshot…") };
+    juce::TextButton loadButton { juce::String::fromUTF8 ("Load Snapshot…") };
+    juce::TextButton sendAllButton { juce::String::fromUTF8 ("Send All → BSII") };
     juce::TextButton getPatchButton { "Get Patch from BSII" };
     juce::TextButton armSysExButton { "Arm Patch Capture" };
-    juce::TextButton saveSysExButton { "Save Last .syx…" };
-    juce::TextButton sendSysExButton { "Send .syx → BSII" };
-    juce::TextButton importSysExButton { "Import .syx → Editor" };
+    juce::TextButton saveSysExButton { juce::String::fromUTF8 ("Save Last .syx…") };
+    juce::TextButton sendSysExButton { juce::String::fromUTF8 ("Send .syx → BSII") };
+    juce::TextButton importSysExButton { juce::String::fromUTF8 ("Import .syx → Editor") };
     juce::TabbedComponent tabs { juce::TabbedButtonBar::TabsAtTop };
 
     std::vector<std::unique_ptr<ParameterControl>> parameterControls;

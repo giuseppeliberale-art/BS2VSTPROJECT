@@ -62,3 +62,10 @@ now use overlay labels and the confirmed first-C Filter Tracking shortcut.
   Remaining slot numbering follows the documented 0–127 range.
 - Automated checks cover settling, rapid changes, stale response rejection,
   unknown state, bounds and millisecond counter wrap.
+
+## Correct Unicode label encoding
+
+Labels containing arrows, ellipses and the title dash now explicitly use UTF-8
+conversion. JUCE's ASCII string constructor previously interpreted individual
+UTF-8 bytes as characters, producing garbled symbols. This affects presentation
+only; MIDI routes, parameter state and patch data are unchanged.

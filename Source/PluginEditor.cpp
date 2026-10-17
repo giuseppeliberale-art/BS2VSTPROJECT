@@ -269,7 +269,7 @@ BSIIControlAudioProcessorEditor::BSIIControlAudioProcessorEditor (BSIIControlAud
     setResizable (true, true);
     setResizeLimits (760, 600, 1600, 1200);
     setSize (900, 800);
-    titleLabel.setText ("Bass Station II Control — Waveforms + SysEx Validation v0.8.2", juce::dontSendNotification);
+    titleLabel.setText (juce::String::fromUTF8 ("Bass Station II Control — Waveforms + SysEx Validation v0.8.2"), juce::dontSendNotification);
     titleLabel.setFont (juce::FontOptions (23.0f).withStyle ("Bold"));
     addAndMakeVisible (titleLabel);
 
@@ -640,7 +640,7 @@ void BSIIControlAudioProcessorEditor::selectPreset (int program, bool sendToHard
     previousPresetButton.setEnabled (program > 0);
     nextPresetButton.setEnabled (program < 127);
     loadPresetButton.setEnabled (true);
-    statusLabel.setText ("Preset " + juce::String (program) + ": waiting to refresh patch…", juce::dontSendNotification);
+    statusLabel.setText ("Preset " + juce::String (program) + juce::String::fromUTF8 (": waiting to refresh patch…"), juce::dontSendNotification);
 }
 
 void BSIIControlAudioProcessorEditor::requestPatchFromHardware()
@@ -661,7 +661,7 @@ void BSIIControlAudioProcessorEditor::requestPatchFromHardware()
     static constexpr uint8_t requestBytes[] { 0xF0, 0x00, 0x20, 0x29, 0x00, 0x33, 0x00, 0x40, 0xF7 };
     juce::MidiMessage request (requestBytes, static_cast<int> (sizeof (requestBytes)), 0.0);
     midiOutput->sendMessageNow (request);
-    statusLabel.setText ("Requested current patch from Bass Station II…", juce::dontSendNotification);
+    statusLabel.setText (juce::String::fromUTF8 ("Requested current patch from Bass Station II…"), juce::dontSendNotification);
 }
 
 void BSIIControlAudioProcessorEditor::sendParameterValue (int specIndex, int value)
@@ -758,7 +758,7 @@ juce::String BSIIControlAudioProcessorEditor::hexPreview (const juce::MemoryBloc
     for (int i = 0; i < count; ++i)
         parts.add (juce::String::toHexString (static_cast<int> (bytes[i])).paddedLeft ('0', 2).toUpperCase());
     auto result = parts.joinIntoString (" ");
-    if (static_cast<int> (block.getSize()) > count) result += " …";
+    if (static_cast<int> (block.getSize()) > count) result += juce::String::fromUTF8 (" …");
     return result;
 }
 
@@ -800,7 +800,7 @@ void BSIIControlAudioProcessorEditor::updateSysExDisplay()
         const bool looksLikeNovation = latest.data.getSize() >= 5
             && bytes[0] == 0xF0 && bytes[1] == 0x00 && bytes[2] == 0x20 && bytes[3] == 0x29;
         statusLabel.setText (looksLikeNovation
-            ? "Captured a Novation SysEx message (" + juce::String (size) + " bytes). Use Save Last .syx… to keep the raw patch dump."
+            ? "Captured a Novation SysEx message (" + juce::String (size) + juce::String::fromUTF8 (" bytes). Use Save Last .syx… to keep the raw patch dump.")
             : "Captured SysEx (" + juce::String (size) + " bytes). Header is not the expected Novation manufacturer ID.",
             juce::dontSendNotification);
     }
@@ -1150,7 +1150,7 @@ void BSIIControlAudioProcessorEditor::loadSnapshot()
             const auto ok = loadStateFromFile (file);
             if (ok)
             {
-                statusLabel.setText ("Loaded snapshot: " + file.getFileName() + ". Use Send All → BSII to recall it on hardware.",
+                statusLabel.setText ("Loaded snapshot: " + file.getFileName() + juce::String::fromUTF8 (". Use Send All → BSII to recall it on hardware."),
                                      juce::dontSendNotification);
             }
             else

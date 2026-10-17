@@ -6,7 +6,7 @@ Updated 2026-10-17. Read this first; use evidence links below for details.
 
 - Repo: BS2VSTPROJECT, main. Manual-test fixes landed in776d44c; this update
   adds MIDI Lab and preset selection/sync. Original v0.8.2 tag stays immutable.
-- LATEST RUNNING APP: `/private/tmp/BSII-Control-presets/BSII Control.app`.
+- LATEST RUNNING APP: `/private/tmp/BSII-Control-label-fix/BSII Control.app`.
   Temporary location may disappear after cleanup/reboot. Build alone does not update it.
   Older Downloads app / earlier temp copies must not be launched alongside it.
 - Synth firmware: user reports4.14 with AFX overlay. Hardware now on preset2 after preset-sync validation. Read-only backup saved in
@@ -112,3 +112,12 @@ Generate current76-control registry via `lab.py reference`.
   received/decoded154-byte patch. Exposed values matched preset1. Both directions
   checked; channel filtering/paused RX and induced late hardware replies remain
   untested live. See docs/preset-validation.md. Hardware now on preset2.
+
+## Label encoding fix
+
+UI title/buttons/status strings with non-ASCII punctuation explicitly decode UTF-8.
+Old build reproduced garbled ASCII interpretation; fresh signed standalone verified
+all six affected button labels and title through full accessibility text and visual
+inspection. Existing7 regression groups passed (20261017-170201-48080).
+No MIDI was sent for this check; sound controls restored from app state on restart.
+Feature/GUI redesign work remains paused apart from this requested display fix.
