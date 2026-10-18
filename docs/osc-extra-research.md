@@ -123,3 +123,20 @@ Standalone, AU and VST3 builds passed. With Live confirmed closed, both plugins
 were backed up and replaced; strict signature verification and Apple AU
 validation passed. Manual Ableton and audible acceptance remain pending.
 The public preview release assets have not been replaced.
+
+### Manual Ableton acceptance passed
+
+User verified Oscillator Error plugin selection 7 as E-7 on the hardware
+after reopening the on-key menu without editing Patch/Value. Hardware E-6
+updated the plugin to 6. With Live RX paused, hardware E-0 left the plugin
+at 6; Get Patch then updated it to 0.
+
+User verified Glide Divergence plugin selection 15 as g-15 on the hardware
+after reopening its on-key menu without editing Patch/Value. Hardware g-14
+updated the plugin to 14. With Live RX paused, hardware g-0 left the plugin
+at 14; Get Patch then updated it to 0. User confirmed resuming Live RX and
+exiting the hardware menu. Both controls ended at zero.
+
+These results supersede the basic hosted acceptance deferrals above.
+Dedicated audible checks, hosted automation recording/playback and hosted
+session-reopen acceptance for these controls remain untested.
