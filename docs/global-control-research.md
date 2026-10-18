@@ -161,3 +161,48 @@ back to 0 and resumed Live RX. No separate hardware-display confirmation was
 requested for that final selection. These results complete basic hosted
 send, receive, pause and SysEx readback acceptance; MicroTune automation
 recording/playback and whole-patch transmission remain separately untested.
+
+## Global Tune repeat receive probes
+
+After user-confirmed hardware Tune 0, the scoped diagnostic sender repeated
+NRPN 64:6 with CC6=65. User reopened Tune without touching Patch/Value and
+again observed +50. User manually restored 0 and confirmed completion.
+
+The next probe sent CC6=1, producing user-confirmed +1. A subsequent CC6=127
+probe produced +50, not -1. User then manually returned Tune to 0, exited
+the function, and confirmed completion. User also reconfirmed the hardware
+range -50 through +50.
+
+These are individual command/display observations, not a complete receive
+mapping. They suggest positive direct values with an upper limit but do not
+establish a universal clamp rule, negative encoding, 14-bit behavior, a
+different RPN route, or a firmware defect. In particular, do not send raw 64
+as a presumed neutral value or add a partially working signed Tune control.
+No ordinary patch can verify or restore this global setting in our current
+tools; restoration was manual and user-confirmed.
+
+### Negative endpoint and exact-message round trip
+
+At the user’s suggestion, a fresh Tune-zero edit-buffer dump was captured:
+`midi-lab-results/20261018-225133-backup-df343a/baseline.syx`.
+User set hardware Tune to -50 and exited the function. Passive capture
+`20261018-225137-record-bd8895/events.jsonl` contains exactly 50 NRPN
+64:6 values, CC6 descending 63 through 14, using only CC99, CC98 and CC6.
+No Data Entry LSB or SysEx messages were captured.
+
+The -50 dump `20261018-225214-backup-548844/baseline.syx` is byte-for-byte
+identical to the zero dump (both 154 bytes). No ordinary patch field for
+Global Tune was found in this comparison; this does not rule out other
+global SysEx formats. These dumps and the emitted trace are retained in
+`tests/global-tune-fixtures/`.
+
+After user-confirmed manual restoration to zero, the diagnostic sender
+replayed NRPN 64:6 CC6=14. User reopened Tune without editing and observed
++14, rather than the -50 represented by the hardware’s outgoing raw 14.
+User manually returned Tune to 0 and exited, then confirmed completion.
+
+Thus outgoing and incoming representations demonstrably differ for this
+exact message. Negative receive encoding remains unresolved. No Global
+Tune plugin control or speculative restore encoding has been added. The
+temporary diagnostic sender was removed after the experiments. See
+global-tune-protocol-research.md for the checked primary references.
