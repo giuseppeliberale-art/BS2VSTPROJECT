@@ -132,6 +132,31 @@ class MidiLabTests(unittest.TestCase):
         self.assertFalse(values[2]['inRange'])
         self.assertFalse(values[5]['inRange'])
 
+    @unittest.skipUnless(os.environ.get('BSII_PATCH_INSPECT'), 'Inspector built by validation routine')
+    def test_sub_tuning_hardware_patch_captures(self):
+        folder=ROOT/'tests/sub-tuning-fixtures'
+        files=[folder/'before.syx']+[folder/f'sub-fine-{v}.syx' for v in range(27,229)]+[folder/f'sub-coarse-{v}.syx' for v in range(256)]
+        result=subprocess.run([os.environ['BSII_PATCH_INSPECT'],*[str(p) for p in files]],capture_output=True,text=True,check=True)
+        decoded=[json.loads(line) for line in result.stdout.splitlines()]
+        self.assertEqual(len(decoded),459)
+        self.assertTrue(all(p['valid'] for p in decoded))
+        self.assertEqual([p['fields']['subFine'] for p in decoded[1:203]],list(range(27,229)))
+        self.assertEqual([p['fields']['subCoarse'] for p in decoded[203:]],list(range(256)))
+        for patch in decoded[1:]:
+            for field in ('osc1Fine','osc1Coarse','osc2Fine','osc2Coarse'):
+                self.assertEqual(patch['fields'][field],decoded[0]['fields'][field])
+        self.assertEqual((folder/'before.syx').read_bytes(),(folder/'after.syx').read_bytes())
+
+    def test_sub_tuning_paired_nrpn_isolation(self):
+        d=lab.Decoder()
+        rows=d.feed([0xB0,99,0,98,77,38,64,6,13])
+        self.assertTrue(all('controls' not in r for r in rows))
+        rows=d.feed([0xB1,99,0,98,84,6,127,0xB0,38,64,0xB1,38,64])
+        values=[r['controls'][0] for r in rows if 'controls' in r]
+        self.assertEqual([(v['id'],v['value']) for v in values],[('subFine',27),('subCoarse',255)])
+        rows=d.feed([0xB0,98,84,38,64,100,3,6,10,38,0])
+        self.assertTrue(all('controls' not in r for r in rows))
+
     def test_microtune_emitted_nrpn(self):
         rows=lab.Decoder().feed([0xB0,99,0,98,0,6,8,6,0,6,9])
         values=[r['controls'][0] for r in rows if 'controls' in r]

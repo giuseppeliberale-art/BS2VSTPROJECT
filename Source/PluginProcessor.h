@@ -77,7 +77,12 @@ public:
     };
     void clearPendingMidi(); // Message thread, before explicit full-state sends.
     void setHardwareMidiChannel (int channel);
-    void setLiveMidiRxEnabled (bool enabled) { liveMidiRxEnabled.store (enabled, std::memory_order_relaxed); }
+    void setLiveMidiRxEnabled (bool enabled)
+    {
+        if (! enabled)
+            for (auto& value : currentNrpnDataMSB) value.store (-1, std::memory_order_relaxed);
+        liveMidiRxEnabled.store (enabled, std::memory_order_relaxed);
+    }
     bool isLiveMidiRxEnabled() const { return liveMidiRxEnabled.load (std::memory_order_relaxed); }
     // Returns bsii::noHardwareValue when no update is pending (negative bend is valid).
     int getKnownHardwareProgram() const { return knownHardwareProgram.load(); }
@@ -149,6 +154,7 @@ private:
 
     std::array<std::atomic<int>, 17> currentNrpnMSB {};
     std::array<std::atomic<int>, 17> currentNrpnLSB {};
+    std::array<std::atomic<int>, 17> currentNrpnDataMSB {};
 
     std::atomic<int> lastRxChannel { 0 };
     std::atomic<int> lastRxController { 0 };

@@ -43,8 +43,8 @@ ParameterControl::ParameterControl (juce::AudioProcessorValueTreeState& state,
         secondChoice.onClick = [this] { slider.setValue (isSyncSwitch ? 127 : 0, juce::sendNotificationSync); updateDiscreteSwitch(); };
         updateDiscreteSwitch();
     }
-    const bool fine = parameterId == "osc1Fine" || parameterId == "osc2Fine";
-    const bool coarse = parameterId == "osc1Coarse" || parameterId == "osc2Coarse";
+    const bool fine = parameterId == "osc1Fine" || parameterId == "osc2Fine" || parameterId == "subFine";
+    const bool coarse = parameterId == "osc1Coarse" || parameterId == "osc2Coarse" || parameterId == "subCoarse";
     if (fine || coarse)
     {
         // Set after attachment construction, which installs its own raw formatter.
@@ -54,13 +54,16 @@ ParameterControl::ParameterControl (juce::AudioProcessorValueTreeState& state,
                                     : bsii::coarseDisplay (juce::roundToInt (raw));
             return (value > 0 ? "+" : "") + juce::String (value, fine ? 0 : 1);
         };
-        slider.valueFromTextFunction = [fine] (const juce::String& text)
+        slider.valueFromTextFunction = [fine, parameterId] (const juce::String& text)
         {
+            if (parameterId == "subFine" && text.getDoubleValue() == 0.0) return 127.0;
             return static_cast<double> (fine ? bsii::fineRaw (text.getDoubleValue())
                                             : bsii::coarseRaw (text.getDoubleValue()));
         };
         slider.setTooltip (fine ? "Fine tuning in cents (-100 to +100)."
                                : "Approximate coarse tuning in semitones (-12.0 to +12.0). Hardware display rounding may differ.");
+        if (parameterId == "subFine" || parameterId == "subCoarse")
+            slider.setTooltip ("Independent Sub tuning. Endpoints and zero are captured; intermediate displayed values are approximate.");
         slider.updateText();
     }
     const bool signedAmount = parameterId == "velocityAmp" || parameterId == "velocityMod"
@@ -1057,6 +1060,8 @@ bool BSIIControlAudioProcessorEditor::decodeSysExIntoEditor (const juce::MemoryB
     set ("arpRhythm", decoded.arpRhythm);
     set ("seqRetrig", decoded.seqRetrig);
     set ("modWhLfo1Pitch", decoded.modWhLfo1Pitch);
+    set ("subFine", decoded.subFine);
+    set ("subCoarse", decoded.subCoarse);
     set ("oscError", decoded.oscError);
     set ("glideDivergence", decoded.glideDivergence);
     set ("microTuneTable", decoded.microTuneTable);

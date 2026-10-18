@@ -12,7 +12,8 @@ namespace bsii
     {
         cc7,
         pairedCC8,
-        nrpn7
+        nrpn7,
+        nrpn8
     };
 
     struct ParameterSpec
@@ -118,7 +119,9 @@ namespace bsii
             { "aftertouchLfo1",    "Aftertouch -> LFO1",    "FX / Perf",   Protocol::nrpn7,      0, 75, 0, 127,  64 },
             { "aftertouchLfo2Spd", "Aftertouch -> LFO2 Spd", "FX / Perf",  Protocol::nrpn7,      0, 76, 0, 127,   0 },
             { "modWhFilter",      "ModWh -> Filter",       "FX / Perf",  Protocol::nrpn7,      0, 94, 0, 127,  64 },
-            { "modWhLfo2Filter",  "ModWh -> LFO2 Filter",  "FX / Perf",  Protocol::nrpn7,      0, 71, 0, 127,  64 }
+            { "modWhLfo2Filter",  "ModWh -> LFO2 Filter",  "FX / Perf",  Protocol::nrpn7,      0, 71, 0, 127,  64 },
+            { "subFine",           "Sub Fine",              "Osc 1",       Protocol::nrpn8,      0, 77, 27, 228, 127 },
+            { "subCoarse",         "Sub Coarse",            "Osc 1",       Protocol::nrpn8,      0, 84, 0, 255, 128 }
         };
         return specs;
     }
@@ -251,6 +254,10 @@ namespace bsii
                                             juce::String (spec.id) == "bendAmount" ? bendAmountToWire (clamped) : clamped); break;
             case Protocol::pairedCC8: sendPairedCC8 (out, channel, spec.numberMSB, spec.numberLSB, clamped); break;
             case Protocol::nrpn7:     sendNRPN7 (out, channel, spec.numberMSB, spec.numberLSB, clamped); break;
+            case Protocol::nrpn8:
+                sendNRPN7 (out, channel, spec.numberMSB, spec.numberLSB, clamped >> 1);
+                sendCC (out, channel, 38, (clamped & 1) << 6);
+                break;
         }
     }
 

@@ -53,10 +53,13 @@ class Decoder:
         self.sysex = None
         self.msb = {}
         self.nrpn = {}
+        self.nrpn_data = {}
         self.warnings = Counter()
 
     def identify(self, channel, controller, value):
         self.msb[channel, controller] = value
+        if controller in (99, 98, 101, 100): self.nrpn_data.pop(channel, None)
+        if controller == 6: self.nrpn_data[channel] = value
         if controller in (101, 100):
             self.nrpn.pop(channel, None)  # RPN selection cancels NRPN selection.
         state = self.nrpn.setdefault(channel, [None, None])
@@ -76,6 +79,9 @@ class Decoder:
                 else: raw = (high << 1) | (value >> 6)
             elif protocol == 'nrpn7' and controller == 6 and selected == (spec['msb'], spec['lsb']):
                 raw = value
+            elif protocol == 'nrpn8' and controller == 38 and selected == (spec['msb'], spec['lsb']):
+                high = self.nrpn_data.get(channel)
+                if high is not None: raw = (high << 1) | (value >> 6)
             if raw is None: continue
             item = dict(id=spec['id'], value=raw, name=spec['name'])
             if 'choices' in spec:

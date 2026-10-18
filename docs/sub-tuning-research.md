@@ -86,3 +86,35 @@ confirmed for each control; adjacent raw values' display rounding is not yet
 established. The synth was left with both Sub tuning settings displaying zero.
 Retained labelled copies: `tests/sub-tuning-fixtures/hardware-fine-zero.syx`
 and `hardware-coarse-zero.syx`.
+
+## Plugin implementation
+
+Sub Fine and Sub Coarse are added to Osc 1 as independent numeric controls.
+Sub Fine uses captured range 27–228, default 127 (hardware-observed zero).
+Sub Coarse uses 0–255, default 128 (hardware-observed zero). These follow all
+91 published parameters at host indices 91 and 92, preserving existing IDs
+and indices. A new paired NRPN protocol sends CC99/98 selection, CC6 high
+bits and CC38 low bit. Reception waits for the LSB, tracks data per channel
+and discards cached high bits on selection changes, RPN selection and pause.
+Get Patch/import decoding uses the verified masks and the existing silent
+parameter-refresh path. No preset-save command is added.
+
+The tuning display reuses the oscillator signed presentation model as an
+approximation: endpoint and zero observations are confirmed, but intermediate
+LCD rounding and Sub Fine raw 128 displaying zero are not independently
+verified. The tooltip states this limitation. Typing Fine zero and resetting
+the knob select the captured raw 127; no assumption about display precision
+is used in raw storage or MIDI transmission. Hosted/audible checks pending.
+
+### Local build and integration verification
+
+Report: `validation-results/20261018-215141-24495/`. All seven offline test
+groups passed, including all 458 captured Sub tuning values, unchanged main
+oscillator fields, and MIDI channel/selection isolation. Native processor
+integration passed paired-NRPN output, deferred publication until CC38,
+independent hardware updates without echo, saved state, published indices
+and patch refresh. Direct SysEx integration passed. Standalone/AU/VST3
+builds passed. Live was confirmed closed; installed AU/VST3 were backed up,
+replaced and locally signed. Strict signature verification and Apple AU
+validation passed. Manual hosted/audible checks remain pending. Public
+preview release assets have not been replaced.

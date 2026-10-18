@@ -27,6 +27,7 @@ BSIIControlAudioProcessor::BSIIControlAudioProcessor()
     for (auto& value : pairedMSB) value.store (-1, std::memory_order_relaxed);
     for (auto& value : currentNrpnMSB) value.store (-1, std::memory_order_relaxed);
     for (auto& value : currentNrpnLSB) value.store (-1, std::memory_order_relaxed);
+    for (auto& value : currentNrpnDataMSB) value.store (-1, std::memory_order_relaxed);
     for (const auto& spec : bsii::parameterSpecs()) apvts.addParameterListener (spec.id, this);
     for (const auto& spec : bsii::choiceSpecs()) apvts.addParameterListener (spec.id, this);
     startTimerHz (100);
@@ -306,8 +307,8 @@ BSIIControlAudioProcessor::createParameterLayout()
         layout.add (std::move (parameter));
     };
 
-    // Published layout: 58 original numeric controls, then 28 existing choices.
-    // New numeric controls must follow those 86 parameters, not shift choices.
+    // Preserve published ordering: 58 numeric, 28 choices, 2 numeric, 3 choices.
+    // Sub tuning numeric controls follow all 91 published parameters.
     const auto& numeric = bsii::parameterSpecs();
     const auto& discrete = bsii::choiceSpecs();
     constexpr size_t originalNumericCount = 58, originalChoiceCount = 28;
@@ -328,8 +329,11 @@ BSIIControlAudioProcessor::createParameterLayout()
         layout.add (std::move (parameter));
     };
     for (size_t i = 0; i < originalChoiceCount; ++i) addChoice (discrete[i]);
-    for (size_t i = originalNumericCount; i < numeric.size(); ++i) addNumeric (numeric[i]);
-    for (size_t i = originalChoiceCount; i < discrete.size(); ++i) addChoice (discrete[i]);
+    constexpr size_t publishedNumericCount = 60, publishedChoiceCount = 31;
+    for (size_t i = originalNumericCount; i < publishedNumericCount; ++i) addNumeric (numeric[i]);
+    for (size_t i = originalChoiceCount; i < publishedChoiceCount; ++i) addChoice (discrete[i]);
+    for (size_t i = publishedNumericCount; i < numeric.size(); ++i) addNumeric (numeric[i]);
+    for (size_t i = publishedChoiceCount; i < discrete.size(); ++i) addChoice (discrete[i]);
 
     return layout;
 }
@@ -367,7 +371,7 @@ void BSIIControlAudioProcessor::publishNRPN (int channel, int nrpnMSB, int nrpnL
     for (size_t i = 0; i < params.size() && i < maxSpecs; ++i)
     {
         const auto& spec = params[i];
-        if (spec.protocol == bsii::Protocol::nrpn7
+        if ((spec.protocol == bsii::Protocol::nrpn7 || spec.protocol == bsii::Protocol::nrpn8)
             && spec.numberMSB == nrpnMSB && spec.numberLSB == nrpnLSB)
         {
             pendingHardwareValues[i].store (
@@ -424,6 +428,7 @@ void BSIIControlAudioProcessor::parseIncomingMidi (const juce::MidiBuffer& midiM
             for (auto& value : pendingHardwareValues) value.store (bsii::noHardwareValue);
             for (auto& value : pendingChoiceWireValues) value.store (-1);
             for (auto& value : pairedMSB) value.store (-1);
+            for (auto& value : currentNrpnDataMSB) value.store (-1);
             knownHardwareProgram.store (message.getProgramChangeNumber());
             pendingHardwareProgram.store (message.getProgramChangeNumber(), std::memory_order_release);
             continue;
@@ -443,6 +448,8 @@ void BSIIControlAudioProcessor::parseIncomingMidi (const juce::MidiBuffer& midiM
 
         if (channel >= 1 && channel <= 16)
         {
+            if (controller == 99 || controller == 98 || controller == 100 || controller == 101)
+                currentNrpnDataMSB[static_cast<size_t> (channel)].store (-1, std::memory_order_relaxed);
             if (controller == 100 || controller == 101)
             {
                 // An RPN selection cancels stale NRPN state on this channel.
@@ -460,12 +467,24 @@ void BSIIControlAudioProcessor::parseIncomingMidi (const juce::MidiBuffer& midiM
                 currentNrpnLSB[static_cast<size_t> (channel)].store (value, std::memory_order_relaxed);
                 continue;
             }
-            if (controller == 6)
+            if (controller == 6 || controller == 38)
             {
                 const auto msb = currentNrpnMSB[static_cast<size_t> (channel)].load (std::memory_order_relaxed);
                 const auto lsb = currentNrpnLSB[static_cast<size_t> (channel)].load (std::memory_order_relaxed);
-                if (msb >= 0 && lsb >= 0)
-                    publishNRPN (channel, msb, lsb, value);
+                bool paired = false;
+                for (const auto& spec : params)
+                    paired |= spec.protocol == bsii::Protocol::nrpn8
+                        && spec.numberMSB == msb && spec.numberLSB == lsb;
+                if (controller == 6)
+                {
+                    currentNrpnDataMSB[static_cast<size_t> (channel)].store (value, std::memory_order_relaxed);
+                    if (! paired && msb >= 0 && lsb >= 0) publishNRPN (channel, msb, lsb, value);
+                }
+                else if (paired)
+                {
+                    const auto high = currentNrpnDataMSB[static_cast<size_t> (channel)].load (std::memory_order_relaxed);
+                    if (high >= 0) publishNRPN (channel, msb, lsb, (high << 1) | (value >> 6));
+                }
                 continue;
             }
         }
