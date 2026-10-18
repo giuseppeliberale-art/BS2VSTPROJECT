@@ -22,7 +22,7 @@ hardware-verified merely because the manual mentions them.
 - [x] MicroTune table selection 0–8: MIDI send/receive and SysEx decoding implemented;
       basic hosted send/receive, paused RX and Get Patch acceptance passed. No tuning-table contents are edited or saved.
 - [ ] Global Tune receive encoding and tuning-table editing/transfer remain unresolved.
-- [x] External Input Gain: separate Global control, hosted acceptance pending; excluded from patch snapshots and Send All.
+- [x] External Input Gain: separate Global control; basic Ableton send/receive, paused RX and Get Patch isolation checks passed; excluded from patch snapshots and Send All.
 - [ ] AFX overlay selection, editing and read protection; keep AFX work last.
 - [ ] Full-bank dump/management workflow; single-patch request/capture exists.
 

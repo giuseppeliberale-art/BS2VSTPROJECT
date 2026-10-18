@@ -85,3 +85,20 @@ AU/VST3 were backed up, replaced and locally signed. Strict signature
 verification and Apple AU validation passed. No live hardware gain changes
 were sent during these isolated regression checks. Hosted acceptance remains
 pending; public preview release assets have not been replaced.
+
+### Manual Ableton acceptance passed
+
+User set the plugin Global page Input Gain to 62, reopened the hardware
+Input Gain function without editing Patch/Value, and confirmed display 62.
+Changing hardware to 60 updated the plugin automatically.
+
+With Live RX paused, changing hardware to 0 left the plugin at 60. Get Patch
+also left it at 60, confirming that ordinary patch refresh does not overwrite
+the global control. User then completed plugin Input Gain 0 and resumed Live
+RX. Hardware 0 was explicitly observed during the paused test; a separate
+hardware display check after the final plugin command was not requested.
+
+This supersedes basic hosted acceptance deferrals above. Audible gain
+calibration, hosted automation, persistence, global query support and manual
+snapshot/Send All acceptance remain separate untested work. Snapshot isolation
+and Send All exclusion already have passing local native regression coverage.
