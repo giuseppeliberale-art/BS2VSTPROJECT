@@ -7,6 +7,8 @@ mapping evidence, not by repeating the full captures. Two new mod-wheel filter
 controls are implemented with raw 0–127 and signed -64…+63 display; see
 `docs/modwheel-filter-research.md`. Existing 86 host indices are retained and new
 controls appended at 86/87. Manual hosted acceptance remains pending.
+Updated AU/VST3 from c2ac24e are installed locally; strict signatures and Apple AU
+validation passed after Live quit. Standalone build is available in build outputs.
 
 `docs/osc-extra-research.md` retains unfinished Oscillator Error and Paraphonic
 mapping. Paraphonic patch bit is verified but the hardware unexpectedly emitted

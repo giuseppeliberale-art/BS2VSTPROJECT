@@ -75,3 +75,9 @@ The first installation attempt detected Live still running and stopped before
 backing up or replacing plugins. User was asked to save and quit with Cmd+Q.
 Installed-plugin validation is recorded below when completed. No new hardware
 tests were requested after the user stopped testing for usage conservation.
+
+User subsequently confirmed Live was fully quit. AU/VST3 were installed with
+previous bundles backed up under the validation directory's `before/`. Strict
+signatures passed and Apple AU validation succeeded. Installed production source
+matches commit c2ac24e. Manual hosted acceptance is deferred to the next session.
+The public prerelease downloads remain the earlier 4993591 snapshot.
