@@ -121,7 +121,8 @@ namespace bsii
             { "modWhFilter",      "ModWh -> Filter",       "FX / Perf",  Protocol::nrpn7,      0, 94, 0, 127,  64 },
             { "modWhLfo2Filter",  "ModWh -> LFO2 Filter",  "FX / Perf",  Protocol::nrpn7,      0, 71, 0, 127,  64 },
             { "subFine",           "Sub Fine",              "Osc 1",       Protocol::nrpn8,      0, 77, 27, 228, 127 },
-            { "subCoarse",         "Sub Coarse",            "Osc 1",       Protocol::nrpn8,      0, 84, 0, 255, 128 }
+            { "subCoarse",         "Sub Coarse",            "Osc 1",       Protocol::nrpn8,      0, 84, 0, 255, 128 },
+            { "inputGain",         "Input Gain",            "Global",      Protocol::nrpn7,     64, 28, 0, 31, 0 }
         };
         return specs;
     }
@@ -215,6 +216,9 @@ namespace bsii
         };
         return specs;
     }
+
+    // Global controls must not be sent or replaced by patch-only operations.
+    inline bool isPatchParameter (const juce::String& id) { return id != "inputGain"; }
 
     inline int clampMidiChannel (int channel) { return juce::jlimit (1, 16, channel); }
     inline int clamp7 (int value) { return juce::jlimit (0, 127, value); }

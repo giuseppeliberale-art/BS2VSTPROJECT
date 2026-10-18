@@ -45,3 +45,43 @@ support and physical dB calibration remain unresolved.
 
 User subsequently reopened Input Gain without editing and confirmed displayed
 0. Restoration of the known initial global setting is therefore hardware-verified.
+
+## Upper receive endpoint and restoration
+
+Starting hardware display 0 was explicitly confirmed. The scoped sender
+transmitted raw 31; user reopened the menu without editing and confirmed 62.
+The sender then transmitted raw 0. User may have accidentally changed preset
+during navigation, but subsequently reopened Input Gain and confirmed zero.
+Together with the earlier raw-1/display-2 check, remote receipt has now been
+spot-checked at raw 0, 1 and 31. This is not a full 32-value remote sweep.
+
+## Global control implementation
+
+Input Gain is appended as host parameter index 93, preserving all 93 previous
+indices. Raw storage is 0–31; editor and host text show 0–62 in steps of 2.
+No dB label is used. It lives on a separate Global page whose note states
+that Get Patch does not read it and shown values follow edits/received MIDI.
+
+Direct edits and host automation use NRPN 64:28. Hardware reception follows
+the selected MIDI channel and Live RX setting. There is no invented patch
+decoder field. Send All excludes global controls. Portable patch snapshots
+omit Input Gain; snapshot loading preserves the current global control even
+if an older/custom snapshot contains an Input Gain entry. Host session state
+remembers the parameter value silently; restoring that state does not itself
+send an Input Gain command. A host automation lane can explicitly send it.
+
+No global-value query, persistence across synth power cycles or dB calibration
+is established. Plugin hosted/audible acceptance remains pending.
+
+### Local validation and installation completed
+
+Report: `validation-results/20261018-222337-26455/`. All seven offline groups
+passed. Native processor integration passed NRPN 64:28 output/reception,
+host text scaling, index 93, silent host-state recall, patch snapshot filtering
+and merge preservation. A real virtual-port Send All capture excluded Input
+Gain. Get Patch refresh preserved its existing value. Direct SysEx regression
+passed. Standalone, AU and VST3 builds passed. Live was confirmed closed;
+AU/VST3 were backed up, replaced and locally signed. Strict signature
+verification and Apple AU validation passed. No live hardware gain changes
+were sent during these isolated regression checks. Hosted acceptance remains
+pending; public preview release assets have not been replaced.

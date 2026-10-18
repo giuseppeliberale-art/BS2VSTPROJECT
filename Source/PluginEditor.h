@@ -57,6 +57,7 @@ public:
     int preferredHeight (int width) const;
 private:
     juce::String title;
+    juce::Label globalNote;
     std::vector<juce::Component*> controls;
 };
 

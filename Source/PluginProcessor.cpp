@@ -301,8 +301,10 @@ BSIIControlAudioProcessor::createParameterLayout()
             juce::ParameterID { spec.id, 1 }, spec.name,
             juce::NormalisableRange<float> (static_cast<float> (spec.minimum), static_cast<float> (spec.maximum), 1.0f),
             static_cast<float> (spec.defaultValue), Attributes().withDiscrete (true)
-                .withStringFromValueFunction ([] (float v, int) { return juce::String (juce::roundToInt (v)); })
-                .withValueFromStringFunction ([] (const juce::String& text) { return text.getFloatValue(); }));
+                .withStringFromValueFunction ([id = juce::String (spec.id)] (float v, int)
+                { return juce::String (juce::roundToInt (v) * (id == "inputGain" ? 2 : 1)); })
+                .withValueFromStringFunction ([id = juce::String (spec.id)] (const juce::String& text)
+                { return text.getFloatValue() / (id == "inputGain" ? 2.0f : 1.0f); }));
         static_cast<juce::AudioProcessorParameter*> (parameter.get())->setValue (parameter->getDefaultValue());
         layout.add (std::move (parameter));
     };

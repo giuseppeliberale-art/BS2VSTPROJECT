@@ -2,6 +2,7 @@
 #include "PluginProcessor.h"
 #include "BSIIPatchDecoder.h"
 #include "BSIIProjectRecall.h"
+#include "BSIIPatchState.h"
 #include <iostream>
 #include <thread>
 
@@ -184,6 +185,19 @@ int main (int argc, char** argv)
         ok &= processor.getParameters().getParameter ("subCoarse")->getParameterIndex() == 92;
         set ("subFine", 27); pump(); nrpn (77, 13); cc (38, 64);
         set ("subCoarse", 255); pump(); nrpn (84, 127); cc (38, 64);
+        ok &= processor.getParameters().getParameter ("inputGain")->getParameterIndex() == 93;
+        set ("inputGain", 31); pump(); cc (99, 64); cc (98, 28); cc (6, 31);
+        auto* gain = processor.getParameters().getParameter ("inputGain");
+        ok &= gain->getText (1.0f, 64) == "62" && gain->getValueForText ("62") == 1.0f;
+        const auto currentState = processor.getParameters().copyState();
+        auto patchState = bsii::patchOnlyState (currentState);
+        ok &= ! patchState.getChildWithProperty ("id", "inputGain").isValid();
+        ok &= currentState.getChildWithProperty ("id", "inputGain").isValid();
+        auto legacyGlobal = currentState.getChildWithProperty ("id", "inputGain").createCopy();
+        legacyGlobal.setProperty ("value", 0.0f, nullptr);
+        patchState.addChild (legacyGlobal, -1, nullptr);
+        const auto merged = bsii::patchStateKeepingGlobals (patchState, currentState);
+        ok &= static_cast<float> (merged.getChildWithProperty ("id", "inputGain").getProperty ("value")) == 31.0f;
         set ("filterCutoff", 128); pump(); cc (16, 64); cc (48, 0);
         set ("ampTrigger", 0); pump(); nrpn (73, 1); nrpn (105, 1);
         ok &= processor.getParameters().getRawParameterValue ("modTrigger")->load() == 0;
@@ -214,6 +228,7 @@ int main (int argc, char** argv)
         ok &= processor.getParameters().getRawParameterValue ("glideDivergence")->load() == 15;
         ok &= processor.getParameters().getRawParameterValue ("subFine")->load() == 27;
         ok &= processor.getParameters().getRawParameterValue ("subCoarse")->load() == 255;
+        ok &= processor.getParameters().getRawParameterValue ("inputGain")->load() == 31;
         set ("filterResonance", 50);
         {
             BSIIControlAudioProcessor::ScopedMidiSilence silence (processor);
@@ -262,6 +277,11 @@ int main (int argc, char** argv)
         processor.processBlock (audio, incoming); pump();
         ok &= processor.getParameters().getRawParameterValue ("subCoarse")->load() == 1;
         ok &= processor.getParameters().getRawParameterValue ("subFine")->load() == 201;
+        incoming.clear();
+        for (const auto [controller, value] : { std::pair {99, 64}, {98, 28}, {6, 2} })
+            incoming.addEvent (juce::MidiMessage::controllerEvent (1, controller, value), incoming.getNumEvents());
+        processor.processBlock (audio, incoming); pump();
+        ok &= processor.getParameters().getRawParameterValue ("inputGain")->load() == 2;
         // Incoming captured encodings update the attached editor/APVTS without MIDI echo.
         incoming.clear();
         for (const auto [controller, value] : { std::pair {108, 0}, {109, 0}, {111, 2}, {118, 4}, {119, 0}, {99, 0}, {98, 106}, {6, 1} })
@@ -353,6 +373,11 @@ int main (int argc, char** argv)
                 if (button->getButtonText() == "Get Patch from BSII") button->triggerClick();
         pump();
         expected.add ("f0 00 20 29 00 33 00 40 f7");
+        {
+            BSIIControlAudioProcessor::ScopedMidiSilence silence (receiver);
+            auto* gain = receiver.getParameters().getParameter ("inputGain");
+            gain->setValueNotifyingHost (gain->convertTo0to1 (7));
+        }
         juce::MemoryBlock patch;
         ok &= juce::File::getCurrentWorkingDirectory().getChildFile ("tests/arp-seq-fixtures/seq-retrig-on.syx").loadFileAsData (patch);
         const auto decoded = bsii::decodePatchFields (patch);
@@ -363,6 +388,7 @@ int main (int argc, char** argv)
         juce::AudioBuffer<float> audio (2, 64);
         receiver.processBlock (audio, incoming); pump (200);
         if (edits.count != 0) std::cerr << "FAIL: patch refresh reported " << edits.count << " manual parameter edits to host\n";
+        ok &= receiver.getParameters().getRawParameterValue ("inputGain")->load() == 7;
         ok &= edits.count == 0 && decoded.valid
             && juce::roundToInt (receiver.getParameters().getRawParameterValue ("filterResonance")->load()) == decoded.filterResonance;
         for (const auto [id, value] : { std::pair {"arpOn", decoded.arpOn}, {"arpLatch", decoded.arpLatch}, {"arpOctaves", decoded.arpOctaves}, {"arpMode", decoded.arpMode}, {"arpRhythm", decoded.arpRhythm}, {"seqRetrig", decoded.seqRetrig} })
@@ -543,9 +569,32 @@ int main (int argc, char** argv)
         source.waitForProcessToFinish (3000);
         command.deleteFile(); done.deleteFile();
     }
+    {
+        BSIIControlAudioProcessor bulk;
+        for (const auto& port : juce::MidiOutput::getAvailableDevices())
+            if (port.name == name) bulk.hardwareMidiOutput() = juce::MidiOutput::openDevice (port.identifier);
+        ok &= bulk.hardwareMidiOutput() != nullptr;
+        {
+            BSIIControlAudioProcessor::ScopedMidiSilence silence (bulk);
+            auto* gain = bulk.getParameters().getParameter ("inputGain");
+            gain->setValueNotifyingHost (gain->convertTo0to1 (31));
+        }
+        auto editor = std::unique_ptr<juce::AudioProcessorEditor> (bulk.createEditor());
+        bool sent = false;
+        for (auto* child : editor->getChildren())
+            if (auto* button = dynamic_cast<juce::TextButton*> (child))
+                if (button->getButtonText().startsWith ("Send All"))
+                { button->triggerClick(); sent = true; }
+        pump (300);
+        ok &= sent && bulk.getParameters().getRawParameterValue ("inputGain")->load() == 31;
+    }
     log.withFileExtension ("stop").replaceWithText ("stop");
     sink.waitForProcessToFinish (5000);
-    const auto actual = juce::StringArray::fromLines (log.loadFileAsString());
+    auto actual = juce::StringArray::fromLines (log.loadFileAsString());
+    auto bulkMessages = actual;
+    bulkMessages.removeRange (0, expected.size());
+    ok &= ! bulkMessages.isEmpty() && ! bulkMessages.contains ("b0 63 40");
+    actual.removeRange (expected.size(), actual.size());
     ok &= actual == expected;
     if (actual != expected)
         std::cerr << "Expected:\n" << expected.joinIntoString ("\n") << "\nActual:\n" << actual.joinIntoString ("\n") << "\n";

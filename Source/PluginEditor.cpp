@@ -2,6 +2,7 @@
 #include "BSIIMidi.h"
 #include "BSIIPatchDecoder.h"
 #include "BSIITuningDisplay.h"
+#include "BSIIPatchState.h"
 
 ParameterControl::ParameterControl (juce::AudioProcessorValueTreeState& state,
                                     const bsii::ParameterSpec& parameterSpec,
@@ -64,6 +65,14 @@ ParameterControl::ParameterControl (juce::AudioProcessorValueTreeState& state,
                                : "Approximate coarse tuning in semitones (-12.0 to +12.0). Hardware display rounding may differ.");
         if (parameterId == "subFine" || parameterId == "subCoarse")
             slider.setTooltip ("Independent Sub tuning. Endpoints and zero are captured; intermediate displayed values are approximate.");
+        slider.updateText();
+    }
+    if (parameterId == "inputGain")
+    {
+        slider.textFromValueFunction = [] (double raw) { return juce::String (juce::roundToInt (raw) * 2); };
+        slider.valueFromTextFunction = [] (const juce::String& text)
+        { return static_cast<double> (juce::jlimit (0, 31, juce::roundToInt (text.getDoubleValue() / 2.0))); };
+        slider.setTooltip ("Global external input gain: 0 to 62 in steps of 2. Display units are not calibrated dB.");
         slider.updateText();
     }
     const bool signedAmount = parameterId == "velocityAmp" || parameterId == "velocityMod"
@@ -200,14 +209,24 @@ void ChoiceControl::setInteractionEnabled (bool enabled)
     note.setAlpha (enabled ? 1.0f : 0.55f);
 }
 
-ParameterSection::ParameterSection (juce::String titleText) : title (std::move (titleText)) {}
+ParameterSection::ParameterSection (juce::String titleText) : title (std::move (titleText))
+{
+    if (title == "Global")
+    {
+        globalNote.setText ("Affects the synth across presets. Shown value follows edits and live MIDI; Get Patch does not read Input Gain.",
+                            juce::dontSendNotification);
+        globalNote.setJustificationType (juce::Justification::topLeft);
+        globalNote.setColour (juce::Label::textColourId, juce::Colours::white.withAlpha (0.75f));
+        addAndMakeVisible (globalNote);
+    }
+}
 void ParameterSection::addControl (juce::Component* control) { controls.push_back (control); addAndMakeVisible (control); }
 
 int ParameterSection::preferredHeight (int width) const
 {
     const int controlsPerRow = juce::jlimit (1, 6, (width - 20) / 120);
     const auto rows = juce::jmax (1, static_cast<int> ((controls.size() + controlsPerRow - 1) / controlsPerRow));
-    return 38 + rows * 126 + 12;
+    return 38 + rows * 126 + 12 + (title == "Global" ? 48 : 0);
 }
 
 void ParameterSection::paint (juce::Graphics& g)
@@ -226,6 +245,7 @@ void ParameterSection::resized()
 {
     auto area = getLocalBounds().reduced (10);
     area.removeFromTop (28);
+    if (title == "Global") globalNote.setBounds (area.removeFromTop (48));
     const int controlsPerRow = juce::jlimit (1, 6, area.getWidth() / 120);
     constexpr int controlHeight = 126;
 
@@ -408,7 +428,8 @@ void BSIIControlAudioProcessorEditor::buildPages()
         { "Amp Env", { "Amp Env" } },
         { "Mod Env", { "Mod Env" } },
         { "FX + Perf", { "FX / Perf" } },
-        { "Arp / Seq", { "Arp / Seq" } }
+        { "Arp / Seq", { "Arp / Seq" } },
+        { "Global", { "Global" } }
     };
 
     const auto& params = bsii::parameterSpecs();
@@ -775,6 +796,7 @@ void BSIIControlAudioProcessorEditor::sendAllStateToHardware()
 
     for (size_t i = 0; i < params.size(); ++i)
     {
+        if (! bsii::isPatchParameter (params[i].id)) continue;
         const auto value = currentParameterValue (params[i].id);
         bsii::sendParameter (*midiOutput, midiChannel, params[i], value);
     }
@@ -1157,7 +1179,7 @@ bool BSIIControlAudioProcessorEditor::saveStateToFile (const juce::File& request
     if (! file.hasFileExtension ("bsiistate"))
         file = file.withFileExtension ("bsiistate");
 
-    auto state = processor.getParameters().copyState();
+    auto state = bsii::patchOnlyState (processor.getParameters().copyState());
     state.setProperty ("bsiiControlVersion", "0.8.1", nullptr);
     state.setProperty ("savedAt", juce::Time::getCurrentTime().toISO8601 (true), nullptr);
 
@@ -1178,7 +1200,7 @@ bool BSIIControlAudioProcessorEditor::loadStateFromFile (const juce::File& file)
 
     BSIIControlAudioProcessor::ScopedMidiSilence silence (processor);
     forgetPreset();
-    processor.getParameters().replaceState (state);
+    processor.getParameters().replaceState (bsii::patchStateKeepingGlobals (state, processor.getParameters().copyState()));
     return true;
 }
 

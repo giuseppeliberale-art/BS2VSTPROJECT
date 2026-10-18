@@ -17,8 +17,8 @@ class MidiLabTests(unittest.TestCase):
         ids = {item['id'] for item in lab.registry()}
         import re
         mapped = set(re.findall(r'\{"([^"]+)"', (ROOT/'Source/BSIIPatchFields.h').read_text()))
-        self.assertEqual(ids, mapped)
-        self.assertTrue(all(c['patchMapped'] for c in lab.registry()))
+        self.assertEqual(ids - {'inputGain'}, mapped)
+        self.assertEqual({c['id'] for c in lab.registry() if not c['patchMapped']}, {'inputGain'})
         self.assertEqual(next(c for c in lab.registry() if c['id']=='bendAmount')['minimum'], -24)
 
     def test_running_status_fragmentation_clock_and_program(self):
@@ -156,6 +156,13 @@ class MidiLabTests(unittest.TestCase):
         self.assertEqual([(v['id'],v['value']) for v in values],[('subFine',27),('subCoarse',255)])
         rows=d.feed([0xB0,98,84,38,64,100,3,6,10,38,0])
         self.assertTrue(all('controls' not in r for r in rows))
+
+    def test_global_input_gain_msb_and_range(self):
+        rows=lab.Decoder().feed([0xB0,99,64,98,28,6,0,6,31,6,32,99,0,6,1])
+        values=[r['controls'][0] for r in rows if 'controls' in r]
+        self.assertEqual([(v['id'],v['value']) for v in values],[('inputGain',0),('inputGain',31),('inputGain',32)])
+        self.assertFalse(values[-1]['inRange'])
+        self.assertNotIn('controls',rows[-1])
 
     def test_microtune_emitted_nrpn(self):
         rows=lab.Decoder().feed([0xB0,99,0,98,0,6,8,6,0,6,9])
