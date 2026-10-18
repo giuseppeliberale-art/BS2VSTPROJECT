@@ -1,0 +1,3 @@
+{"seconds": 16.061334013938904, "channel": 1, "bytes": [176, 99, 0], "type": "cc", "controller": 99, "value": 0}
+{"seconds": 16.061334013938904, "channel": 1, "bytes": [176, 98, 107], "type": "cc", "controller": 98, "value": 107}
+{"seconds": 16.061334013938904, "channel": 1, "bytes": [176, 6, 1], "type": "cc", "controller": 6, "value": 1, "nrpn": [0, 107], "unmapped": "NRPN 0:107"}

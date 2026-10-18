@@ -1082,6 +1082,7 @@ bool BSIIControlAudioProcessorEditor::decodeSysExIntoEditor (const juce::MemoryB
     set ("arpRhythm", decoded.arpRhythm);
     set ("seqRetrig", decoded.seqRetrig);
     set ("modWhLfo1Pitch", decoded.modWhLfo1Pitch);
+    set ("paraphonic", decoded.paraphonic);
     set ("subFine", decoded.subFine);
     set ("subCoarse", decoded.subCoarse);
     set ("oscError", decoded.oscError);

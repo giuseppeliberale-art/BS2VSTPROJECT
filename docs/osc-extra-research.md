@@ -140,3 +140,47 @@ exiting the hardware menu. Both controls ended at zero.
 These results supersede the basic hosted acceptance deferrals above.
 Dedicated audible checks, hosted automation recording/playback and hosted
 session-reopen acceptance for these controls remain untested.
+
+## Paraphonic repeat — documented emitted NRPN confirmed
+
+A new labelled test began with user-confirmed P-0 and an immediate baseline
+dump. Capture `20261018-223413-record-124954/events.jsonl` recorded exactly
+NRPN 0:107 value 1 for the requested P-0 to P-1 edit. The corresponding dump
+`20261018-223439-backup-6d06d4/baseline.syx` differed from
+`20261018-223412-backup-9f4f5b/baseline.syx` only at byte 111, 0 to 2.
+Osc Sync byte 18 mask 0x40 stayed off.
+
+Reverse capture `20261018-223457-record-5d0817/events.jsonl` recorded exactly
+NRPN 0:107 value 0. Final dump
+`20261018-223521-backup-9c55c8/baseline.syx` matched the original full patch
+byte for byte. Paths are under midi-lab-results. Labelled dumps and emitted
+event files are retained as hardware-p*-repeat* under tests/paraphonic-fixtures.
+
+This verifies the documented emitted route in the current configuration.
+The earlier CC110 observations are retained as unresolved history; their
+cause is not established, and they must not be silently reinterpreted.
+Implement explicit Paraphonic receive on NRPN 0:107, retain Osc Sync on CC110,
+and do not alias one CC to both parameters.
+
+### Paraphonic plugin integration
+
+Paraphonic Mode Off/On is appended to FX + Perf at host index 94. It uses
+NRPN 0:107 for output and explicit live reception, plus verified byte 111
+mask 0x02 for Get Patch/import decoding. CC110 retains Osc Sync meaning
+only. No heuristic alias or automatic ambiguous-CC patch refresh is added.
+The current verified route supersedes the implementation deferral; earlier
+conflicting capture history remains unexplained. Basic hosted/audible
+acceptance is pending.
+
+### Paraphonic local validation and installation completed
+
+Report: `validation-results/20261018-223650-27596/`. All seven offline
+groups passed, including replay of both new emitted NRPN captures and
+decoding labelled P-0/P-1 fixtures. Native processor integration passed
+NRPN output, reception, silent state/patch refresh, host index preservation
+and independent CC110 Osc Sync behavior. Direct SysEx regression passed.
+Standalone/AU/VST3 builds passed. Installation initially waited because
+Live remained running; after the second quit confirmation, the process
+guard passed and both plugins were backed up and replaced. Strict installed
+signature verification and Apple AU validation passed. Manual hosted/audible
+acceptance remains pending. Public preview assets have not been replaced.

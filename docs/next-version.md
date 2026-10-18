@@ -13,7 +13,7 @@ hardware-verified merely because the manual mentions them.
 - [x] Mod Wheel → LFO2 → Filter Frequency: implemented following the full hardware
       sweep; manual hosted acceptance still pending.
 - [x] Oscillator tuning error (`E:OscErr`): implemented; basic Ableton MIDI and Get Patch checks passed.
-- [ ] Paraphonic mode (`P:Para`).
+- [x] Paraphonic mode (`P:Para`): implemented on verified NRPN 0:107; hosted acceptance pending. Earlier conflicting CC110 observations retained in research notes.
 - [x] Glide divergence (`g:GlideDiv`): implemented; basic Ableton MIDI and Get Patch checks passed.
 - [x] Independent Sub Oscillator coarse and fine tuning: implemented; basic Ableton send/receive, paused RX and Get Patch checks passed; intermediate display rounding approximate.
 - [ ] Hardware Local Control.

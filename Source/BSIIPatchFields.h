@@ -60,6 +60,7 @@ namespace bsii
         {"velocityMod", &bsii::DecodedPatchFields::velocityMod},
         {"vcaLimit", &bsii::DecodedPatchFields::vcaLimit},
         {"modWhLfo1Pitch", &bsii::DecodedPatchFields::modWhLfo1Pitch},
+        {"paraphonic", &bsii::DecodedPatchFields::paraphonic},
         {"subFine", &bsii::DecodedPatchFields::subFine},
         {"subCoarse", &bsii::DecodedPatchFields::subCoarse},
         {"oscError", &bsii::DecodedPatchFields::oscError},

@@ -29,7 +29,7 @@ version labels still show earlier numbers.
 
 ## Available features
 
-- **94 controls** across Osc 1, Osc 2, Mixer, Filter, LFO/Glide,
+- **95 controls** across Osc 1, Osc 2, Mixer, Filter, LFO/Glide,
   Amp Env, Mod Env, FX/Performance and Arp/Seq pages.
 - **Live MIDI in both directions:** app edits send CC/NRPN messages, and supported
   hardware changes update the editor while Live RX is running.

@@ -164,6 +164,29 @@ class MidiLabTests(unittest.TestCase):
         self.assertFalse(values[-1]['inRange'])
         self.assertNotIn('controls',rows[-1])
 
+    @unittest.skipUnless(os.environ.get('BSII_PATCH_INSPECT'), 'Inspector built by validation routine')
+    def test_paraphonic_hardware_patch_captures(self):
+        folder=ROOT/'tests/paraphonic-fixtures'
+        files=[folder/f'paraphonic-{v}.syx' for v in range(2)]+[folder/'hardware-p0-repeat.syx',folder/'hardware-p1-repeat.syx',folder/'hardware-p0-repeat-restored.syx']
+        result=subprocess.run([os.environ['BSII_PATCH_INSPECT'],*[str(p) for p in files]],capture_output=True,text=True,check=True)
+        decoded=[json.loads(line) for line in result.stdout.splitlines()]
+        self.assertTrue(all(p['valid'] for p in decoded))
+        self.assertEqual([p['fields']['paraphonic'] for p in decoded],[0,1,0,1,0])
+        self.assertEqual([p['fields']['oscSyncRaw'] for p in decoded[2:]],[0,0,0])
+        self.assertEqual(files[2].read_bytes(),files[4].read_bytes())
+
+    def test_paraphonic_captured_midi_and_sync_isolation(self):
+        folder=ROOT/'tests/paraphonic-fixtures'
+        for filename,value in [('hardware-p1-repeat.jsonl',1),('hardware-p0-repeat.jsonl',0)]:
+            decoder=lab.Decoder()
+            rows=[]
+            for line in (folder/filename).read_text().splitlines():
+                rows.extend(decoder.feed(json.loads(line)['bytes']))
+            controls=[r['controls'][0] for r in rows if 'controls' in r]
+            self.assertEqual([(c['id'],c['value']) for c in controls],[('paraphonic',value)])
+        rows=lab.Decoder().feed([0xB0,110,1])
+        self.assertEqual([c['id'] for c in rows[0]['controls']],['oscSyncRaw'])
+
     def test_microtune_emitted_nrpn(self):
         rows=lab.Decoder().feed([0xB0,99,0,98,0,6,8,6,0,6,9])
         values=[r['controls'][0] for r in rows if 'controls' in r]

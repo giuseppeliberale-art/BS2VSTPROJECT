@@ -198,6 +198,8 @@ int main (int argc, char** argv)
         patchState.addChild (legacyGlobal, -1, nullptr);
         const auto merged = bsii::patchStateKeepingGlobals (patchState, currentState);
         ok &= static_cast<float> (merged.getChildWithProperty ("id", "inputGain").getProperty ("value")) == 31.0f;
+        ok &= processor.getParameters().getParameter ("paraphonic")->getParameterIndex() == 94;
+        set ("paraphonic", 1); pump(); nrpn (107, 1);
         set ("filterCutoff", 128); pump(); cc (16, 64); cc (48, 0);
         set ("ampTrigger", 0); pump(); nrpn (73, 1); nrpn (105, 1);
         ok &= processor.getParameters().getRawParameterValue ("modTrigger")->load() == 0;
@@ -229,6 +231,7 @@ int main (int argc, char** argv)
         ok &= processor.getParameters().getRawParameterValue ("subFine")->load() == 27;
         ok &= processor.getParameters().getRawParameterValue ("subCoarse")->load() == 255;
         ok &= processor.getParameters().getRawParameterValue ("inputGain")->load() == 31;
+        ok &= processor.getParameters().getRawParameterValue ("paraphonic")->load() == 1;
         set ("filterResonance", 50);
         {
             BSIIControlAudioProcessor::ScopedMidiSilence silence (processor);
@@ -282,6 +285,18 @@ int main (int argc, char** argv)
             incoming.addEvent (juce::MidiMessage::controllerEvent (1, controller, value), incoming.getNumEvents());
         processor.processBlock (audio, incoming); pump();
         ok &= processor.getParameters().getRawParameterValue ("inputGain")->load() == 2;
+        const auto syncBefore = processor.getParameters().getRawParameterValue ("oscSyncRaw")->load();
+        incoming.clear();
+        for (const auto [controller, value] : { std::pair {99, 0}, {98, 107}, {6, 0} })
+            incoming.addEvent (juce::MidiMessage::controllerEvent (1, controller, value), incoming.getNumEvents());
+        processor.processBlock (audio, incoming); pump();
+        ok &= processor.getParameters().getRawParameterValue ("paraphonic")->load() == 0;
+        ok &= processor.getParameters().getRawParameterValue ("oscSyncRaw")->load() == syncBefore;
+        incoming.clear();
+        incoming.addEvent (juce::MidiMessage::controllerEvent (1, 110, 1), 0);
+        processor.processBlock (audio, incoming); pump();
+        ok &= processor.getParameters().getRawParameterValue ("paraphonic")->load() == 0;
+        ok &= processor.getParameters().getRawParameterValue ("oscSyncRaw")->load() == 1;
         // Incoming captured encodings update the attached editor/APVTS without MIDI echo.
         incoming.clear();
         for (const auto [controller, value] : { std::pair {108, 0}, {109, 0}, {111, 2}, {118, 4}, {119, 0}, {99, 0}, {98, 106}, {6, 1} })
@@ -398,6 +413,7 @@ int main (int argc, char** argv)
         ok &= juce::roundToInt (receiver.getParameters().getRawParameterValue ("modWhFilter")->load()) == decoded.modWhFilter;
         ok &= juce::roundToInt (receiver.getParameters().getRawParameterValue ("modWhLfo2Filter")->load()) == decoded.modWhLfo2Filter;
         ok &= juce::roundToInt (receiver.getParameters().getRawParameterValue ("microTuneTable")->load()) == decoded.microTuneTable;
+        ok &= juce::roundToInt (receiver.getParameters().getRawParameterValue ("paraphonic")->load()) == decoded.paraphonic;
         ok &= juce::roundToInt (receiver.getParameters().getRawParameterValue ("subFine")->load()) == decoded.subFine;
         ok &= juce::roundToInt (receiver.getParameters().getRawParameterValue ("subCoarse")->load()) == decoded.subCoarse;
         ok &= juce::roundToInt (receiver.getParameters().getRawParameterValue ("oscError")->load()) == decoded.oscError;
