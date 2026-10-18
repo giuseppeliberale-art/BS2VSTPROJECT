@@ -16,6 +16,12 @@ CC110; its documented NRPN receive route is unverified. Neither oscillator-extra
 control is implemented. Next planned mapping was Glide Divergence, not started.
 Missing-feature list: `docs/next-version.md`. AFX and final GUI remain deferred.
 
+Later mapping checkpoint: Oscillator Error (0–7), Paraphonic remote reception
+(0/1), and Glide Divergence (0–15) now passed full automatic SysEx checks with
+exact patch restoration. See `docs/osc-extra-research.md` and retained fixture
+directories. The Paraphonic emitted-CC110 ambiguity remains unresolved. These
+three controls still await batch implementation; installed runtime is unchanged.
+
 The public prerelease `v0.8.2-preview.20261018` still contains the earlier 4993591
 build (86 controls), requires macOS 27+/arm64 and is ad-hoc signed, not notarized.
 Its AU/VST3 ZIPs include the installation workaround and checksums. Source-only

@@ -9,6 +9,24 @@ Oscillator Error incoming capture
 `20261018-052332-record-cdaafa/events.jsonl` contains no complete NRPN events,
 so emitted zero is not yet confirmed by that capture.
 
+Follow-up `midi-lab-results/20261018-163206-record-3e9eb6/events.jsonl`
+captured NRPN 0:111 values 1 then 0 after explicit E-1→E-0 hardware changes.
+Together with the earlier 1–7 sweep, all emitted values 0–7 are now confirmed.
+The hardware was left at E-0. Full remote/SysEx sweep remains pending.
+
+### Oscillator Error automatic verification completed
+
+With Ableton closed, the `osc-error` group in `tools/LFOSyncSampler.swift`
+tested all eight NRPN 0:111 values. Every requested patch reply matched
+`(b[117] & 0x38) >> 3`, and no unrelated patch bits changed. The complete starting
+patch was restored and read back byte for byte. No hardware preset was saved.
+Evidence: `midi-lab-results/osc-error-discovery-20261018/`, retained as
+`tests/osc-error-fixtures/` (eight values, before/after and samples.csv).
+
+Oscillator Error mapping is now verified for emitted MIDI, remote receipt and
+SysEx storage across all values 0–7. Plugin implementation and manual hosted/
+audible checks are still deferred to the next implementation batch.
+
 Labelled hardware patch dumps at error 7 (`20261018-052328-backup-741f71/baseline.syx`)
 and error 0 (`20261018-052506-backup-d7fefb/baseline.syx`) differ only at zero-based
 byte 117, decimal 56 → 0. Candidate field `(b[117] & 0x38) >> 3`. Full remote sweep
@@ -48,3 +66,37 @@ Paraphonic edits may therefore be misrepresented by live UI sync; do not alias
 CC110 to both parameters or guess which mode was edited. Investigate an explicit
 patch refresh or another reliable discriminator before implementing live follow.
 Firmware 4.14 transmission quirk is a possibility, not an established diagnosis.
+
+### Paraphonic remote reception verified
+
+The automatic `paraphonic` group sent documented NRPN 0:107 values 0 and 1.
+Both patch replies matched byte 111 mask 0x02, with no unrelated bits changed.
+The complete starting patch was restored and verified exactly. No preset was saved.
+Evidence: `midi-lab-results/paraphonic-discovery-20261018/`, retained as
+`tests/paraphonic-fixtures/` (both settings, before/after and samples.csv).
+
+This establishes the remote receive route and SysEx field. It does not resolve
+the different CC110 messages emitted by hardware edits. Keep the existing
+CC110 Osc Sync receive meaning; do not treat incoming CC110 as an unambiguous
+Paraphonic change. Plugin implementation and manual audible checks remain pending.
+
+## Glide Divergence — mapping verified
+
+Hardware shortcut: hold Function/Exit and press Input Gain twice; display g-0…g-15.
+Forward capture `midi-lab-results/20261018-163652-record-76cb47/events.jsonl`
+recorded NRPN 0:113 values 1–15. Reverse capture
+`20261018-163754-record-b1b1fd/events.jsonl` recorded 14 down through 0, completing
+all emitted values. Hardware endpoint dumps at g-15
+(`20261018-163751-backup-84828c/baseline.syx`) and g-0
+(`20261018-163832-backup-2322ba/baseline.syx`) differed only at zero-based byte
+118, decimal 60→0. All paths above are under `midi-lab-results/`.
+
+Automatic group `glide-divergence` tested all 16 NRPN 0:113 values against
+`(b[118] & 0x3C) >> 2`. Every value matched, with no unrelated bits changed.
+Full starting-patch restoration was verified byte for byte; no preset was saved.
+Evidence run: `midi-lab-results/glide-divergence-discovery-20261018/`, retained
+under `tests/glide-divergence-fixtures/` with before/after, 16 dumps and samples.csv.
+
+Glide Divergence is fully mapped for emitted MIDI, remote receipt and SysEx
+storage. Like Oscillator Error and Paraphonic mode, it is not yet implemented in
+the installed plugin. Manual hosted/audible checks remain pending.
