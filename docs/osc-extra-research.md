@@ -100,3 +100,26 @@ under `tests/glide-divergence-fixtures/` with before/after, 16 dumps and samples
 Glide Divergence is fully mapped for emitted MIDI, remote receipt and SysEx
 storage. Like Oscillator Error and Paraphonic mode, it is not yet implemented in
 the installed plugin. Manual hosted/audible checks remain pending.
+
+## Plugin integration — Oscillator Error and Glide Divergence
+
+The discovery-stage deferrals above are superseded for these two controls:
+Oscillator Error 0–7 is implemented in FX + Perf, and Glide Divergence 0–15
+in LFO. Both are stepped choices matching hardware ranges, with existing
+NRPN send/receive, snapshot/session state and automation paths. New host
+indices 89 and 90 follow MicroTune at 88, preserving all published indices.
+Get Patch and SysEx imports decode the verified fields. No stored-preset
+write command is added. Paraphonic ambiguity remains unresolved and its
+implementation is still deferred. Hosted and audible acceptance are pending.
+
+### Integration validation completed
+
+Report: `validation-results/20261018-173004-20712/`. All seven offline test
+groups passed, including decoding the eight Oscillator Error and sixteen
+Glide Divergence hardware fixtures. Virtual MIDI processor integration passed
+NRPN output, hardware input without echo, saved-state recall, patch refresh
+and preservation of published host indices. Direct SysEx integration passed.
+Standalone, AU and VST3 builds passed. With Live confirmed closed, both plugins
+were backed up and replaced; strict signature verification and Apple AU
+validation passed. Manual Ableton and audible acceptance remain pending.
+The public preview release assets have not been replaced.

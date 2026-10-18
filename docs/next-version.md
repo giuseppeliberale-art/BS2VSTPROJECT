@@ -12,9 +12,9 @@ hardware-verified merely because the manual mentions them.
       manual hosted acceptance still pending.
 - [x] Mod Wheel → LFO2 → Filter Frequency: implemented following the full hardware
       sweep; manual hosted acceptance still pending.
-- [ ] Oscillator tuning error (`E:OscErr`).
+- [x] Oscillator tuning error (`E:OscErr`): implemented; hosted acceptance pending.
 - [ ] Paraphonic mode (`P:Para`).
-- [ ] Glide divergence (`g:GlideDiv`).
+- [x] Glide divergence (`g:GlideDiv`): implemented; hosted acceptance pending.
 - [ ] Independent Sub Oscillator coarse and fine tuning (listed in manual).
 - [ ] Hardware Local Control.
 - [ ] Hardware Global MIDI Channel setting; the existing app channel selector

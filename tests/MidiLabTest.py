@@ -111,6 +111,27 @@ class MidiLabTests(unittest.TestCase):
         self.assertEqual([p['fields']['microTuneTable'] for p in decoded], list(range(9)))
         self.assertEqual((folder/'range-before.syx').read_bytes(),(folder/'range-restored.syx').read_bytes())
 
+    @unittest.skipUnless(os.environ.get('BSII_PATCH_INSPECT'), 'Inspector built by validation routine')
+    def test_osc_extra_hardware_patch_captures(self):
+        for prefix, field, count in [('osc-error','oscError',8),('glide-divergence','glideDivergence',16)]:
+            folder=ROOT/f'tests/{prefix}-fixtures'
+            files=[folder/f'{prefix}-{v}.syx' for v in range(count)]
+            result=subprocess.run([os.environ['BSII_PATCH_INSPECT'],*[str(p) for p in files]],capture_output=True,text=True,check=True)
+            decoded=[json.loads(line) for line in result.stdout.splitlines()]
+            self.assertEqual(len(decoded),count)
+            self.assertTrue(all(p['valid'] for p in decoded))
+            self.assertEqual([p['fields'][field] for p in decoded],list(range(count)))
+            self.assertEqual((folder/'before.syx').read_bytes(),(folder/'after.syx').read_bytes())
+
+    def test_osc_extra_emitted_nrpn(self):
+        rows=lab.Decoder().feed([0xB0,99,0,98,111,6,7,6,0,6,8,98,113,6,15,6,0,6,16])
+        values=[r['controls'][0] for r in rows if 'controls' in r]
+        self.assertEqual([(v['id'],v['choice']) for v in values],[
+            ('oscError','7'),('oscError','0'),('oscError',None),
+            ('glideDivergence','15'),('glideDivergence','0'),('glideDivergence',None)])
+        self.assertFalse(values[2]['inRange'])
+        self.assertFalse(values[5]['inRange'])
+
     def test_microtune_emitted_nrpn(self):
         rows=lab.Decoder().feed([0xB0,99,0,98,0,6,8,6,0,6,9])
         values=[r['controls'][0] for r in rows if 'controls' in r]

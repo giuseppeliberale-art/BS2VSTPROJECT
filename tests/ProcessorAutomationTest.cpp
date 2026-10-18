@@ -176,6 +176,10 @@ int main (int argc, char** argv)
         ok &= processor.getParameters().getParameter ("microTuneTable")->getParameterIndex() == 88;
         set ("microTuneTable", 8); pump();
         cc (100, 3); cc (101, 0); cc (6, 8); cc (100, 127); cc (101, 127);
+        ok &= processor.getParameters().getParameter ("oscError")->getParameterIndex() == 89;
+        ok &= processor.getParameters().getParameter ("glideDivergence")->getParameterIndex() == 90;
+        set ("oscError", 7); pump(); nrpn (111, 7);
+        set ("glideDivergence", 15); pump(); nrpn (113, 15);
         set ("filterCutoff", 128); pump(); cc (16, 64); cc (48, 0);
         set ("ampTrigger", 0); pump(); nrpn (73, 1); nrpn (105, 1);
         ok &= processor.getParameters().getRawParameterValue ("modTrigger")->load() == 0;
@@ -202,6 +206,8 @@ int main (int argc, char** argv)
         ok &= processor.getParameters().getRawParameterValue ("modWhFilter")->load() == 0;
         ok &= processor.getParameters().getRawParameterValue ("modWhLfo2Filter")->load() == 127;
         ok &= processor.getParameters().getRawParameterValue ("microTuneTable")->load() == 8;
+        ok &= processor.getParameters().getRawParameterValue ("oscError")->load() == 7;
+        ok &= processor.getParameters().getRawParameterValue ("glideDivergence")->load() == 15;
         set ("filterResonance", 50);
         {
             BSIIControlAudioProcessor::ScopedMidiSilence silence (processor);
@@ -225,6 +231,13 @@ int main (int argc, char** argv)
             incoming.addEvent (juce::MidiMessage::controllerEvent (1, controller, value), incoming.getNumEvents());
         processor.processBlock (audio, incoming); pump();
         ok &= processor.getParameters().getRawParameterValue ("microTuneTable")->load() == 3;
+        incoming.clear();
+        for (const auto address : {111, 113})
+            for (const auto [controller, value] : { std::pair {99, 0}, {98, address}, {6, 0} })
+                incoming.addEvent (juce::MidiMessage::controllerEvent (1, controller, value), incoming.getNumEvents());
+        processor.processBlock (audio, incoming); pump();
+        ok &= processor.getParameters().getRawParameterValue ("oscError")->load() == 0;
+        ok &= processor.getParameters().getRawParameterValue ("glideDivergence")->load() == 0;
         // Incoming captured encodings update the attached editor/APVTS without MIDI echo.
         incoming.clear();
         for (const auto [controller, value] : { std::pair {108, 0}, {109, 0}, {111, 2}, {118, 4}, {119, 0}, {99, 0}, {98, 106}, {6, 1} })
@@ -335,6 +348,8 @@ int main (int argc, char** argv)
         ok &= juce::roundToInt (receiver.getParameters().getRawParameterValue ("modWhFilter")->load()) == decoded.modWhFilter;
         ok &= juce::roundToInt (receiver.getParameters().getRawParameterValue ("modWhLfo2Filter")->load()) == decoded.modWhLfo2Filter;
         ok &= juce::roundToInt (receiver.getParameters().getRawParameterValue ("microTuneTable")->load()) == decoded.microTuneTable;
+        ok &= juce::roundToInt (receiver.getParameters().getRawParameterValue ("oscError")->load()) == decoded.oscError;
+        ok &= juce::roundToInt (receiver.getParameters().getRawParameterValue ("glideDivergence")->load()) == decoded.glideDivergence;
         incoming.clear();
         incoming.addEvent (juce::MidiMessage::controllerEvent (1, 82, 60), 0);
         incoming.addEvent (juce::MidiMessage::controllerEvent (1, 83, 1), 1);

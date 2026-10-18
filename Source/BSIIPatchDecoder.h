@@ -30,6 +30,7 @@ namespace bsii
         int lfo1Wave=-1, lfo1Delay=-1, lfo1Slew=-1, lfo1Speed=-1, lfo1KeySync=-1;
         int lfo2Wave=-1, lfo2Delay=-1, lfo2Slew=-1, lfo2Speed=-1, lfo2KeySync=-1;
         int lfo1Sync=-1, lfo2Sync=-1, lfo1Division=-1, lfo2Division=-1;
+        int oscError=-1, glideDivergence=-1;
         int microTuneTable=-1;
         int modWhFilter=-1, modWhLfo2Filter=-1;
         int arpSwing=-1, modWhLfo1Pitch=-1, modWhOsc2Pitch=-1, aftertouchFilter=-1, aftertouchLfo1=-1, aftertouchLfo2Spd=-1;
@@ -215,6 +216,8 @@ namespace bsii
 
         acceptCandidate (extractField (b, 81, 0x3F, 0x40), 0, 127, out.arpSwing, out);
         acceptCandidate (extractField (b, 83, 0x0F, 0x70), 0, 127, out.modWhLfo1Pitch, out);
+        acceptVerified (extractField (b, 117, 0x38), 0, 7, out.oscError, out);
+        acceptVerified (extractField (b, 118, 0x3C), 0, 15, out.glideDivergence, out);
         acceptVerified (extractField (b, 115, 0x01, 0x70), 0, 8, out.microTuneTable, out);
         acceptVerified (extractField (b, 82, 0x1F, 0x60), 0, 127, out.modWhFilter, out);
         acceptVerified (extractField (b, 84, 0x07, 0x78), 0, 127, out.modWhLfo2Filter, out);
