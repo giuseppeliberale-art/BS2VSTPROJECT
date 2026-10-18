@@ -1,6 +1,7 @@
 #include "BSIIPairedCC.h"
 #include "BSIIMidiRouting.h"
 #include "BSIIProjectRecall.h"
+#include "BSIIHardwareChannel.h"
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 #include <cmath>
@@ -255,6 +256,7 @@ bool BSIIControlAudioProcessor::serviceProjectRecall()
 void BSIIControlAudioProcessor::timerCallback()
 {
     restoreHardwareConnection();
+    if (serviceHardwareChannelChange()) return;
     if (serviceProjectRecall()) return;
     const auto channel = hardwareMidiChannel.load();
     const auto& params = bsii::parameterSpecs();
@@ -395,6 +397,13 @@ void BSIIControlAudioProcessor::publishNRPN (int channel, int nrpnMSB, int nrpnL
 
 void BSIIControlAudioProcessor::receiveSysEx (const juce::MidiMessage& message)
 {
+    const auto channel = bsii::hardwareChannelNotification (message);
+    if (channel > 0)
+    {
+        if (isLiveMidiRxEnabled() || pendingHardwareChannel.load() > 0)
+            observedHardwareChannel.store (channel, std::memory_order_release);
+        return; // A channel report must not satisfy a pending patch request.
+    }
     const juce::ScopedLock lock (sysExLock);
     lastSysExData = juce::MemoryBlock (message.getRawData(), static_cast<size_t> (message.getRawDataSize()));
     lastSysExSerial.fetch_add (1, std::memory_order_release);
@@ -535,6 +544,43 @@ void BSIIControlAudioProcessor::parseIncomingMidi (const juce::MidiBuffer& midiM
                 pendingChoiceWireValues[i].store (value, std::memory_order_release);
         }
     }
+}
+
+bool BSIIControlAudioProcessor::requestHardwareMidiChannel (int target)
+{
+    if (target < 1 || target > 16 || ! midiOutput || pendingHardwareChannel.load() > 0
+        || capturePending || recallPending || recallSettling || target == hardwareMidiChannel.load())
+        return false;
+    observedHardwareChannel.store (-1);
+    hardwareChannelTimedOut.store (false);
+    hardwareChannelRequestMs = juce::Time::getMillisecondCounter();
+    pendingHardwareChannel.store (target);
+    bsii::sendNRPN7 (*midiOutput, hardwareMidiChannel.load(), 64, 4, target);
+    return true;
+}
+
+BSIIControlAudioProcessor::HardwareChannelInfo BSIIControlAudioProcessor::getHardwareChannelInfo() const
+{
+    return { pendingHardwareChannel.load(), reportedHardwareChannel.load(), hardwareChannelTimedOut.load() };
+}
+
+bool BSIIControlAudioProcessor::serviceHardwareChannelChange()
+{
+    const auto observed = observedHardwareChannel.exchange (-1, std::memory_order_acq_rel);
+    if (observed > 0)
+    {
+        if (hardwareMidiChannel.load() != observed) setHardwareMidiChannel (observed);
+        reportedHardwareChannel.store (observed);
+        pendingHardwareChannel.store (-1);
+        hardwareChannelTimedOut.store (false);
+    }
+    if (pendingHardwareChannel.load() > 0)
+    {
+        if (juce::Time::getMillisecondCounter() - hardwareChannelRequestMs < 1500u) return true;
+        pendingHardwareChannel.store (-1);
+        hardwareChannelTimedOut.store (true);
+    }
+    return false;
 }
 
 void BSIIControlAudioProcessor::setHardwareMidiChannel (int channel)

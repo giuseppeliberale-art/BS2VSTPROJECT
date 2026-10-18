@@ -238,3 +238,56 @@ establish a reliable bidirectional receive mapping or a firmware fault.
 In particular, do not implement an On/Off control from the apparently
 successful Off observation alone. Local remains unimplemented pending
 better receive verification; no patch or global-query field was invented.
+
+## Hardware MIDI Channel receive and acknowledgement verified
+
+User confirmed starting channel 1. Scoped sender NRPN 64:4 target 2 on
+channel 1 produced user-confirmed hardware display 2. Sending target 1 on
+channel 2 restored user-confirmed display 1.
+
+A repeat round trip was passively captured in
+`midi-lab-results/20261018-230533-record-56b3cd/events.jsonl`.
+The synth emitted exactly two SysEx notifications:
+`F0 00 20 29 00 33 00 58 02 F7`, then the same with channel byte 01.
+No NRPN echo was recorded in this remote-command run. Notifications provide
+a tested confirmation path distinct from ordinary patch replies. The final
+notification reports restoration to channel 1. The trace is retained as
+tests/hardware-channel-fixtures/remote-roundtrip.jsonl.
+
+The official guide documents a 1–16 hardware channel range:
+https://userguides.novationmusic.com/hc/en-gb/articles/25494313827986-Bass-Station-II-in-detail
+(Global: MIDI Channel). Remote receive/confirmation is empirically verified
+for 1 and 2 only; other channel values remain hardware-untested.
+
+### Explicit Global-page hardware channel command
+
+Added a target selector and Set Synth Channel button, separate from sound
+automation parameters. The command sends NRPN 64:4 on the current plugin
+communication channel, waits for the validated 0x58 notification, then follows
+the reported channel. MIDI output is held while awaiting confirmation.
+A 1.5-second timeout reports no confirmation and does not assume success.
+Normal Live RX follows hardware channel notifications without needing the
+editor open; paused RX ignores unsolicited notifications, while an explicit
+pending command still accepts its confirmation.
+
+Notifications are consumed separately from patch data and cannot satisfy
+Get Patch or project-sound capture. Existing patch/snapshot parameter counts
+and automation indices are unchanged. DAW note routing is separate: changing
+the synth/plugin channel does not change External Instrument or track routing.
+Basic hosted acceptance remains pending.
+
+### Hardware-channel local validation and installation completed
+
+Report: `validation-results/20261018-231112-29650/`. All seven offline
+groups passed. Native processor integration replayed both captured channel
+confirmations and passed command routing on the old channel, follow only
+after confirmation, one request at a time, timeout without guessed success,
+paused RX rules, editor-independent following and separation from patch
+serials. The decoder accepts only the exact notification header and range
+1–16. Existing parameter indices and all prior integration checks passed.
+Direct SysEx regression passed. Standalone, AU and VST3 builds passed.
+Live was confirmed closed; installed plugins were backed up and replaced,
+strict signatures verified and Apple AU validation passed. Hosted acceptance
+remains pending. Public preview assets were not replaced. The scoped
+`tools/MidiChannelProbe.swift SOURCE_CHANNEL TARGET_CHANNEL` sender used
+in discovery is retained; its transport output alone is not confirmation.

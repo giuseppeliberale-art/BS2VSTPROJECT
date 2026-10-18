@@ -17,8 +17,7 @@ hardware-verified merely because the manual mentions them.
 - [x] Glide divergence (`g:GlideDiv`): implemented; basic Ableton MIDI and Get Patch checks passed.
 - [x] Independent Sub Oscillator coarse and fine tuning: implemented; basic Ableton send/receive, paused RX and Get Patch checks passed; intermediate display rounding approximate.
 - [ ] Hardware Local Control.
-- [ ] Hardware Global MIDI Channel setting; the existing app channel selector
-      selects the plugin's communication channel, not this hardware setting.
+- [x] Hardware Global MIDI Channel: explicit Global-page command with confirmation; hosted acceptance pending. The top Channel selector remains communication-only.
 - [x] MicroTune table selection 0–8: MIDI send/receive and SysEx decoding implemented;
       basic hosted send/receive, paused RX and Get Patch acceptance passed. No tuning-table contents are edited or saved.
 - [ ] Global Tune receive encoding and tuning-table editing/transfer remain unresolved.

@@ -47,6 +47,21 @@ private:
     std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> attachment;
 };
 
+class HardwareChannelControl : public juce::Component
+{
+public:
+    explicit HardwareChannelControl (BSIIControlAudioProcessor&);
+    void resized() override;
+    void refresh();
+private:
+    BSIIControlAudioProcessor& processor;
+    juce::Label label, status;
+    juce::ComboBox target;
+    juce::TextButton apply { "Set Synth Channel" };
+    int displayedChannel = -1;
+    bool rejected = false;
+};
+
 class ParameterSection : public juce::Component
 {
 public:
@@ -133,6 +148,7 @@ private:
     juce::TextButton importSysExButton { juce::String::fromUTF8 ("Import .syx → Editor") };
     juce::TabbedComponent tabs { juce::TabbedButtonBar::TabsAtTop };
 
+    std::unique_ptr<HardwareChannelControl> hardwareChannelControl;
     std::vector<std::unique_ptr<ParameterControl>> parameterControls;
     std::vector<std::unique_ptr<ChoiceControl>> choiceControls;
     std::vector<std::unique_ptr<ParameterSection>> sections;

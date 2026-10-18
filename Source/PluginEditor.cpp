@@ -209,6 +209,51 @@ void ChoiceControl::setInteractionEnabled (bool enabled)
     note.setAlpha (enabled ? 1.0f : 0.55f);
 }
 
+HardwareChannelControl::HardwareChannelControl (BSIIControlAudioProcessor& p) : processor (p)
+{
+    label.setText ("Hardware MIDI Channel", juce::dontSendNotification);
+    label.setJustificationType (juce::Justification::centred);
+    for (int i = 1; i <= 16; ++i) target.addItem (juce::String (i), i);
+    addAndMakeVisible (label); addAndMakeVisible (target);
+    addAndMakeVisible (apply); addAndMakeVisible (status);
+    status.setJustificationType (juce::Justification::topLeft);
+    status.setColour (juce::Label::textColourId, juce::Colours::white.withAlpha (0.75f));
+    apply.setTooltip ("Changes the synth channel. The plugin follows confirmation; update DAW note routing separately.");
+    target.onChange = [this] { refresh(); };
+    apply.onClick = [this] { rejected = ! processor.requestHardwareMidiChannel (target.getSelectedId()); refresh(); };
+    refresh();
+}
+
+void HardwareChannelControl::resized()
+{
+    auto area = getLocalBounds().reduced (6);
+    label.setBounds (area.removeFromTop (22));
+    auto row = area.removeFromTop (32);
+    target.setBounds (row.removeFromLeft (60)); row.removeFromLeft (6);
+    apply.setBounds (row);
+    area.removeFromTop (4); status.setBounds (area);
+}
+
+void HardwareChannelControl::refresh()
+{
+    const auto channel = processor.getHardwareMidiChannel();
+    if (displayedChannel != channel)
+    {
+        displayedChannel = channel;
+        target.setSelectedId (channel, juce::dontSendNotification);
+    }
+    const auto info = processor.getHardwareChannelInfo();
+    target.setEnabled (info.pending < 0);
+    apply.setEnabled (processor.hardwareMidiOutput() != nullptr && info.pending < 0 && target.getSelectedId() != channel);
+    juce::String text;
+    if (info.pending > 0) text = "Waiting for synth channel " + juce::String (info.pending) + "...";
+    else if (info.timedOut) text = "No confirmation. Check the synth and the plugin Channel selector.";
+    else if (rejected) text = "Connect the synth and finish any capture or recall first.";
+    else if (info.reported == channel) text = "Synth confirmed channel " + juce::String (channel) + ". Match DAW note routing.";
+    else text = "Plugin uses channel " + juce::String (channel) + ". Select a new synth channel.";
+    status.setText (text, juce::dontSendNotification);
+}
+
 ParameterSection::ParameterSection (juce::String titleText) : title (std::move (titleText))
 {
     if (title == "Global")
@@ -459,6 +504,11 @@ void BSIIControlAudioProcessorEditor::buildPages()
                 parameterControls.push_back (std::move (control));
             }
 
+            if (sectionName == "Global")
+            {
+                hardwareChannelControl = std::make_unique<HardwareChannelControl> (processor);
+                section->addControl (hardwareChannelControl.get());
+            }
             page->addSection (section.get());
             sections.push_back (std::move (section));
         }
@@ -593,6 +643,11 @@ void BSIIControlAudioProcessorEditor::timerCallback()
             juce::dontSendNotification);
     }
 
+    const auto channelChange = processor.getHardwareChannelInfo();
+    channelBox.setEnabled (channelChange.pending < 0);
+    midiOutputBox.setEnabled (channelChange.pending < 0);
+    refreshButton.setEnabled (channelChange.pending < 0);
+    sendAllButton.setEnabled (channelChange.pending < 0);
     const auto recall = processor.getProjectRecallInfo();
     recallStatusLabel.setText (recall.status, juce::dontSendNotification);
     recallStatusLabel.setTooltip (recall.status);
@@ -605,6 +660,7 @@ void BSIIControlAudioProcessorEditor::timerCallback()
     const auto program = processor.consumeHardwareProgram();
     if (program >= 0) selectPreset (program, false);
     applyHardwareUpdates();
+    if (hardwareChannelControl) hardwareChannelControl->refresh();
     updateRxDisplay();
     updateSysExDisplay();
     updateFilterModeUi();

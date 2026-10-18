@@ -77,6 +77,11 @@ public:
     };
     void clearPendingMidi(); // Message thread, before explicit full-state sends.
     void setHardwareMidiChannel (int channel);
+    // Message-thread administrative command, never an automatable sound parameter.
+    bool requestHardwareMidiChannel (int target);
+    struct HardwareChannelInfo { int pending = -1, reported = -1; bool timedOut = false; };
+    HardwareChannelInfo getHardwareChannelInfo() const;
+
     void setLiveMidiRxEnabled (bool enabled)
     {
         if (! enabled)
@@ -118,6 +123,7 @@ private:
     void timerCallback() override;
     void restoreHardwareConnection();
     bool serviceProjectRecall();
+    bool serviceHardwareChannelChange();
     bool midiIsSilenced() const;
     static thread_local ScopedMidiSilence* midiSilence;
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
@@ -139,6 +145,10 @@ private:
     uint32_t captureAfterSerial = 0, captureStartedMs = 0, recallStartedMs = 0;
     juce::String recallStatus { "Automatic recall is off." };
     std::atomic<int> hardwareMidiChannel { 1 };
+    std::atomic<int> pendingHardwareChannel { -1 }, observedHardwareChannel { -1 }, reportedHardwareChannel { -1 };
+    std::atomic<bool> hardwareChannelTimedOut { false };
+    uint32_t hardwareChannelRequestMs = 0;
+
     std::atomic<int> pendingHardwareProgram { -1 };
     std::atomic<int> knownHardwareProgram { -1 };
     std::atomic<bool> liveMidiRxEnabled { true };

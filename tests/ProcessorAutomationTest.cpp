@@ -3,6 +3,7 @@
 #include "BSIIPatchDecoder.h"
 #include "BSIIProjectRecall.h"
 #include "BSIIPatchState.h"
+#include "BSIIHardwareChannel.h"
 #include <iostream>
 #include <thread>
 
@@ -141,6 +142,66 @@ int main (int argc, char** argv)
         };
         auto nrpn = [&] (int lsb, int value) { cc (99, 0); cc (98, lsb); cc (6, value); };
 
+        auto channelMessage = [] (int channel)
+        {
+            const juce::uint8 payload[] {0, 0x20, 0x29, 0, 0x33, 0, 0x58, static_cast<juce::uint8> (channel)};
+            return juce::MidiMessage::createSysExMessage (payload, sizeof (payload));
+        };
+        auto deliverChannel = [&] (const juce::MidiMessage& message)
+        {
+            juce::MidiBuffer incoming; incoming.addEvent (message, 0);
+            juce::AudioBuffer<float> audio (2, 64);
+            processor.processBlock (audio, incoming); pump();
+        };
+        for (int channel = 1; channel <= 16; ++channel)
+            ok &= bsii::hardwareChannelNotification (channelMessage (channel)) == channel;
+        ok &= bsii::hardwareChannelNotification (channelMessage (0)) == -1;
+        ok &= bsii::hardwareChannelNotification (channelMessage (17)) == -1;
+        ok &= ! processor.requestHardwareMidiChannel (0) && ! processor.requestHardwareMidiChannel (17);
+        const auto channelEvents = juce::StringArray::fromLines (
+            juce::File::getCurrentWorkingDirectory().getChildFile ("tests/hardware-channel-fixtures/remote-roundtrip.jsonl").loadFileAsString());
+        std::vector<juce::MidiMessage> channelReplies;
+        for (const auto& line : channelEvents)
+        {
+            if (line.isEmpty()) continue;
+            const auto json = juce::JSON::parse (line);
+            const auto byteValue = json["bytes"];
+            const auto* bytes = byteValue.getArray();
+            if (! bytes) { ok = false; continue; }
+            std::vector<juce::uint8> raw;
+            for (const auto& byte : *bytes) raw.push_back (static_cast<juce::uint8> (static_cast<int> (byte)));
+            channelReplies.emplace_back (raw.data(), static_cast<int> (raw.size()), 0.0);
+        }
+        ok &= channelReplies.size() == 2;
+        if (channelReplies.size() != 2) return 1;
+        const auto patchSerial = processor.getLatestSysEx().serial;
+        ok &= processor.requestHardwareMidiChannel (2);
+        cc (99, 64); cc (98, 4); cc (6, 2);
+        ok &= processor.getHardwareMidiChannel() == 1; // Never guess on send.
+        ok &= ! processor.requestHardwareMidiChannel (3); // One request at a time.
+        deliverChannel (channelReplies[0]);
+        ok &= processor.getHardwareMidiChannel() == 2 && processor.getHardwareChannelInfo().pending == -1;
+        ok &= processor.getLatestSysEx().serial == patchSerial; // Not a patch reply.
+        ok &= processor.requestHardwareMidiChannel (1);
+        cc (99, 64, 2); cc (98, 4, 2); cc (6, 1, 2);
+        deliverChannel (channelReplies[1]);
+        ok &= processor.getHardwareMidiChannel() == 1;
+        processor.setLiveMidiRxEnabled (false);
+        deliverChannel (channelMessage (3));
+        ok &= processor.getHardwareMidiChannel() == 1;
+        ok &= processor.requestHardwareMidiChannel (2);
+        cc (99, 64); cc (98, 4); cc (6, 2);
+        deliverChannel (channelReplies[0]); // Explicit command confirms even while RX paused.
+        ok &= processor.getHardwareMidiChannel() == 2;
+        processor.setLiveMidiRxEnabled (true);
+        deliverChannel (channelReplies[1]); // Hardware notification follows with no editor.
+        ok &= processor.getHardwareMidiChannel() == 1;
+        ok &= processor.requestHardwareMidiChannel (2);
+        cc (99, 64); cc (98, 4); cc (6, 2);
+        pump (1700);
+        ok &= processor.getHardwareChannelInfo().timedOut && processor.getHardwareMidiChannel() == 1;
+        deliverChannel (channelMessage (1));
+        ok &= ! processor.getHardwareChannelInfo().timedOut;
         set ("filterResonance", 10); pump(); cc (82, 10); // No editor ever created.
         auto editor = std::unique_ptr<juce::AudioProcessorEditor> (processor.createEditor());
         pump();

@@ -29,8 +29,10 @@ version labels still show earlier numbers.
 
 ## Available features
 
-- **95 controls** across Osc 1, Osc 2, Mixer, Filter, LFO/Glide,
-  Amp Env, Mod Env, FX/Performance and Arp/Seq pages.
+- **95 automatable controls** across Osc 1, Osc 2, Mixer, Filter, LFO/Glide,
+  Amp Env, Mod Env, FX/Performance, Arp/Seq and Global pages.
+- **Hardware MIDI channel setup:** the Global page can request a synth channel
+  change and follow its confirmation. DAW note routing remains separate.
 - **Live MIDI in both directions:** app edits send CC/NRPN messages, and supported
   hardware changes update the editor while Live RX is running.
 - **Preset selection, 0–127:** select a number, step with Previous/Next, or reload
