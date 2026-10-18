@@ -291,3 +291,15 @@ strict signatures verified and Apple AU validation passed. Hosted acceptance
 remains pending. Public preview assets were not replaced. The scoped
 `tools/MidiChannelProbe.swift SOURCE_CHANNEL TARGET_CHANNEL` sender used
 in discovery is retained; its transport output alone is not confirmation.
+
+### Hardware-channel hosted acceptance passed
+
+In Ableton, the user selected target 2 on the plugin Global page and clicked
+Set Synth Channel. They confirmed channel 2 in the acknowledgement status and
+the top communication-channel selector. Moving the hardware Cutoff knob then
+updated the plugin on channel 2. Selecting target 1 and issuing the command
+again confirmed channel 1 and restored the top selector to 1. These results
+complete the basic hosted 1-to-2-to-1 command and incoming-control check.
+Other channel values, unsolicited hardware channel changes, power-cycle
+persistence and DAW note-routing changes were not tested in this pass.
+Public preview assets were not replaced.
