@@ -206,3 +206,35 @@ exact message. Negative receive encoding remains unresolved. No Global
 Tune plugin control or speculative restore encoding has been added. The
 temporary diagnostic sender was removed after the experiments. See
 global-tune-protocol-research.md for the checked primary references.
+
+## Local Control repeat and standard-message probes
+
+User confirmed starting Local On, then performed the requested hardware
+On -> Off -> On sequence and exited. Passive capture
+`midi-lab-results/20261018-225625-record-7bfcdd/` recorded zero messages,
+matching the earlier no-transmission observation.
+
+A subsequent positive-control capture
+`midi-lab-results/20261018-225750-record-55136b/events.jsonl` received three
+note-on/off pairs on channel 1 after the user pressed/released one key
+(notes 88,100,112). This confirms input reception in the subsequent run;
+it does not independently timestamp overlap during the zero-message run.
+The note trace is retained as tests/local-control-fixtures/key-positive-control.jsonl.
+
+The MIDI Association defines CC122=0 as Local Off and CC122=127 as Local On:
+https://midi.org/midi-1-0-control-change-messages .
+That standard alone does not establish BSII implementation support.
+
+A scoped diagnostic sender sent channel-1 CC122=0 from the previously
+confirmed On state. User reopened the Local menu without editing and reported
+Off. The sender then sent CC122=127; the user answered no when asked whether
+Local showed On. An alternate compatibility probe CC122=1 also did not
+produce a user-confirmed On display. Exact display text after the latter
+two probes was not separately supplied. No audible verification was performed.
+
+User then manually selected Local On, exited the function, and confirmed
+completion. The temporary sender was removed. These observations do not
+establish a reliable bidirectional receive mapping or a firmware fault.
+In particular, do not implement an On/Off control from the apparently
+successful Off observation alone. Local remains unimplemented pending
+better receive verification; no patch or global-query field was invented.

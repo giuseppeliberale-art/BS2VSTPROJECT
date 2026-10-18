@@ -1,0 +1,6 @@
+{"seconds": 12.221776008605957, "channel": 1, "bytes": [144, 88, 127], "type": "noteOn"}
+{"seconds": 12.37720799446106, "channel": 1, "bytes": [128, 88, 0], "type": "noteOff"}
+{"seconds": 12.38821291923523, "channel": 1, "bytes": [144, 100, 127], "type": "noteOn"}
+{"seconds": 12.547179937362671, "channel": 1, "bytes": [128, 100, 0], "type": "noteOff"}
+{"seconds": 12.558190941810608, "channel": 1, "bytes": [144, 112, 127], "type": "noteOn"}
+{"seconds": 12.647288918495178, "channel": 1, "bytes": [128, 112, 0], "type": "noteOff"}
