@@ -149,3 +149,15 @@ with previous bundles backed up. Both installed signatures passed strict
 verification; Apple auval reported AU VALIDATION SUCCEEDED. Manual acceptance
 in Ableton for this control remains pending. Public prerelease assets were
 not replaced by this local installation.
+
+### Manual Ableton acceptance passed
+
+User verified the installed plugin in Ableton: selecting table 1 in the plugin
+was confirmed as t 1 on the hardware display after reopening MicroTune without
+editing Patch/Value. Changing hardware to t 2 updated the plugin automatically.
+With Live RX paused, hardware selection t 8 left the plugin at 2; Get Patch
+then updated the plugin to 8. User completed the requested plugin selection
+back to 0 and resumed Live RX. No separate hardware-display confirmation was
+requested for that final selection. These results complete basic hosted
+send, receive, pause and SysEx readback acceptance; MicroTune automation
+recording/playback and whole-patch transmission remain separately untested.

@@ -20,7 +20,7 @@ hardware-verified merely because the manual mentions them.
 - [ ] Hardware Global MIDI Channel setting; the existing app channel selector
       selects the plugin's communication channel, not this hardware setting.
 - [x] MicroTune table selection 0–8: MIDI send/receive and SysEx decoding implemented;
-      hosted acceptance pending. No tuning-table contents are edited or saved.
+      basic hosted send/receive, paused RX and Get Patch acceptance passed. No tuning-table contents are edited or saved.
 - [ ] Global Tune receive encoding and tuning-table editing/transfer remain unresolved.
 - [ ] External Input Gain.
 - [ ] AFX overlay selection, editing and read protection; keep AFX work last.
@@ -173,5 +173,6 @@ RPN 0:3 followed by RPN null selection. Patch decoding uses verified byte
 115 bit 0 and byte 116 bits 4–6. All nine hardware fixtures are retained.
 Connection recall, snapshots and automation use the existing parameter paths.
 The control selects a table only; tuning-table contents and stored preset slots
-are untouched. Hosted acceptance and incoming whole-patch verification remain
-pending. See global-control-research.md for measured evidence.
+are untouched. Basic Ableton send/receive, paused RX and Get Patch acceptance passed.
+Automation playback and incoming whole-patch verification remain pending.
+See global-control-research.md for measured evidence.
