@@ -184,3 +184,16 @@ Live remained running; after the second quit confirmation, the process
 guard passed and both plugins were backed up and replaced. Strict installed
 signature verification and Apple AU validation passed. Manual hosted/audible
 acceptance remains pending. Public preview assets have not been replaced.
+
+### Paraphonic manual Ableton acceptance passed
+
+User set plugin Paraphonic Mode On, reopened the hardware on-key function
+without editing Patch/Value, and confirmed P-1. Hardware P-1 to P-0 updated
+the plugin to Off. With Live RX paused, hardware P-0 to P-1 left the plugin
+Off; Get Patch then updated it to On. User completed plugin Off and resumed
+Live RX. A separate hardware readback after the final Off command was not
+requested. No stored preset was saved.
+
+This supersedes basic hosted acceptance deferrals for Paraphonic Mode above.
+Dedicated audible two-note behavior, hosted automation/session-reopen checks,
+and the cause of the earlier conflicting CC110 captures remain unverified.
