@@ -67,3 +67,22 @@ The raw MIDI routes and SysEx fields are now verified across those ranges.
 Hardware-displayed endpoints are user-confirmed; exact center/display conversion,
 Osc Select independence, audible behavior and plugin integration remain pending.
 Both Sub parameters remain absent from the installed plugin.
+
+### Hardware zero observation — Fine
+
+User held Function/Exit while setting Fine until the hardware displayed 0.
+Dump `midi-lab-results/20261018-165117-backup-33938a/baseline.syx` stores
+byte 34=31, byte 35=96: effective Sub Fine raw 127. Compared with the sweep's
+restored patch, only byte 34 changed. This confirms displayed zero at raw 127;
+it does not independently establish whether raw 128 also displays zero.
+
+### Hardware zero observation — Coarse
+
+User held Function/Exit while setting Coarse until the hardware displayed 0.
+Dump `midi-lab-results/20261018-165204-backup-112c06/baseline.syx` stores
+byte 33=64, byte 34=31, byte 35=96: Sub Coarse raw 128, with Sub Fine still 127.
+Only byte 33 changed from the Fine-zero capture. Thus one displayed zero is
+confirmed for each control; adjacent raw values' display rounding is not yet
+established. The synth was left with both Sub tuning settings displaying zero.
+Retained labelled copies: `tests/sub-tuning-fixtures/hardware-fine-zero.syx`
+and `hardware-coarse-zero.syx`.
