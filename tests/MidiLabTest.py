@@ -100,6 +100,23 @@ class MidiLabTests(unittest.TestCase):
             self.assertEqual(patch['fields'][field],index%128)
         self.assertEqual((folder/'before.syx').read_bytes(),(folder/'after.syx').read_bytes())
 
+    @unittest.skipUnless(os.environ.get('BSII_PATCH_INSPECT'), 'Inspector built by validation routine')
+    def test_microtune_hardware_patch_captures(self):
+        folder=ROOT/'tests/microtune-fixtures'
+        files=[folder/'table-0-before.syx']+[folder/f'table-{v}.syx' for v in range(1,9)]
+        result=subprocess.run([os.environ['BSII_PATCH_INSPECT'],*[str(p) for p in files]],capture_output=True,text=True,check=True)
+        decoded=[json.loads(line) for line in result.stdout.splitlines()]
+        self.assertEqual(len(decoded),9)
+        self.assertTrue(all(p['valid'] for p in decoded))
+        self.assertEqual([p['fields']['microTuneTable'] for p in decoded], list(range(9)))
+        self.assertEqual((folder/'range-before.syx').read_bytes(),(folder/'range-restored.syx').read_bytes())
+
+    def test_microtune_emitted_nrpn(self):
+        rows=lab.Decoder().feed([0xB0,99,0,98,0,6,8,6,0,6,9])
+        values=[r['controls'][0] for r in rows if 'controls' in r]
+        self.assertEqual([(v['id'],v['choice']) for v in values[:2]], [('microTuneTable','8'),('microTuneTable','0')])
+        self.assertFalse(values[-1]['inRange'])
+
     def test_modwheel_filter_signed_midi(self):
         rows=lab.Decoder().feed([0xB0,99,0,98,94,6,0,6,127,98,71,6,0,6,127])
         values=[r['controls'][0] for r in rows if 'controls' in r]

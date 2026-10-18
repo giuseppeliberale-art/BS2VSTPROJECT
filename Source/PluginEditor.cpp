@@ -1057,6 +1057,7 @@ bool BSIIControlAudioProcessorEditor::decodeSysExIntoEditor (const juce::MemoryB
     set ("arpRhythm", decoded.arpRhythm);
     set ("seqRetrig", decoded.seqRetrig);
     set ("modWhLfo1Pitch", decoded.modWhLfo1Pitch);
+    set ("microTuneTable", decoded.microTuneTable);
     set ("modWhFilter", decoded.modWhFilter);
     set ("modWhLfo2Filter", decoded.modWhLfo2Filter);
     set ("modWhOsc2Pitch", decoded.modWhOsc2Pitch);

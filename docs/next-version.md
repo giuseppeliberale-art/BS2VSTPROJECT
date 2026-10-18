@@ -12,15 +12,16 @@ hardware-verified merely because the manual mentions them.
       manual hosted acceptance still pending.
 - [x] Mod Wheel → LFO2 → Filter Frequency: implemented following the full hardware
       sweep; manual hosted acceptance still pending.
-- [ ] Oscillator tuning error (`F:OscErr`).
+- [ ] Oscillator tuning error (`E:OscErr`).
 - [ ] Paraphonic mode (`P:Para`).
 - [ ] Glide divergence (`g:GlideDiv`).
 - [ ] Independent Sub Oscillator coarse and fine tuning (listed in manual).
 - [ ] Hardware Local Control.
 - [ ] Hardware Global MIDI Channel setting; the existing app channel selector
       selects the plugin's communication channel, not this hardware setting.
-- [ ] Hardware tuning / microtuning: determine supported selection, editing and
-      transfer scope before implementation.
+- [x] MicroTune table selection 0–8: MIDI send/receive and SysEx decoding implemented;
+      hosted acceptance pending. No tuning-table contents are edited or saved.
+- [ ] Global Tune receive encoding and tuning-table editing/transfer remain unresolved.
 - [ ] External Input Gain.
 - [ ] AFX overlay selection, editing and read protection; keep AFX work last.
 - [ ] Full-bank dump/management workflow; single-patch request/capture exists.
@@ -163,3 +164,14 @@ rules and standalone Active MIDI Inputs are retained. Notes, pitch wheel and clo
 are excluded from direct input and keep their existing host route. Expanded native
 regression, original SysEx-only test, offline suite, format builds and AU validation
 pass. Original-chain hardware acceptance remains pending.
+
+## MicroTune selection
+
+Added MicroTune Table 0–8 in FX + Perf as appended host parameter index 88.
+Hardware NRPN 0:0 updates the control; output uses the distinct documented
+RPN 0:3 followed by RPN null selection. Patch decoding uses verified byte
+115 bit 0 and byte 116 bits 4–6. All nine hardware fixtures are retained.
+Connection recall, snapshots and automation use the existing parameter paths.
+The control selects a table only; tuning-table contents and stored preset slots
+are untouched. Hosted acceptance and incoming whole-patch verification remain
+pending. See global-control-research.md for measured evidence.

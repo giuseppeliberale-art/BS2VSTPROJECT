@@ -443,6 +443,13 @@ void BSIIControlAudioProcessor::parseIncomingMidi (const juce::MidiBuffer& midiM
 
         if (channel >= 1 && channel <= 16)
         {
+            if (controller == 100 || controller == 101)
+            {
+                // An RPN selection cancels stale NRPN state on this channel.
+                currentNrpnMSB[static_cast<size_t> (channel)].store (-1, std::memory_order_relaxed);
+                currentNrpnLSB[static_cast<size_t> (channel)].store (-1, std::memory_order_relaxed);
+                continue;
+            }
             if (controller == 99)
             {
                 currentNrpnMSB[static_cast<size_t> (channel)].store (value, std::memory_order_relaxed);

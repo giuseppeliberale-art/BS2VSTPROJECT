@@ -201,6 +201,10 @@ namespace bsii
                 {24, "1 1/3 beats"}, {25, "1/4"}, {26, "1/8 dotted"}, {27, "1/4 triplet"},
                 {28, "1/8"}, {29, "1/16 dotted"}, {30, "1/8 triplet"}, {31, "1/16"},
                 {32, "1/16 triplet"}, {33, "1/32"}, {34, "1/32 triplet"} }, 0, true },
+            // Hardware emits NRPN 0:0; sendChoice uses the documented RPN 0:3.
+            { "microTuneTable", "MicroTune Table", "FX / Perf", Protocol::nrpn7, 0, 0,
+              { {0, "0"}, {1, "1"}, {2, "2"}, {3, "3"}, {4, "4"},
+                {5, "5"}, {6, "6"}, {7, "7"}, {8, "8"} }, 0, true },
         };
         return specs;
     }
@@ -249,7 +253,17 @@ namespace bsii
     inline void sendChoice (juce::MidiOutput& out, int channel,
                             const ChoiceSpec& spec, int wireValue)
     {
-        if (spec.protocol == Protocol::nrpn7)
+        // Selection reception is asymmetric: do not echo the hardware's NRPN.
+        if (juce::String (spec.id) == "microTuneTable")
+        {
+            if (wireValue < 0 || wireValue > 8) return;
+            sendCC (out, channel, 100, 3);
+            sendCC (out, channel, 101, 0);
+            sendCC (out, channel, 6, wireValue);
+            sendCC (out, channel, 100, 127);
+            sendCC (out, channel, 101, 127);
+        }
+        else if (spec.protocol == Protocol::nrpn7)
             sendNRPN7 (out, channel, spec.numberMSB, spec.numberLSB, wireValue);
         else
             sendCC (out, channel, spec.numberMSB, wireValue);

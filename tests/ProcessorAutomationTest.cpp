@@ -173,6 +173,9 @@ int main (int argc, char** argv)
         ok &= processor.getParameters().getParameter ("modWhLfo2Filter")->getParameterIndex() == 87;
         set ("modWhFilter", 0); pump(); nrpn (94, 0);
         set ("modWhLfo2Filter", 127); pump(); nrpn (71, 127);
+        ok &= processor.getParameters().getParameter ("microTuneTable")->getParameterIndex() == 88;
+        set ("microTuneTable", 8); pump();
+        cc (100, 3); cc (101, 0); cc (6, 8); cc (100, 127); cc (101, 127);
         set ("filterCutoff", 128); pump(); cc (16, 64); cc (48, 0);
         set ("ampTrigger", 0); pump(); nrpn (73, 1); nrpn (105, 1);
         ok &= processor.getParameters().getRawParameterValue ("modTrigger")->load() == 0;
@@ -198,6 +201,7 @@ int main (int argc, char** argv)
         ok &= processor.getParameters().getRawParameterValue ("lfo2Division")->load() == 34;
         ok &= processor.getParameters().getRawParameterValue ("modWhFilter")->load() == 0;
         ok &= processor.getParameters().getRawParameterValue ("modWhLfo2Filter")->load() == 127;
+        ok &= processor.getParameters().getRawParameterValue ("microTuneTable")->load() == 8;
         set ("filterResonance", 50);
         {
             BSIIControlAudioProcessor::ScopedMidiSilence silence (processor);
@@ -210,6 +214,17 @@ int main (int argc, char** argv)
         juce::AudioBuffer<float> audio (2, 64);
         processor.processBlock (audio, incoming); pump();
         ok &= processor.getParameters().getRawParameterValue ("filterResonance")->load() == 60;
+        incoming.clear();
+        for (const auto [controller, value] : { std::pair {99, 0}, {98, 0}, {6, 3} })
+            incoming.addEvent (juce::MidiMessage::controllerEvent (1, controller, value), incoming.getNumEvents());
+        processor.processBlock (audio, incoming); pump();
+        ok &= processor.getParameters().getRawParameterValue ("microTuneTable")->load() == 3;
+        // RPN data entry must not be decoded as a stale MicroTune NRPN.
+        incoming.clear();
+        for (const auto [controller, value] : { std::pair {100, 3}, {101, 0}, {6, 7} })
+            incoming.addEvent (juce::MidiMessage::controllerEvent (1, controller, value), incoming.getNumEvents());
+        processor.processBlock (audio, incoming); pump();
+        ok &= processor.getParameters().getRawParameterValue ("microTuneTable")->load() == 3;
         // Incoming captured encodings update the attached editor/APVTS without MIDI echo.
         incoming.clear();
         for (const auto [controller, value] : { std::pair {108, 0}, {109, 0}, {111, 2}, {118, 4}, {119, 0}, {99, 0}, {98, 106}, {6, 1} })
@@ -319,6 +334,7 @@ int main (int argc, char** argv)
             if (value >= 0) ok &= juce::roundToInt (receiver.getParameters().getRawParameterValue (id)->load()) == value;
         ok &= juce::roundToInt (receiver.getParameters().getRawParameterValue ("modWhFilter")->load()) == decoded.modWhFilter;
         ok &= juce::roundToInt (receiver.getParameters().getRawParameterValue ("modWhLfo2Filter")->load()) == decoded.modWhLfo2Filter;
+        ok &= juce::roundToInt (receiver.getParameters().getRawParameterValue ("microTuneTable")->load()) == decoded.microTuneTable;
         incoming.clear();
         incoming.addEvent (juce::MidiMessage::controllerEvent (1, 82, 60), 0);
         incoming.addEvent (juce::MidiMessage::controllerEvent (1, 83, 1), 1);
