@@ -22,6 +22,12 @@ exact patch restoration. See `docs/osc-extra-research.md` and retained fixture
 directories. The Paraphonic emitted-CC110 ambiguity remains unresolved. These
 three controls still await batch implementation; installed runtime is unchanged.
 
+Independent Sub Fine and Coarse mapping also passed 458 remote/SysEx checks
+with exact patch restoration. Both require paired NRPN Data Entry, not NRPN7.
+See `docs/sub-tuning-research.md`. Display endpoints are confirmed, but exact
+center/display conversion and selector independence remain untested. No Sub
+tuning controls have been added to the installed app yet.
+
 The public prerelease `v0.8.2-preview.20261018` still contains the earlier 4993591
 build (86 controls), requires macOS 27+/arm64 and is ad-hoc signed, not notarized.
 Its AU/VST3 ZIPs include the installation workaround and checksums. Source-only

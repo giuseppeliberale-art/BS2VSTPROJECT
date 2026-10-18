@@ -1,5 +1,5 @@
 // Hardware evidence collector: changes only the temporary edit buffer, never saves a preset.
-// Usage: swift tools/LFOSyncSampler.swift NEW_OUTPUT_DIRECTORY [lfo-sync|modwheel-filter|osc-error|paraphonic|glide-divergence]
+// Usage: swift tools/LFOSyncSampler.swift NEW_OUTPUT_DIRECTORY [lfo-sync|modwheel-filter|osc-error|paraphonic|glide-divergence|sub-tuning]
 import Foundation
 import CoreMIDI
 import Darwin
@@ -9,10 +9,10 @@ struct CaptureError: Error, CustomStringConvertible {
     init(_ message: String) { description = message }
 }
 guard (2...3).contains(CommandLine.arguments.count) else {
-    fatalError("Usage: swift tools/LFOSyncSampler.swift NEW_OUTPUT_DIRECTORY [lfo-sync|modwheel-filter|osc-error|paraphonic|glide-divergence]")
+    fatalError("Usage: swift tools/LFOSyncSampler.swift NEW_OUTPUT_DIRECTORY [lfo-sync|modwheel-filter|osc-error|paraphonic|glide-divergence|sub-tuning]")
 }
 let group = CommandLine.arguments.count == 3 ? CommandLine.arguments[2] : "lfo-sync"
-guard ["lfo-sync", "modwheel-filter", "osc-error", "paraphonic", "glide-divergence"].contains(group) else { fatalError("Unknown capture group") }
+guard ["lfo-sync", "modwheel-filter", "osc-error", "paraphonic", "glide-divergence", "sub-tuning"].contains(group) else { fatalError("Unknown capture group") }
 let directory = URL(fileURLWithPath: CommandLine.arguments[1], isDirectory: true)
 guard !FileManager.default.fileExists(atPath: directory.path) else {
     fatalError("Refusing to overwrite an existing capture directory")
@@ -78,8 +78,9 @@ func patch() throws -> [UInt8] {
     guard let bytes = response else { throw CaptureError("Missing response") }
     return bytes
 }
-func setNRPN(_ address: UInt8, _ value: Int) throws {
-    let messages: [[UInt8]] = [[0xB0,99,0], [0xB0,98,address], [0xB0,6,UInt8(value)]]
+func setNRPN(_ address: UInt8, _ value: Int, pairedDataEntry: Bool = false) throws {
+    var messages: [[UInt8]] = [[0xB0,99,0], [0xB0,98,address], [0xB0,6,UInt8(pairedDataEntry ? value >> 1 : value)]]
+    if pairedDataEntry { messages.append([0xB0,38,UInt8((value & 1) << 6)]) }
     for bytes in messages {
         try send(bytes); Thread.sleep(forTimeInterval: 0.005)
     }
@@ -88,6 +89,8 @@ func setNRPN(_ address: UInt8, _ value: Int) throws {
 struct Field {
     let id: String, address: UInt8, maximum: Int, masks: [Int: UInt8]
     let read: ([UInt8]) -> Int
+    var minimum = 0
+    var pairedDataEntry = false
 }
 // Candidate division masks inferred from labelled hardware endpoints.
 let fields = group == "modwheel-filter" ? [
@@ -99,6 +102,9 @@ let fields = group == "modwheel-filter" ? [
     Field(id: "paraphonic", address: 107, maximum: 1, masks: [111: 0x02], read: { Int(($0[111] & 0x02) >> 1) })
 ] : group == "glide-divergence" ? [
     Field(id: "glide-divergence", address: 113, maximum: 15, masks: [118: 0x3C], read: { Int(($0[118] & 0x3C) >> 2) })
+] : group == "sub-tuning" ? [
+    Field(id: "sub-fine", address: 77, maximum: 228, masks: [34: 0x3F, 35: 0x60], read: { (Int($0[34] & 0x3F) << 2) | Int(($0[35] & 0x60) >> 5) }, minimum: 27, pairedDataEntry: true),
+    Field(id: "sub-coarse", address: 84, maximum: 255, masks: [33: 0x7F, 34: 0x40], read: { (Int($0[33] & 0x7F) << 1) | Int(($0[34] & 0x40) >> 6) }, pairedDataEntry: true)
 ] : [
     Field(id: "lfo1-sync", address: 88, maximum: 1, masks: [69: 0x08], read: { Int(($0[69] & 8) >> 3) }),
     Field(id: "lfo2-sync", address: 92, maximum: 1, masks: [76: 0x10], read: { Int(($0[76] & 16) >> 4) }),
@@ -114,8 +120,8 @@ do {
     baseline = original
     var previous = original
     for field in fields {
-        for value in 0...field.maximum {
-            try setNRPN(field.address, value)
+        for value in field.minimum...field.maximum {
+            try setNRPN(field.address, value, pairedDataEntry: field.pairedDataEntry)
             let bytes = try patch()
             try Data(bytes).write(to: directory.appendingPathComponent("\(field.id)-\(value).syx"), options: .withoutOverwriting)
             let unexpected = bytes.indices.filter { ((bytes[$0] ^ previous[$0]) & ~(field.masks[$0] ?? 0)) != 0 }
@@ -125,7 +131,7 @@ do {
             }
             previous = bytes
         }
-        print("PASS \(field.id): \(field.maximum + 1) values, no unrelated bits changed"); fflush(stdout)
+        print("PASS \(field.id): \(field.maximum - field.minimum + 1) values, no unrelated bits changed"); fflush(stdout)
     }
 } catch { problem = error }
 // Always attempt restoration after any caught send/capture/file error once a backup exists.
