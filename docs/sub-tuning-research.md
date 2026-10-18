@@ -118,3 +118,45 @@ builds passed. Live was confirmed closed; installed AU/VST3 were backed up,
 replaced and locally signed. Strict signature verification and Apple AU
 validation passed. Manual hosted/audible checks remain pending. Public
 preview release assets have not been replaced.
+
+## Manual Ableton acceptance passed
+
+User verified the correctly labelled Sub Fine and Sub Coarse controls:
+
+- Sub Fine plugin +100 produced raw 228 in hardware patch
+  `midi-lab-results/20261018-220601-backup-fdfb66/baseline.syx`.
+  Compared with immediate baseline
+  `20261018-220523-backup-547e16/baseline.syx`, only Sub Fine field bits
+  changed (byte 34: 32 to 57). Hardware Function + Fine fully left followed
+  in the plugin after resuming Live RX. With RX paused, moving hardware to
+  +100 left the plugin at -100; Get Patch updated it to +100.
+- Sub Coarse plugin +12.0 produced raw 255; readback
+  `20261018-221115-backup-78e386/baseline.syx` also confirmed Sub Fine
+  raw 127. Hardware Function + Coarse fully left updated plugin to -12.0.
+  With RX paused, moving hardware fully right left plugin at -12.0;
+  Get Patch updated it to +12.0.
+- User set Sub Coarse back to 0.0 and resumed Live RX. Final readback
+  `20261018-221348-backup-8881ca/baseline.syx` confirms Sub Fine raw 127
+  and Sub Coarse raw 128, both captured zero settings.
+
+### Resolved test confusion; no runtime fix needed
+
+Initial reports of Sub Fine +100 and mouse-drag +91 not reaching hardware
+were traced to the user adjusting the LFO1 -> Pitch knob above Sub Fine.
+Readback `20261018-220149-backup-9a7004/baseline.syx` identified Osc 1
+LFO1 Pitch raw 100 -> 91 while Sub Fine remained raw 128; user explicitly
+confirmed the control mix-up after finding the lower Sub tuning row.
+
+A temporary narrowly scoped sender replayed expected Sub Fine raw 228
+with zero inter-message delay; hardware accepted it with only Sub Fine bits
+changed. Restoring raw 128 reproduced the starting full patch exactly.
+Thus that probe did not support the spacing hypothesis. The temporary
+sender was removed; no runtime changes were made during diagnosis.
+A later hardware-follow attempt was made with Live RX paused; it followed
+after RX resumed. Neither episode is evidence of a Sub tuning software bug.
+
+These results supersede basic hosted acceptance deferrals above.
+Intermediate LCD rounding, Osc Select independence, dedicated audible tests,
+hosted automation and session-reopen acceptance remain separate untested work.
+Accidental LFO1 Pitch and diagnostic Resonance edits are not claimed restored
+to their original pre-test values.

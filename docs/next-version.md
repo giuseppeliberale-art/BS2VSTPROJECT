@@ -15,7 +15,7 @@ hardware-verified merely because the manual mentions them.
 - [x] Oscillator tuning error (`E:OscErr`): implemented; basic Ableton MIDI and Get Patch checks passed.
 - [ ] Paraphonic mode (`P:Para`).
 - [x] Glide divergence (`g:GlideDiv`): implemented; basic Ableton MIDI and Get Patch checks passed.
-- [x] Independent Sub Oscillator coarse and fine tuning: implemented; hosted checks pending, intermediate display rounding approximate.
+- [x] Independent Sub Oscillator coarse and fine tuning: implemented; basic Ableton send/receive, paused RX and Get Patch checks passed; intermediate display rounding approximate.
 - [ ] Hardware Local Control.
 - [ ] Hardware Global MIDI Channel setting; the existing app channel selector
       selects the plugin's communication channel, not this hardware setting.
