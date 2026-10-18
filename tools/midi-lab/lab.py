@@ -19,7 +19,7 @@ ROOT = Path(__file__).resolve().parents[2]
 CACHE = ROOT / 'build' / 'midi-lab'
 RESULTS = ROOT / 'midi-lab-results'
 SIGNED = {'velocityAmp', 'velocityMod', 'modWhLfo1Pitch', 'modWhOsc2Pitch',
-          'aftertouchFilter', 'aftertouchLfo1', 'aftertouchLfo2Spd'}
+          'aftertouchFilter', 'aftertouchLfo1', 'aftertouchLfo2Spd', 'modWhFilter', 'modWhLfo2Filter'}
 # Documented discovery routes, not yet implemented/verified app controls.
 DISCOVERY = {}
 

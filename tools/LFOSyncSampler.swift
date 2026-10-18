@@ -1,5 +1,5 @@
 // Hardware evidence collector: changes only the temporary edit buffer, never saves a preset.
-// Usage: swift tools/LFOSyncSampler.swift NEW_OUTPUT_DIRECTORY
+// Usage: swift tools/LFOSyncSampler.swift NEW_OUTPUT_DIRECTORY [lfo-sync|modwheel-filter]
 import Foundation
 import CoreMIDI
 import Darwin
@@ -8,9 +8,11 @@ struct CaptureError: Error, CustomStringConvertible {
     let description: String
     init(_ message: String) { description = message }
 }
-guard CommandLine.arguments.count == 2 else {
-    fatalError("Usage: swift tools/LFOSyncSampler.swift NEW_OUTPUT_DIRECTORY")
+guard (2...3).contains(CommandLine.arguments.count) else {
+    fatalError("Usage: swift tools/LFOSyncSampler.swift NEW_OUTPUT_DIRECTORY [lfo-sync|modwheel-filter]")
 }
+let group = CommandLine.arguments.count == 3 ? CommandLine.arguments[2] : "lfo-sync"
+guard ["lfo-sync", "modwheel-filter"].contains(group) else { fatalError("Unknown capture group") }
 let directory = URL(fileURLWithPath: CommandLine.arguments[1], isDirectory: true)
 guard !FileManager.default.fileExists(atPath: directory.path) else {
     fatalError("Refusing to overwrite an existing capture directory")
@@ -88,7 +90,10 @@ struct Field {
     let read: ([UInt8]) -> Int
 }
 // Candidate division masks inferred from labelled hardware endpoints.
-let fields = [
+let fields = group == "modwheel-filter" ? [
+    Field(id: "modwheel-filter", address: 94, maximum: 127, masks: [82: 0x1F, 83: 0x60], read: { (Int($0[82] & 31) << 2) | Int(($0[83] & 96) >> 5) }),
+    Field(id: "modwheel-lfo2-filter", address: 71, maximum: 127, masks: [84: 0x07, 85: 0x78], read: { (Int($0[84] & 7) << 4) | Int(($0[85] & 120) >> 3) })
+] : [
     Field(id: "lfo1-sync", address: 88, maximum: 1, masks: [69: 0x08], read: { Int(($0[69] & 8) >> 3) }),
     Field(id: "lfo2-sync", address: 92, maximum: 1, masks: [76: 0x10], read: { Int(($0[76] & 16) >> 4) }),
     Field(id: "lfo1-division", address: 87, maximum: 34, masks: [67: 0x1F, 68: 0x70], read: { (Int($0[67] & 31) << 3) | Int(($0[68] & 112) >> 4) }),

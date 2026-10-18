@@ -87,6 +87,24 @@ class MidiLabTests(unittest.TestCase):
                     self.assertEqual(decoded['fields'][field],value)
         self.assertEqual((directory/'before.syx').read_bytes(),(directory/'after.syx').read_bytes())
 
+    @unittest.skipUnless(os.environ.get('BSII_PATCH_INSPECT'), 'Inspector built by validation routine')
+    def test_all_modwheel_filter_captures(self):
+        folder=ROOT/'tests/modwheel-filter-fixtures'
+        files=[folder/f'{prefix}-{raw}.syx' for prefix in ('modwheel-filter','modwheel-lfo2-filter') for raw in range(128)]
+        result=subprocess.run([os.environ['BSII_PATCH_INSPECT'],*[str(p) for p in files]],capture_output=True,text=True,check=True)
+        decoded=[json.loads(line) for line in result.stdout.splitlines()]
+        self.assertEqual(len(decoded),256)
+        for index, patch in enumerate(decoded):
+            field='modWhFilter' if index<128 else 'modWhLfo2Filter'
+            self.assertTrue(patch['valid'])
+            self.assertEqual(patch['fields'][field],index%128)
+        self.assertEqual((folder/'before.syx').read_bytes(),(folder/'after.syx').read_bytes())
+
+    def test_modwheel_filter_signed_midi(self):
+        rows=lab.Decoder().feed([0xB0,99,0,98,94,6,0,6,127,98,71,6,0,6,127])
+        values=[r['controls'][0] for r in rows if 'controls' in r]
+        self.assertEqual([(v['id'],v['display']) for v in values], [('modWhFilter',-64),('modWhFilter',63),('modWhLfo2Filter',-64),('modWhLfo2Filter',63)])
+
     def test_report_does_not_claim_hardware_or_ui_pass(self):
         with tempfile.TemporaryDirectory() as tmp:
             path=Path(tmp); source=path/'capture.txt'

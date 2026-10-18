@@ -1,5 +1,26 @@
 # Project handover
 
+## Latest checkpoint — 18 October 2026
+
+User stopped hardware testing to conserve remaining usage. Resume with the saved
+mapping evidence, not by repeating the full captures. Two new mod-wheel filter
+controls are implemented with raw 0–127 and signed -64…+63 display; see
+`docs/modwheel-filter-research.md`. Existing 86 host indices are retained and new
+controls appended at 86/87. Manual hosted acceptance remains pending.
+
+`docs/osc-extra-research.md` retains unfinished Oscillator Error and Paraphonic
+mapping. Paraphonic patch bit is verified but the hardware unexpectedly emitted
+CC110; its documented NRPN receive route is unverified. Neither oscillator-extra
+control is implemented. Next planned mapping was Glide Divergence, not started.
+Missing-feature list: `docs/next-version.md`. AFX and final GUI remain deferred.
+
+The public prerelease `v0.8.2-preview.20261018` still contains the earlier 4993591
+build (86 controls), requires macOS 27+/arm64 and is ad-hoc signed, not notarized.
+Its AU/VST3 ZIPs include the installation workaround and checksums. Source-only
+updates do not replace those download assets. Broader OS compatibility is deferred
+at the user's request. See `docs/lfo-sync-research.md` for manual LFO acceptance
+and inconclusive automation investigations; no automation runtime fix was made.
+
 Updated 2026-10-17. Read this first; use evidence links below for details.
 
 ## Current working state

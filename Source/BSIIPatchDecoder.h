@@ -30,6 +30,7 @@ namespace bsii
         int lfo1Wave=-1, lfo1Delay=-1, lfo1Slew=-1, lfo1Speed=-1, lfo1KeySync=-1;
         int lfo2Wave=-1, lfo2Delay=-1, lfo2Slew=-1, lfo2Speed=-1, lfo2KeySync=-1;
         int lfo1Sync=-1, lfo2Sync=-1, lfo1Division=-1, lfo2Division=-1;
+        int modWhFilter=-1, modWhLfo2Filter=-1;
         int arpSwing=-1, modWhLfo1Pitch=-1, modWhOsc2Pitch=-1, aftertouchFilter=-1, aftertouchLfo1=-1, aftertouchLfo2Spd=-1;
         int arpOn=-1, arpLatch=-1, arpOctaves=-1, arpMode=-1, arpRhythm=-1, seqRetrig=-1;
         int oscSyncRaw=-1;
@@ -213,6 +214,8 @@ namespace bsii
 
         acceptCandidate (extractField (b, 81, 0x3F, 0x40), 0, 127, out.arpSwing, out);
         acceptCandidate (extractField (b, 83, 0x0F, 0x70), 0, 127, out.modWhLfo1Pitch, out);
+        acceptVerified (extractField (b, 82, 0x1F, 0x60), 0, 127, out.modWhFilter, out);
+        acceptVerified (extractField (b, 84, 0x07, 0x78), 0, 127, out.modWhLfo2Filter, out);
         acceptCandidate (extractField (b, 85, 0x03, 0x7C), 0, 127, out.modWhOsc2Pitch, out);
         acceptCandidate (extractField (b, 86, 0x01, 0x7E), 0, 127, out.aftertouchFilter, out);
         acceptCandidate (extractField (b, 88, 0x7F), 0, 127, out.aftertouchLfo1, out);

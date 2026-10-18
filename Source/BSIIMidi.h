@@ -116,7 +116,9 @@ namespace bsii
             { "modWhOsc2Pitch",    "ModWh -> Osc2 Pitch",   "FX / Perf",   Protocol::nrpn7,      0, 78, 0, 127,  64 },
             { "aftertouchFilter",  "Aftertouch -> Filter",  "FX / Perf",   Protocol::nrpn7,      0, 74, 0, 127,  64 },
             { "aftertouchLfo1",    "Aftertouch -> LFO1",    "FX / Perf",   Protocol::nrpn7,      0, 75, 0, 127,  64 },
-            { "aftertouchLfo2Spd", "Aftertouch -> LFO2 Spd", "FX / Perf",  Protocol::nrpn7,      0, 76, 0, 127,   0 }
+            { "aftertouchLfo2Spd", "Aftertouch -> LFO2 Spd", "FX / Perf",  Protocol::nrpn7,      0, 76, 0, 127,   0 },
+            { "modWhFilter",      "ModWh -> Filter",       "FX / Perf",  Protocol::nrpn7,      0, 94, 0, 127,  64 },
+            { "modWhLfo2Filter",  "ModWh -> LFO2 Filter",  "FX / Perf",  Protocol::nrpn7,      0, 71, 0, 127,  64 }
         };
         return specs;
     }

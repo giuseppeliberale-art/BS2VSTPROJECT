@@ -60,6 +60,8 @@ namespace bsii
         {"velocityMod", &bsii::DecodedPatchFields::velocityMod},
         {"vcaLimit", &bsii::DecodedPatchFields::vcaLimit},
         {"modWhLfo1Pitch", &bsii::DecodedPatchFields::modWhLfo1Pitch},
+        {"modWhFilter", &bsii::DecodedPatchFields::modWhFilter},
+        {"modWhLfo2Filter", &bsii::DecodedPatchFields::modWhLfo2Filter},
         {"modWhOsc2Pitch", &bsii::DecodedPatchFields::modWhOsc2Pitch},
         {"aftertouchFilter", &bsii::DecodedPatchFields::aftertouchFilter},
         {"aftertouchLfo1", &bsii::DecodedPatchFields::aftertouchLfo1},

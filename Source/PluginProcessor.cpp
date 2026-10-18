@@ -294,7 +294,7 @@ BSIIControlAudioProcessor::createParameterLayout()
     using Attributes = juce::AudioProcessorValueTreeStateParameterAttributes;
     // APVTS::Parameter updates its adapter even for setValue(), allowing hardware
     // reception to update state without reporting a manual edit to the DAW.
-    for (const auto& spec : bsii::parameterSpecs())
+    const auto addNumeric = [&] (const bsii::ParameterSpec& spec)
     {
         auto parameter = std::make_unique<Parameter> (
             juce::ParameterID { spec.id, 1 }, spec.name,
@@ -304,9 +304,15 @@ BSIIControlAudioProcessor::createParameterLayout()
                 .withValueFromStringFunction ([] (const juce::String& text) { return text.getFloatValue(); }));
         static_cast<juce::AudioProcessorParameter*> (parameter.get())->setValue (parameter->getDefaultValue());
         layout.add (std::move (parameter));
-    }
+    };
 
-    for (const auto& spec : bsii::choiceSpecs())
+    // Published layout: 58 original numeric controls, then 28 existing choices.
+    // New numeric controls must follow those 86 parameters, not shift choices.
+    const auto& numeric = bsii::parameterSpecs();
+    const auto& discrete = bsii::choiceSpecs();
+    constexpr size_t originalNumericCount = 58, originalChoiceCount = 28;
+    for (size_t i = 0; i < originalNumericCount; ++i) addNumeric (numeric[i]);
+    const auto addChoice = [&] (const bsii::ChoiceSpec& spec)
     {
         juce::StringArray choices;
         for (const auto& choice : spec.choices) choices.add (choice.label);
@@ -320,7 +326,10 @@ BSIIControlAudioProcessor::createParameterLayout()
                 { return static_cast<float> (juce::jmax (0, choices.indexOf (text))); }));
         static_cast<juce::AudioProcessorParameter*> (parameter.get())->setValue (parameter->getDefaultValue());
         layout.add (std::move (parameter));
-    }
+    };
+    for (size_t i = 0; i < originalChoiceCount; ++i) addChoice (discrete[i]);
+    for (size_t i = originalNumericCount; i < numeric.size(); ++i) addNumeric (numeric[i]);
+    for (size_t i = originalChoiceCount; i < discrete.size(); ++i) addChoice (discrete[i]);
 
     return layout;
 }

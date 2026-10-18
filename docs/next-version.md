@@ -1,5 +1,36 @@
 # Next version notes
 
+## Deferred parameter gaps — overlay audit, 18 October 2026
+
+User requested retaining this list for later while completing manual LFO sync
+acceptance first. Compared the photographed AFX overlay with the current control
+registry and cached official firmware 4.14 manual. These functions are not yet
+exposed as plugin controls; do not treat their MIDI routes or SysEx fields as
+hardware-verified merely because the manual mentions them.
+
+- [x] Mod Wheel → Filter Frequency: implemented following the full hardware sweep;
+      manual hosted acceptance still pending.
+- [x] Mod Wheel → LFO2 → Filter Frequency: implemented following the full hardware
+      sweep; manual hosted acceptance still pending.
+- [ ] Oscillator tuning error (`F:OscErr`).
+- [ ] Paraphonic mode (`P:Para`).
+- [ ] Glide divergence (`g:GlideDiv`).
+- [ ] Independent Sub Oscillator coarse and fine tuning (listed in manual).
+- [ ] Hardware Local Control.
+- [ ] Hardware Global MIDI Channel setting; the existing app channel selector
+      selects the plugin's communication channel, not this hardware setting.
+- [ ] Hardware tuning / microtuning: determine supported selection, editing and
+      transfer scope before implementation.
+- [ ] External Input Gain.
+- [ ] AFX overlay selection, editing and read protection; keep AFX work last.
+- [ ] Full-bank dump/management workflow; single-patch request/capture exists.
+
+Envelope retrigger, retrigger count and fixed duration already have app controls;
+their presence on the overlay does not imply a missing implementation. LFO
+Speed/Sync and all 35 divisions are now implemented, with manual hosted acceptance
+pending. Sequence-step editing and verified sequence-slot behavior remain separate
+unfinished work. Final GUI redesign follows feature implementation.
+
 ## Live RX status wording
 
 Requested on 16 October 2026 during hardware validation.

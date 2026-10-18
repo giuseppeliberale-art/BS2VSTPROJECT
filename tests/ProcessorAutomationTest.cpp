@@ -11,7 +11,10 @@ void pump (int ms = 100) { CFRunLoopRunInMode (kCFRunLoopDefaultMode, ms / 1000.
 struct HostEdits : juce::AudioProcessorListener
 {
     int count = 0;
+    int gestureStarts = 0, gestureEnds = 0;
     void audioProcessorParameterChanged (juce::AudioProcessor*, int, float) override { ++count; }
+    void audioProcessorParameterChangeGestureBegin (juce::AudioProcessor*, int) override { ++gestureStarts; }
+    void audioProcessorParameterChangeGestureEnd (juce::AudioProcessor*, int) override { ++gestureEnds; }
     void audioProcessorChanged (juce::AudioProcessor*, const ChangeDetails&) override {}
 };
 struct Capture : juce::MidiInputCallback
@@ -29,6 +32,28 @@ struct Capture : juce::MidiInputCallback
 int main (int argc, char** argv)
 {
     juce::ScopedJuceInitialiser_GUI initialise;
+    if (argc == 2 && juce::String (argv[1]) == "--hardware-gesture-probe")
+    {
+        BSIIControlAudioProcessor processor;
+        HostEdits edits;
+        processor.addListener (&edits);
+        juce::MidiBuffer incoming;
+        incoming.addEvent (juce::MidiMessage::controllerEvent (1, 16, 20), 0);
+        incoming.addEvent (juce::MidiMessage::controllerEvent (1, 48, 64), 1);
+        juce::AudioBuffer<float> audio (2, 64);
+        processor.processBlock (audio, incoming);
+        // Queue the hardware-fallback message before an editor can auto-open a
+        // physical direct input. The editor then consumes the real update queue.
+        auto editor = std::unique_ptr<juce::AudioProcessorEditor> (processor.createEditor());
+        pump (300);
+        processor.removeListener (&edits);
+        const bool ok = edits.count > 0 && edits.gestureStarts > 0
+            && edits.gestureStarts == edits.gestureEnds;
+        std::cout << (ok ? "PASS" : "FAIL") << " hardware cutoff host notifications: values="
+            << edits.count << " touch-start=" << edits.gestureStarts
+            << " touch-end=" << edits.gestureEnds << "\n";
+        return ok ? 0 : 1;
+    }
     if (argc == 4 && juce::String (argv[1]) == "--sink")
     {
         Capture capture;
@@ -143,6 +168,11 @@ int main (int argc, char** argv)
         set ("lfo2Sync", 1); pump(); nrpn (92, 1);
         set ("lfo1Division", 25); pump(); nrpn (87, 25);
         set ("lfo2Division", 34); pump(); nrpn (91, 34);
+        ok &= processor.getParameters().getParameter ("lfo2Division")->getParameterIndex() == 85;
+        ok &= processor.getParameters().getParameter ("modWhFilter")->getParameterIndex() == 86;
+        ok &= processor.getParameters().getParameter ("modWhLfo2Filter")->getParameterIndex() == 87;
+        set ("modWhFilter", 0); pump(); nrpn (94, 0);
+        set ("modWhLfo2Filter", 127); pump(); nrpn (71, 127);
         set ("filterCutoff", 128); pump(); cc (16, 64); cc (48, 0);
         set ("ampTrigger", 0); pump(); nrpn (73, 1); nrpn (105, 1);
         ok &= processor.getParameters().getRawParameterValue ("modTrigger")->load() == 0;
@@ -166,6 +196,8 @@ int main (int argc, char** argv)
         ok &= processor.getParameters().getRawParameterValue ("lfo2Sync")->load() == 1;
         ok &= processor.getParameters().getRawParameterValue ("lfo1Division")->load() == 25;
         ok &= processor.getParameters().getRawParameterValue ("lfo2Division")->load() == 34;
+        ok &= processor.getParameters().getRawParameterValue ("modWhFilter")->load() == 0;
+        ok &= processor.getParameters().getRawParameterValue ("modWhLfo2Filter")->load() == 127;
         set ("filterResonance", 50);
         {
             BSIIControlAudioProcessor::ScopedMidiSilence silence (processor);
@@ -194,6 +226,13 @@ int main (int argc, char** argv)
         ok &= processor.getParameters().getRawParameterValue ("lfo2Sync")->load() == 0;
         ok &= processor.getParameters().getRawParameterValue ("lfo1Division")->load() == 34;
         ok &= processor.getParameters().getRawParameterValue ("lfo2Division")->load() == 25;
+        incoming.clear();
+        for (const auto [address, value] : { std::pair {94, 127}, {71, 0} })
+            for (const auto [controller, data] : { std::pair {99, 0}, {98, address}, {6, value} })
+                incoming.addEvent (juce::MidiMessage::controllerEvent (1, controller, data), incoming.getNumEvents());
+        processor.processBlock (audio, incoming); pump();
+        ok &= processor.getParameters().getRawParameterValue ("modWhFilter")->load() == 127;
+        ok &= processor.getParameters().getRawParameterValue ("modWhLfo2Filter")->load() == 0;
         processor.setHardwareMidiChannel (2);
         processor.setLiveMidiRxEnabled (false);
         editor.reset();
@@ -278,6 +317,8 @@ int main (int argc, char** argv)
             if (value >= 0) ok &= juce::roundToInt (receiver.getParameters().getRawParameterValue (id)->load()) == value;
         for (const auto [id, value] : { std::pair {"lfo1Sync", decoded.lfo1Sync}, {"lfo2Sync", decoded.lfo2Sync}, {"lfo1Division", decoded.lfo1Division}, {"lfo2Division", decoded.lfo2Division} })
             if (value >= 0) ok &= juce::roundToInt (receiver.getParameters().getRawParameterValue (id)->load()) == value;
+        ok &= juce::roundToInt (receiver.getParameters().getRawParameterValue ("modWhFilter")->load()) == decoded.modWhFilter;
+        ok &= juce::roundToInt (receiver.getParameters().getRawParameterValue ("modWhLfo2Filter")->load()) == decoded.modWhLfo2Filter;
         incoming.clear();
         incoming.addEvent (juce::MidiMessage::controllerEvent (1, 82, 60), 0);
         incoming.addEvent (juce::MidiMessage::controllerEvent (1, 83, 1), 1);

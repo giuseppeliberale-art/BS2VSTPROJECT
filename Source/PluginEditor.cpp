@@ -66,7 +66,8 @@ ParameterControl::ParameterControl (juce::AudioProcessorValueTreeState& state,
     const bool signedAmount = parameterId == "velocityAmp" || parameterId == "velocityMod"
         || parameterId == "modWhLfo1Pitch" || parameterId == "modWhOsc2Pitch"
         || parameterId == "aftertouchFilter" || parameterId == "aftertouchLfo1"
-        || parameterId == "aftertouchLfo2Spd";
+        || parameterId == "aftertouchLfo2Spd" || parameterId == "modWhFilter"
+        || parameterId == "modWhLfo2Filter";
     if (signedAmount)
     {
         slider.textFromValueFunction = [] (double raw)
@@ -1056,6 +1057,8 @@ bool BSIIControlAudioProcessorEditor::decodeSysExIntoEditor (const juce::MemoryB
     set ("arpRhythm", decoded.arpRhythm);
     set ("seqRetrig", decoded.seqRetrig);
     set ("modWhLfo1Pitch", decoded.modWhLfo1Pitch);
+    set ("modWhFilter", decoded.modWhFilter);
+    set ("modWhLfo2Filter", decoded.modWhLfo2Filter);
     set ("modWhOsc2Pitch", decoded.modWhOsc2Pitch);
     set ("aftertouchFilter", decoded.aftertouchFilter);
     set ("aftertouchLfo1", decoded.aftertouchLfo1);

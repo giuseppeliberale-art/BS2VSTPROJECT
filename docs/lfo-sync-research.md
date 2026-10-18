@@ -94,3 +94,91 @@ passed. Prior bundles and validation logs are retained under
 Xcode's build database lock; the sequential retry passed. No install occurred
 before the passing build and integration checks. Manual Ableton acceptance
 of the new controls is still pending.
+
+### Manual Ableton hardware-to-plugin acceptance — 2026-10-18
+
+User tested the installed 4993591 build with Live RX running:
+
+- LFO 1: after selecting Snc on hardware, turning the round rate knob fully left
+  showed 64 beats in the plugin; fully right showed 1/32 triplet.
+- LFO 1: hardware Snc → SPd → Snc changed the plugin selector to Speed → Sync.
+- LFO 2: hardware Snc selection showed Sync in the plugin; fully-left and
+  fully-right rate positions showed 64 beats and 1/32 triplet respectively.
+- LFO 2: hardware Snc → SPd → Snc changed the plugin selector to Speed → Sync.
+
+These user confirmations cover live incoming mode changes and division endpoints.
+They do not yet establish plugin-to-hardware acceptance, paused-Live-RX Get Patch
+behavior for these fields, audible clock timing, or hosted automation of them.
+
+### Manual plugin-to-hardware acceptance — 2026-10-18
+
+- User changed each plugin mode selector to Speed and then Sync; reopening the
+  corresponding hardware on-key page without editing confirmed SPd and Snc for
+  both LFOs.
+- Plugin LFO 1 Division set to 1/4. Requested hardware dump
+  `midi-lab-results/20261018-041028-backup-4e415f/baseline.syx` decoded
+  `lfo1Sync=1`, `lfo1Division=25` (quarter note).
+- Plugin LFO 2 Division set to 1/8. Requested hardware dump
+  `midi-lab-results/20261018-041109-backup-751b23/baseline.syx` decoded
+  `lfo2Sync=1`, `lfo2Division=28` (eighth note), retaining LFO 1 division 25.
+
+These verify both mode directions and one app-sent division per LFO at the stored
+patch level. They do not establish audible clock timing. Paused-Live-RX Get Patch
+and hosted automation acceptance remain pending.
+
+### Manual Get Patch with Live RX paused — 2026-10-18
+
+User paused Live RX before hardware edits and explicitly confirmed each result
+after clicking Get Patch from BSII:
+
+- Hardware LFO 1 rate fully left in Sync: plugin Division updated to 64 beats.
+- Hardware LFO 2 rate fully right in Sync: plugin Division updated to 1/32 triplet.
+- Hardware LFO 1 mode changed to SPd: plugin mode updated to Speed.
+- Hardware LFO 2 mode changed to SPd: plugin mode updated to Speed.
+
+This establishes manual patch-readback acceptance for all four new fields,
+independently of live CC/NRPN updates. Reverse mode changes were covered by
+hardware capture/offline tests, not this paused manual check. Both LFOs ended in
+Speed mode. Live RX was still paused at the end of these checks; resumption is the
+next instruction. Audible clock behavior and hosted automation remain untested.
+
+### Ableton automation acceptance — 2026-10-18
+
+User resumed Live RX and set plugin LFO 1 to Sync, exposed LFO1 Division through
+Ableton Configure, then looped automation alternating 1/4 and 1/8. Other existing
+automation lanes remained active. Twelve read-only hardware patch requests at
+roughly one-second intervals are retained locally in
+`midi-lab-results/lfo-automation-20261018-check/`.
+
+All replies decoded valid; `lfo1Sync` remained 1 and `lfo1Division` was
+25,25,28,28,25,25,28,28,25,25,28,25. This confirms Ableton automation reached the
+hardware with both requested divisions despite other automation running. No
+hardware settings were sent by the capture routine. This is one hosted division
+automation check, not an exhaustive test of every new parameter or audible clock
+accuracy. User was instructed to stop playback after the check.
+
+### Follow-up automation reports — 2026-10-18
+
+User reported Cutoff/Resonance automation being overwritten on subsequent
+Arrangement loop passes while Arrangement Record remained enabled. The behavior
+also occurred through Live's Configure panel and was ultimately reproduced with
+Serum. User considers this Ableton behavior. No BSII editor-specific failure was
+established, and no runtime change was made for this report. Stopping Arrangement
+Record while leaving playback running preserved the recorded automation.
+
+Official documentation distinguishes Session touch/latch behavior from Arrangement
+recording; it does not explicitly establish the exact untouched-knob loop symptom:
+https://www.ableton.com/en/live-manual/12/automation/
+
+User also initially reported hardware Cutoff movements not recording as plugin
+automation, but subsequently confirmed hardware automation recording worked
+without any plugin fix or reinstall. Earlier failure remains intermittent with
+no established cause; do not claim it was fixed.
+
+A local diagnostic in `tests/ProcessorAutomationTest.cpp`, invoked with
+`--hardware-gesture-probe`, observed one incoming Cutoff host value notification
+and zero gesture-start/end notifications. This probe's failing result describes
+the notification protocol only; it does NOT reproduce Ableton's recording
+failure or prove that gesture absence caused it. It remains diagnostic work,
+not an installed fix or a normal regression acceptance requirement. Do not alter
+parameter classification or gesture behavior based on the loop report alone.
