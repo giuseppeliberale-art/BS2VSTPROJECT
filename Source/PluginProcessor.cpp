@@ -231,13 +231,13 @@ bool BSIIControlAudioProcessor::serviceProjectRecall()
         {
             midiOutput->sendMessageNow (juce::MidiMessage::programChange (hardwareMidiChannel.load(), recallProgram));
             knownHardwareProgram.store (recallProgram);
-            recallStatus = "Restored stored preset " + juce::String (recallProgram) + ".";
+            recallStatus = "Sent recall for stored preset " + juce::String (recallProgram) + ". Hardware not confirmed.";
         }
         else if (recallMode == RecallMode::capturedSound && bsii::isRecallPatch (projectSound))
         {
             midiOutput->sendMessageNow (juce::MidiMessage (projectSound.getData(), static_cast<int> (projectSound.getSize()), 0.0));
             knownHardwareProgram.store (-1);
-            recallStatus = "Restored captured sound to edit buffer. Stored presets unchanged.";
+            recallStatus = "Sent captured sound to edit buffer. Hardware not confirmed.";
         }
         else return false;
         // Drop old incoming controls/PCs from before recall, but preserve queued

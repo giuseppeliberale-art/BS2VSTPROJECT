@@ -119,9 +119,10 @@ power cycling; a successful SysEx reply does not prove channel matching.
    tuning/bank workflows. Preserve data before any recording or stored write.
 7. [ ] Implement and validate AFX after the other synth features.
 
-Recall UI follow-up: “Restored stored preset” currently reports dispatch, not a
-hardware acknowledgement. Clarify that wording or design a verification path;
-do not imply that matching-channel readiness has been confirmed by that status.
+Recall UI wording clarified in source on 20 October 2026: stored-preset and
+captured-sound recall now report “Sent” and “Hardware not confirmed.” Dispatch
+is not a hardware acknowledgement; matching-channel readiness is not confirmed.
+This wording change awaits the next plugin installation.
 
 Additional release checks: multiple plugin instances/devices; disconnect during
 capture/recall/automation; flat automation segments and hardware recording;

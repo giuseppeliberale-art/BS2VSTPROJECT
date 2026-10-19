@@ -28,6 +28,10 @@ from the old chat. Verify the current checkout and validation status first.
   Apple AU validation passed. Prior bundles are in that report's `installed-before/`.
   Fresh Ableton acceptance of this installed version and hardware tuning remain
   separate checks. Public downloads were not replaced.
+- A later source-only recall wording fix reports commands as sent rather than
+  claiming hardware restoration. It awaits the next plugin installation. The
+  full nine-group validation above predates this fix; do not treat its fingerprint
+  as current. See `docs/project-sound-recall.md` for focused verification.
 - Public prerelease `v0.8.2-preview.20261018` is an OLDER binary release.
   A source push does not replace its downloads. Publish new binaries only when
   requested and clearly state their compatibility and validation scope.
@@ -35,7 +39,8 @@ from the old chat. Verify the current checkout and validation status first.
 ## Immediate next steps
 
 1. Run `python3 -B tools/midi-lab/lab.py status` for compact, source-fingerprinted
-   offline validation status. If stale, run `./tools/validate.sh` once.
+   offline validation status. If stale, inspect the intervening changes and run
+   relevant checks; use `./tools/validate.sh` when a full refresh is warranted.
 2. The TUN v2 build/install increment is complete. Optionally reopen Ableton and
    check Import Tuning with a known file; compare preview/apply/undo. This requires
    no synth. No fresh hosted acceptance is claimed by the native tests.

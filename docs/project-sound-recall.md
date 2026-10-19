@@ -123,3 +123,17 @@ state, but is never transmitted by stored-preset or captured-sound recall. A pat
 can restore a selected table ID without restoring that table's 128 pitch values.
 The user must not treat a local document in the Set as automatic hardware tuning
 backup/recall. See [MicroTune editor](microtune-editor.md).
+
+## Dispatch status wording — 20 October 2026
+
+Recall status now says “Sent recall for stored preset N. Hardware not confirmed.”
+or “Sent captured sound to edit buffer. Hardware not confirmed.” These messages
+report dispatch only. MIDI routing, recall timing, stored-preset numbering and
+automation behavior are unchanged. This does not add acknowledgement/readback.
+The change awaits the next installed plugin build.
+
+Verification: rebuilt `BSIIProcessorAutomationTest` and its existing isolated
+virtual-MIDI recall/automation regression passed. Local log:
+`validation-results/recall-status-wording/processor-automation.log`. No new tests
+were added for these label-only changes; broader tests and plugin rebuild/install
+were not repeated.
