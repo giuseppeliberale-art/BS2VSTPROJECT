@@ -31,6 +31,18 @@ juce_add_plugin(BSIIControl
     COPY_PLUGIN_AFTER_BUILD FALSE
 )
 
+# Ship the vendored MIT notice inside every macOS product bundle.
+if(APPLE)
+    foreach(format Standalone AU VST3)
+        add_custom_command(TARGET BSIIControl_${format} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_BUNDLE_DIR:BSIIControl_${format}>/Contents/Resources"
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "${CMAKE_CURRENT_SOURCE_DIR}/Source/ThirdParty/tuning-library/LICENSE.md"
+                "$<TARGET_BUNDLE_DIR:BSIIControl_${format}>/Contents/Resources/ThirdParty-Tuning-LICENSE.txt"
+            VERBATIM)
+    endforeach()
+endif()
+
 juce_generate_juce_header(BSIIControl)
 
 target_sources(BSIIControl PRIVATE
@@ -40,6 +52,8 @@ target_sources(BSIIControl PRIVATE
     Source/PluginEditor.h
     Source/BSIIMicroTunePage.cpp
     Source/BSIIMicroTunePage.h
+    Source/BSIIScalaImportPanel.cpp
+    Source/BSIIScalaImportPanel.h
     Source/BSIIMidi.h
     Source/BSIIPatchDecoder.h
 )

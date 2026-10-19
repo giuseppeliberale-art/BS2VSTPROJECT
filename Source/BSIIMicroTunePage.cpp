@@ -1,5 +1,6 @@
 #include "BSIIMicroTunePage.h"
 #include <cstdlib>
+#include "BSIIScalaImportPanel.h"
 
 namespace
 {
@@ -37,11 +38,11 @@ MicroTunePage::MicroTunePage (BSIIControlAudioProcessor& p) : processor (p)
     addAndMakeVisible (viewport);
     for (auto* component : std::initializer_list<juce::Component*> { &heading, &hint, &nameLabel,
             &nameEditor, &targetLabel, &target, &status, &newButton, &loadButton, &saveButton, &table, &undoButton, &redoButton, &allButton,
-            &setButton, &addButton, &resetButton, &bulkCents, &selectionHint })
+            &setButton, &addButton, &resetButton, &bulkCents, &selectionHint, &importButton })
         content.addAndMakeVisible (component);
     heading.setText ("MicroTune - local table", juce::dontSendNotification);
     heading.setFont (juce::FontOptions (18.0f).withStyle ("Bold"));
-    hint.setText ("Edit locally. Nothing is sent to the synth. Target Hz assumes A4 = 440 Hz.", juce::dontSendNotification);
+    hint.setText ("Edit locally. Nothing is sent to the synth. Frequencies are calculated, not measured.", juce::dontSendNotification);
     hint.setColour (juce::Label::textColourId, juce::Colours::lightblue);
     nameLabel.setText ("Name", juce::dontSendNotification);
     nameEditor.setInputRestrictions (128);
@@ -59,6 +60,7 @@ MicroTunePage::MicroTunePage (BSIIControlAudioProcessor& p) : processor (p)
     };
     newButton.onClick = [this] { confirmReplace ([this] { newTable(); }); };
     loadButton.onClick = [this] { confirmReplace ([this] { chooseLoad(); }); };
+    importButton.onClick = [this] { commitName(); chooseScala(); };
     saveButton.onClick = [this] { chooseSave(); };
     undoButton.onClick = [this] { commitName(); processor.undoLocalTuning(); refresh(); };
     redoButton.onClick = [this] { processor.redoLocalTuning(); refresh(); };
@@ -86,6 +88,7 @@ MicroTunePage::~MicroTunePage()
 {
     stopTimer();
     chooser.reset();
+    delete importDialog.getComponent();
     table.setModel (nullptr);
     viewport.setViewedComponent (nullptr, false);
 }
@@ -104,6 +107,7 @@ void MicroTunePage::resized()
     loadButton.setBounds (actions.removeFromLeft (118)); actions.removeFromLeft (8);
     saveButton.setBounds (actions.removeFromLeft (118)); actions.removeFromLeft (16);
     targetLabel.setBounds (actions.removeFromLeft (86)); target.setBounds (actions.removeFromLeft (70));
+    actions.removeFromLeft (8); importButton.setBounds (actions.removeFromLeft (128));
     area.removeFromTop (8);
     auto names = area.removeFromTop (28);
     nameLabel.setBounds (names.removeFromLeft (50)); nameEditor.setBounds (names);
@@ -310,4 +314,18 @@ void MicroTunePage::chooseSave()
             if (file != juce::File {}) safe->saveDocumentFile (file);
             safe->chooser.reset();
         });
+}
+
+void MicroTunePage::chooseScala()
+{
+    if (importDialog) { importDialog->toFront (true); return; }
+    juce::DialogWindow::LaunchOptions options;
+    options.content.setOwned (new ScalaImportPanel (processor));
+    options.dialogTitle = "Import Scala - local preview";
+    options.dialogBackgroundColour = juce::Colour (0xff202326);
+    options.escapeKeyTriggersCloseButton = true;
+    options.useNativeTitleBar = true;
+    options.resizable = false;
+    options.componentToCentreAround = this;
+    importDialog = options.launchAsync();
 }

@@ -215,3 +215,12 @@ before applying and undoes in one step. Save/load content determines the local
 file dirty indicator. Closing the editor keeps history; host state restore clears
 history while restoring the working document. No automation parameter indices or
 hardware tuning-transfer behavior changed.
+
+### Local Scala import — 19 October 2026
+
+Added .scl import with optional .kbm, an explicit reference/mapping preview and
+per-key unavailable reasons. Applying is one undoable document replacement; an
+explicit keep-current policy is required for incomplete mappings. Destination
+slot metadata, MIDI routing and automation parameter indices remain unchanged.
+A pinned MIT-licensed Surge tuning-library dependency is vendored with notices
+included in macOS bundles. TUN and hardware tuning transfer remain pending.

@@ -29,6 +29,9 @@ selects the synth's active table separately.
   compares the current content with the last successful save/load.
 - **Name** labels this working document; **File target** records table slot 0–8
   in the document only. Changing it does not select a table on the synth.
+- **Import Scala...** opens a separate local `.scl`/optional `.kbm` preview, with
+  explicit reference pitch and unavailable-note handling. Applying imports is
+  undoable. See [Scala import](scala-import.md) for the full workflow and limits.
 - **Save Table...** writes a local JSON table file. **Load Table...** reads the
   same versioned format, with all 128 notes required. It does not load `.syx`,
   `.bsiistate` or Scala files. Invalid files leave the current table intact.

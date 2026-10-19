@@ -1,4 +1,5 @@
 #include "BSIITuningDocument.h"
+#include "BSIIScalaImport.h"
 #include <iostream>
 #include <limits>
 #include <set>
@@ -22,6 +23,50 @@ void golden (int table, std::initializer_list<mt::NoteChange> notes,
 
 int main()
 {
+    {
+        namespace sc = mt::scala;
+        const std::string equal = "! own fixture\nTwelve equal steps\n12\n100.0\n200.0\n300.0\n400.0\n500.0\n600.0\n700.0\n800.0\n900.0\n1000.0\n1100.0\n2/1\n";
+        const auto identity = sc::parse (equal);
+        check (identity.valid() && identity.available == 128, "Scala identity all notes available");
+        bool equalOK = true;
+        for (int key = 0; key < 128; ++key) equalOK &= std::abs (identity.notes[key].pitch - key) < 1.0e-9;
+        check (equalOK, "Scala identity frequencies independently match MIDI pitches");
+        const auto low = sc::parse (equal,std::nullopt,{60,69,432});
+        check (low.available == 127 && low.notes[0].status == sc::NoteStatus::outsidePitchRange
+               && std::abs (low.notes[69].hz - 432) < 1.0e-8, "A432 preserved and lower endpoint flagged");
+        mt::Document before; before.table.setCents (60,35); before.targetTable = 7;
+        check (! sc::apply (low,before,false), "incomplete import requires explicit preservation");
+        const auto imported = sc::apply (low,before,true);
+        check (imported && imported->targetTable == 7 && imported->table.pitch (0) == 0
+               && std::abs (*imported->table.pitch (69) - (69+12*std::log2 (432.0/440))) < 1.0e-9,
+               "explicit keep preserves unavailable notes and destination metadata");
+        const auto high = sc::parse (equal,std::nullopt,{60,69,442});
+        check (high.notes[127].status == sc::NoteStatus::outsidePitchRange, "upper endpoint flagged");
+        const auto tritave = sc::parse ("Tritave\n1\n3/1\n",std::nullopt,{60,60,440});
+        check (tritave.valid() && std::abs (tritave.notes[61].hz - 1320) < 1.0e-8, "non-octave ratio scale");
+        std::string nineteen = "19 equal steps\n19\n";
+        for (int i = 1; i <= 19; ++i) nineteen += std::to_string (1200.0*i/19) + "\n";
+        const auto n19 = sc::parse (nineteen,std::nullopt,{60,60,440});
+        check (n19.valid() && std::abs (n19.notes[79].hz - 880) < 1.0e-5, "non12 scale maps consecutive keys");
+        const std::string map = "2\n60\n72\n60\n60\n432.123456789\n2\n0\nx\n";
+        const auto mapped = sc::parse (equal,map);
+        check (mapped.available == 7 && mapped.notes[59].status == sc::NoteStatus::outsideKeyboard
+               && mapped.notes[61].status == sc::NoteStatus::unmapped
+               && std::abs (mapped.notes[60].hz - 432.123456789) < 1.0e-8, "KBM range skips and exact reference applied");
+        check (! sc::parse (equal,"2\n0\n127\n60\n61\n440\n2\n0\nx\n").valid(), "unmapped reference rejected");
+        std::string crlf; for (char c : equal) crlf += c == '\n' ? "\r\n" : std::string (1,c);
+        check (sc::parse (crlf).available == 128, "CRLF comments parse correctly");
+        for (const auto& bad : { "Scale\n2junk\n100.0\n2/1\n", "Scale\n1\n-2/-1\n", "Scale\n1\nnan.0\n", "Scale\n1025\n", "Scale\n1\n0.0\n", "Scale\n1\n2/1/1\n" })
+            check (! sc::parse (bad).valid(), "malformed or unsupported scale rejected");
+        check (sc::parse ("\n1\n2/1\n").valid(), "empty scale description accepted");
+        check (! sc::parse (std::string ("Bad\0scale",9)).valid(), "embedded NUL rejected");
+        const auto latin = sc::parse (std::string ("Caf") + char (0xe9) + "\n1\n2/1\n");
+        const auto latinDoc = sc::apply (latin,before,true);
+        check (latinDoc && latinDoc->name == juce::String::fromUTF8 ("Café"), "Latin1 scale description preserved");
+        check (! sc::parse (std::string (65537,'a')).valid(), "oversized Scala rejected");
+        check (! sc::parse (equal,"0\n0\n127\n60\n69\n440junk\n0\n").valid(), "malformed KBM numeric rejected");
+    }
+
     // Independent expected bytes copied from Novation's published examples.
     golden (0, { {69, 71.0} },
             {0xf0,0x7f,0,8,2,0,1,0x45,0x47,0,0,0xf7}, "documented A4 to B4");

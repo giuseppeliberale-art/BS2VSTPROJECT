@@ -1,6 +1,7 @@
 #include <CoreFoundation/CoreFoundation.h>
 #include "PluginEditor.h"
 #include "BSIIMicroTunePage.h"
+#include "BSIIScalaImportPanel.h"
 #include "BSIIPatchState.h"
 #include <iostream>
 
@@ -230,8 +231,65 @@ int main (int argc, char** argv)
         check (history.undoLocalTuning() && history.getLocalTuningInfo().document.name != "New branch",
                "metadata changes included in history");
     }
+    {
+        auto before = processor.getLocalTuningInfo().document;
+        before.table.setCents (60,35); processor.replaceLocalTuningDocument (before);
+        const auto scaleFile = report.getChildFile ("own-scale.scl");
+        scaleFile.replaceWithText ("! test fixture\nTwelve equal steps\n12\n100.0\n200.0\n300.0\n400.0\n500.0\n600.0\n700.0\n800.0\n900.0\n1000.0\n1100.0\n2/1\n");
+        ScalaImportPanel panel (processor);
+        panel.setVisible (true);
+        check (panel.loadScaleFile (scaleFile), "Scala file selection reads without applying");
+        auto* hz = findComponent<juce::TextEditor> (panel, [] (auto& e) { return e.getComponentID() == "scalaHz"; });
+        auto* keep = findComponent<juce::ToggleButton> (panel, [] (auto&) { return true; });
+        check (hz && keep, "Scala reference and preservation controls");
+        if (hz && keep)
+        {
+            hz->setText ("432",true); pump(); panel.rebuildPreview();
+            const auto revision = processor.getLocalTuningInfo().revision;
+            check (! panel.applyPreview() && processor.getLocalTuningInfo().revision == revision, "preview does not mutate and incomplete import blocks by default");
+            check (picture (panel,report.getChildFile ("scala-preview.png")), "Scala preview render");
+            keep->setToggleState (true,juce::dontSendNotification); panel.rebuildPreview();
+            check (click (panel,"Apply to Local Table") && processor.getLocalTuningInfo().document.table.pitch (0) == before.table.pitch (0)
+                   && std::abs (*processor.getLocalTuningInfo().document.table.pitch (69) - (69+12*std::log2 (432.0/440))) < 1.0e-9,
+                   "explicit keep applies valid notes atomically from preview");
+            check (processor.undoLocalTuning() && processor.getLocalTuningInfo().document.table.pitch (60) == before.table.pitch (60), "Scala import is one undo step");
+            check (processor.redoLocalTuning(), "Scala import can redo");
+            const auto encoded = bsii::microtuning::serialise (processor.getLocalTuningInfo().document);
+            const auto roundTrip = encoded ? bsii::microtuning::parseDocument (*encoded) : std::nullopt;
+            check (roundTrip && roundTrip->table.pitch (69) == processor.getLocalTuningInfo().document.table.pitch (69), "Scala result round trips local JSON");
+            panel.rebuildPreview();
+            hz->setText ("433",true);
+            const auto beforePendingText = processor.getLocalTuningInfo().revision;
+            check (! panel.applyPreview() && processor.getLocalTuningInfo().revision == beforePendingText,
+                   "pending text notification cannot apply an older reference preview");
+            pump(); panel.rebuildPreview();
+            auto changed = processor.getLocalTuningInfo().document; changed.name = "Changed since preview";
+            processor.replaceLocalTuningDocument (changed);
+            check (! panel.applyPreview() && processor.getLocalTuningInfo().document.name == changed.name, "stale preview cannot replace newer document");
+        }
+        const auto mapping = report.getChildFile ("own-mapping.kbm");
+        mapping.replaceWithText ("0\n0\n127\n60\n69\n440\n0\n");
+        check (panel.loadMappingFile (mapping) && hz && ! hz->isEnabled(), "KBM reference replaces manual reference controls");
+        panel.rebuildPreview();
+        check (panel.applyPreview() && std::abs (*processor.getLocalTuningInfo().document.table.pitch (69) - 69) < 1.0e-9,
+               "KBM import uses file reference frequency");
+        const auto bad = report.getChildFile ("bad-scale.scl"); bad.replaceWithText ("bad");
+        check (panel.loadScaleFile (bad), "malformed selection still requires parse");
+        const auto revision = processor.getLocalTuningInfo().revision;
+        panel.rebuildPreview();
+        check (! panel.applyPreview() && processor.getLocalTuningInfo().revision == revision, "bad scale keeps current table");
+    }
     check (processor.getParameters().getParameter ("paraphonic")->getParameterIndex() == 94
            && static_cast<juce::AudioProcessor&> (processor).getParameters().size() == 95, "existing automation layout retained");
+    check (listener.parameters == 0, "Scala imports do not change automation parameters");
+    check (click (*page,"Import Scala..."), "MicroTune opens actual import dialog");
+    juce::Component::SafePointer<juce::DialogWindow> importWindow;
+    for (int i = 0; i < juce::Desktop::getInstance().getNumComponents(); ++i)
+        if (auto* dialog = dynamic_cast<juce::DialogWindow*> (juce::Desktop::getInstance().getComponent (i));
+            dialog && dialog->getName() == "Import Scala - local preview") importWindow = dialog;
+    check (importWindow != nullptr, "import dialog present");
+    editor.reset(); pump();
+    check (importWindow == nullptr, "closing editor destroys import session safely");
     pump (300);
     check (capture.messages.load() == 0, "edit/load/save/restore emits no MIDI");
     processor.removeListener (&listener);

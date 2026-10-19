@@ -107,3 +107,10 @@ work; public availability alone is not a redistribution permission check.
 
 No new physical-synth test is needed to establish local parsing and preview, but
 hardware tuning transmission and acoustic pitch accuracy remain unverified.
+
+## Implementation follow-up
+
+The first [local Scala importer](scala-import.md) is now implemented using the
+pinned headers above. It includes preview, explicit reference fields, KBM bounds
+and skip handling, unavailable-note preservation by explicit choice, and one-step
+undo. This does not implement TUN, ASCL, MTS-file import or hardware transfer.

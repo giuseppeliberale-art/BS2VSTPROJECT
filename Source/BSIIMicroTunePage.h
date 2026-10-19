@@ -26,6 +26,7 @@ private:
     void confirmReplace (std::function<void()>);
     void chooseLoad();
     void chooseSave();
+    void chooseScala();
     void newTable();
     void bulkEdit (bsii::microtuning::BulkEdit);
     void selectedRowsChanged (int) override;
@@ -38,12 +39,13 @@ private:
     juce::Label heading, hint, nameLabel, targetLabel, status;
     juce::TextEditor nameEditor;
     juce::ComboBox target;
-    juce::TextButton newButton { "New Table" }, loadButton { "Load Table..." }, saveButton { "Save Table..." };
+    juce::TextButton newButton { "New Table" }, loadButton { "Load Table..." }, saveButton { "Save Table..." }, importButton { "Import Scala..." };
     juce::TextButton undoButton { "Undo" }, redoButton { "Redo" }, allButton { "Select All" },
         setButton { "Set Offset" }, addButton { "Add Cents" }, resetButton { "Reset Notes" };
     juce::TextEditor bulkCents;
     juce::Label selectionHint;
     juce::TableListBox table { "MicroTune notes", this };
     std::unique_ptr<juce::FileChooser> chooser;
+    juce::Component::SafePointer<juce::DialogWindow> importDialog;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MicroTunePage)
 };
