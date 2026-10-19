@@ -74,6 +74,17 @@ if(BSII_BUILD_TESTS)
     target_compile_definitions(BSIIPatchInspect PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0)
     target_link_libraries(BSIIPatchInspect PRIVATE juce::juce_core)
 
+    add_executable(BSIITuningTableTool tools/TuningTableTool.cpp)
+    target_include_directories(BSIITuningTableTool PRIVATE Source)
+    target_compile_features(BSIITuningTableTool PRIVATE cxx_std_20)
+    target_link_libraries(BSIITuningTableTool PRIVATE juce::juce_core)
+
+    add_executable(BSIIMicroTuningTest tests/MicroTuningTest.cpp)
+    target_include_directories(BSIIMicroTuningTest PRIVATE Source)
+    target_compile_features(BSIIMicroTuningTest PRIVATE cxx_std_20)
+    target_link_libraries(BSIIMicroTuningTest PRIVATE juce::juce_core)
+    add_test(NAME MicroTuningOffline COMMAND BSIIMicroTuningTest)
+
     # Explicit native-port integration check; not part of offline CTest.
     add_executable(BSIIDirectSysExTest tests/DirectSysExTest.cpp)
     target_include_directories(BSIIDirectSysExTest PRIVATE Source)

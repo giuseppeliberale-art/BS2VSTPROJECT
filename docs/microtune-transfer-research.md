@@ -106,3 +106,12 @@ MicroTune content editing is the stronger documented candidate for implementatio
 without the synth: a pure table model and codec can be built and tested locally.
 Keep the first hardware acceptance small. Bulk readback and automatic tuning
 recall remain investigation items, not promised capabilities.
+
+## Offline implementation follow-up — 19 October 2026
+
+The pure table model, strict local JSON document, note-change codec and file tool
+are now implemented; see [offline tool usage and limits](microtune-offline.md).
+All eight offline groups and the CLI workflow checks pass. The application range
+is deliberately restricted to absolute MIDI pitches 0–127 while reserved/wider
+MTS bounds remain unverified. No plugin UI, transport, save or hardware-readback
+integration has been added. The proposed hardware plan above remains pending.

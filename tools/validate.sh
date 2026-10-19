@@ -41,7 +41,7 @@ build_extra=()
 if /usr/bin/grep -q '^CMAKE_GENERATOR:INTERNAL=Xcode$' "$build_dir/CMakeCache.txt"; then
     build_extra=(-- CODE_SIGNING_ALLOWED=NO)
 fi
-run_stage 'Build standalone and regression tests' build.log cmake --build "$build_dir" --config Release --parallel 4 --target BSIIControl_Standalone BSIIMidiRoutingTest BSIIOsc1RangeTest BSIISnapshotRecallTest BSIIPatchInspect "${build_extra[@]}"
+run_stage 'Build standalone and regression tests' build.log cmake --build "$build_dir" --config Release --parallel 4 --target BSIIControl_Standalone BSIIMidiRoutingTest BSIIOsc1RangeTest BSIISnapshotRecallTest BSIIPatchInspect BSIITuningTableTool BSIIMicroTuningTest "${build_extra[@]}"
 run_stage 'Regression tests' tests.log ctest --test-dir "$build_dir" -C Release --output-on-failure --no-tests=error
 printf '\n' >> "$summary"
 /usr/bin/grep -E 'tests passed|Total Test time' "$report_dir/tests.log" | tee -a "$summary"

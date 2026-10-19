@@ -170,7 +170,7 @@ text to see the state.
 - Preset changes have been checked from the app and hardware. After app preset
   selection, all 76 editor values matched the saved hardware patch:
   [preset validation](docs/preset-validation.md).
-- The current offline suite has **seven registered test groups**, including
+- The current offline suite has **eight registered test groups**, including
   15 Python checks for the MIDI Lab tools.
 
 These checks establish specific MIDI, patch storage and editor behaviors. They do
@@ -199,6 +199,10 @@ No synth connection is needed and no MIDI is sent. The routine builds the
 standalone app and regression tools, prints a short result and saves full logs
 under the ignored `validation-results/` folder. App signing and live hardware
 checks are separate.
+
+An [offline MicroTune file editor](docs/microtune-offline.md) can create, edit and
+export tuning tables without a synth. It does not yet add plugin UI or hardware
+transfer/save integration.
 
 For passive hardware MIDI recording and short reports:
 

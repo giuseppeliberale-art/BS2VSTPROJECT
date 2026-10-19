@@ -179,3 +179,13 @@ The control selects a table only; tuning-table contents and stored preset slots
 are untouched. Basic Ableton send/receive, paused RX and Get Patch acceptance passed.
 Automation playback and incoming whole-patch verification remain pending.
 See global-control-research.md for measured evidence.
+
+## Offline MicroTune table tool — 19 October 2026
+
+Added a reusable 128-note model, versioned local document codec, validated
+note-change SysEx encoder and BSIITuningTableTool create/set/inspect/export
+commands. No MIDI port access, persistent save or plugin UI integration is added.
+The existing 95 host parameters and current plugin behavior are unchanged.
+All eight offline groups and the actual CLI file workflow pass. See
+[microtune-offline.md](microtune-offline.md) for application pitch bounds and
+hardware acceptance still required.

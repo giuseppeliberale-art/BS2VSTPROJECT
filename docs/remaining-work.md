@@ -72,8 +72,10 @@ Evidence: [recall](project-sound-recall.md), [global controls](global-control-re
   Existing LFO sync-division controls do not implement a clock generator.
 - [ ] **Arp MIDI routing:** investigate the hardware Function + Latch toggle
   between external MIDI-to-Arp and Arp-to-MIDI; no verified remote command.
-- [ ] **MicroTune table contents:** editing, import/export, table save and
-  restoration; selection alone is already implemented.
+- [ ] **MicroTune hardware table workflow:** an [offline table editor and SysEx
+  exporter](microtune-offline.md) is now implemented and tested. Plugin UI, actual
+  transfer, readback/restoration, persistent save and Scala import remain pending;
+  table selection is already implemented and hardware-tested.
 - [ ] **Patch-bank management:** full-bank backup/import and any stored-slot
   writing need explicit design and validation. Current transfers target the
   temporary sound; no new stored-preset overwrite workflow is implemented.
@@ -146,3 +148,11 @@ unique controls, 63 numeric/32 choices, and 94 shared patch fields; Input Gain
 was the sole unmapped control. No runtime source, installed plugin or public
 preview binary was changed. Native virtual-port integration, AU validation and
 fresh AU/VST3 builds were not repeated for these documentation-only changes.
+
+### Offline MicroTune increment — 19 October 2026
+
+Added reusable table/document/encoding modules and a local create/edit/inspect/
+export tool. Host parameters, MIDI device behavior and installed plugins are
+unchanged. `./tools/validate.sh` now builds these targets and passes **eight**
+CTest groups. The earlier seven-group report above remains historical evidence.
+See [tool usage, limits and validation](microtune-offline.md).
