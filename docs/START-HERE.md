@@ -26,8 +26,9 @@ from the old chat. Verify the current checkout and validation status first.
   The preview screenshot was inspected. Both MIT notices match the vendored
   licenses. Installed bundles passed strict local ad-hoc signature verification;
   Apple AU validation passed. Prior bundles are in that report's `installed-before/`.
-  Fresh Ableton acceptance of this installed version and hardware tuning remain
-  separate checks. Public downloads were not replaced.
+  The user subsequently confirmed TUN v2 preview, Apply, Undo and Redo in Ableton
+  with the A4-plus-50-cents fixture. DAW reopen persistence and hardware tuning
+  remain separate checks. Public downloads were not replaced.
 - A later source-only recall wording fix reports commands as sent rather than
   claiming hardware restoration. It awaits the next plugin installation. The
   full nine-group validation above predates this fix; do not treat its fingerprint
@@ -41,9 +42,10 @@ from the old chat. Verify the current checkout and validation status first.
 1. Run `python3 -B tools/midi-lab/lab.py status` for compact, source-fingerprinted
    offline validation status. If stale, inspect the intervening changes and run
    relevant checks; use `./tools/validate.sh` when a full refresh is warranted.
-2. The TUN v2 build/install increment is complete. Optionally reopen Ableton and
-   check Import Tuning with a known file; compare preview/apply/undo. This requires
-   no synth. No fresh hosted acceptance is claimed by the native tests.
+2. The TUN v2 build/install increment and manual Ableton preview/apply/undo/redo
+   check are complete. Manual DAW reopen persistence is not newly verified.
+   Choose the next unfinished feature from remaining-work; hardware tasks need
+   the synth.
 3. With the synth available, follow the ordered hardware checks in remaining-work.
    Without it, continue only work that can be meaningfully validated offline.
 4. For later installations, confirm Ableton has actually quit; never quit it for

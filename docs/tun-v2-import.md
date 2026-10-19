@@ -110,3 +110,11 @@ licenses, strict local ad-hoc signature verification passed, and
 `auval -v aumf Bs2C Gutz` succeeded. This is not Developer ID/notarization or fresh
 Ableton/hardware acceptance. See [the handoff](START-HERE.md) for next steps.
 Public release assets were not replaced.
+
+## User-confirmed Ableton check — 20 October 2026
+
+The user imported the local A4-plus-50-cents TUN v2 fixture in Ableton. Preview
+showed 128 available/0 unavailable and key 69 at approximately 452.893 Hz,
++50 cents. The user confirmed Apply, Undo and Redo on the local MicroTune table.
+This confirms that hosted UI workflow; DAW reopen persistence and hardware tuning
+transfer/acoustic acceptance were not tested in this manual check.
