@@ -27,6 +27,8 @@ private:
     void chooseLoad();
     void chooseSave();
     void newTable();
+    void bulkEdit (bsii::microtuning::BulkEdit);
+    void selectedRowsChanged (int) override;
 
     BSIIControlAudioProcessor& processor;
     BSIIControlAudioProcessor::LocalTuningInfo shown;
@@ -37,6 +39,10 @@ private:
     juce::TextEditor nameEditor;
     juce::ComboBox target;
     juce::TextButton newButton { "New Table" }, loadButton { "Load Table..." }, saveButton { "Save Table..." };
+    juce::TextButton undoButton { "Undo" }, redoButton { "Redo" }, allButton { "Select All" },
+        setButton { "Set Offset" }, addButton { "Add Cents" }, resetButton { "Reset Notes" };
+    juce::TextEditor bulkCents;
+    juce::Label selectionHint;
     juce::TableListBox table { "MicroTune notes", this };
     std::unique_ptr<juce::FileChooser> chooser;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MicroTunePage)

@@ -85,6 +85,25 @@ private:
     std::array<double, 128> pitches {};
 };
 
+enum class BulkEdit { setOffset, addCents, reset };
+
+// Work on a copy so invalid selections or boundary pitches cannot partially apply.
+inline bool editNotes (Table& table, std::span<const int> keys, BulkEdit operation, double cents = 0)
+{
+    if (keys.empty() || ! std::isfinite (cents)) return false;
+    auto edited = table;
+    for (const auto key : keys)
+    {
+        if (! validKey (key)) return false;
+        const auto pitch = operation == BulkEdit::reset ? static_cast<double> (key)
+            : operation == BulkEdit::setOffset ? key + cents / 100.0
+            : *table.pitch (key) + cents / 100.0;
+        if (! edited.setPitch (key, pitch)) return false;
+    }
+    table = edited;
+    return true;
+}
+
 // Novation's documented real-time note-change family; framing includes F0/F7.
 // Validate the entire operation first: invalid input produces no partial output.
 // Batches of 16 are an application choice, not a hardware-tested maximum.

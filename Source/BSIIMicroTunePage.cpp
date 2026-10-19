@@ -36,7 +36,8 @@ MicroTunePage::MicroTunePage (BSIIControlAudioProcessor& p) : processor (p)
     viewport.setScrollBarsShown (true, false);
     addAndMakeVisible (viewport);
     for (auto* component : std::initializer_list<juce::Component*> { &heading, &hint, &nameLabel,
-            &nameEditor, &targetLabel, &target, &status, &newButton, &loadButton, &saveButton, &table })
+            &nameEditor, &targetLabel, &target, &status, &newButton, &loadButton, &saveButton, &table, &undoButton, &redoButton, &allButton,
+            &setButton, &addButton, &resetButton, &bulkCents, &selectionHint })
         content.addAndMakeVisible (component);
     heading.setText ("MicroTune - local table", juce::dontSendNotification);
     heading.setFont (juce::FontOptions (18.0f).withStyle ("Bold"));
@@ -59,6 +60,17 @@ MicroTunePage::MicroTunePage (BSIIControlAudioProcessor& p) : processor (p)
     newButton.onClick = [this] { confirmReplace ([this] { newTable(); }); };
     loadButton.onClick = [this] { confirmReplace ([this] { chooseLoad(); }); };
     saveButton.onClick = [this] { chooseSave(); };
+    undoButton.onClick = [this] { commitName(); processor.undoLocalTuning(); refresh(); };
+    redoButton.onClick = [this] { processor.redoLocalTuning(); refresh(); };
+    allButton.onClick = [this] { table.selectRangeOfRows (0, 127); };
+    setButton.onClick = [this] { bulkEdit (bsii::microtuning::BulkEdit::setOffset); };
+    addButton.onClick = [this] { bulkEdit (bsii::microtuning::BulkEdit::addCents); };
+    resetButton.onClick = [this] { bulkEdit (bsii::microtuning::BulkEdit::reset); };
+    bulkCents.setText ("0", false);
+    bulkCents.setComponentID ("bulkCents");
+    bulkCents.setTooltip ("Signed cents. Set Offset replaces offsets; Add Cents shifts current pitches.");
+    table.setMultipleSelectionEnabled (true);
+    selectedRowsChanged (-1);
     table.setRowHeight (28);
     table.getHeader().addColumn ("Key", 1, 60, 50, 100);
     table.getHeader().addColumn ("Note", 2, 85, 65, 130);
@@ -81,7 +93,7 @@ MicroTunePage::~MicroTunePage()
 void MicroTunePage::resized()
 {
     viewport.setBounds (getLocalBounds());
-    const auto height = juce::jmax (320, getHeight());
+    const auto height = juce::jmax (420, getHeight());
     const auto width = juce::jmax (1, getWidth() - (height > getHeight() ? viewport.getScrollBarThickness() : 0));
     content.setSize (width, height);
     auto area = content.getLocalBounds().reduced (12);
@@ -96,6 +108,18 @@ void MicroTunePage::resized()
     auto names = area.removeFromTop (28);
     nameLabel.setBounds (names.removeFromLeft (50)); nameEditor.setBounds (names);
     area.removeFromTop (8);
+    auto history = area.removeFromTop (28);
+    undoButton.setBounds (history.removeFromLeft (70)); history.removeFromLeft (8);
+    redoButton.setBounds (history.removeFromLeft (70)); history.removeFromLeft (12);
+    selectionHint.setBounds (history);
+    area.removeFromTop (6);
+    auto bulk = area.removeFromTop (28);
+    allButton.setBounds (bulk.removeFromLeft (90)); bulk.removeFromLeft (8);
+    bulkCents.setBounds (bulk.removeFromLeft (85)); bulk.removeFromLeft (8);
+    setButton.setBounds (bulk.removeFromLeft (100)); bulk.removeFromLeft (8);
+    addButton.setBounds (bulk.removeFromLeft (100)); bulk.removeFromLeft (8);
+    resetButton.setBounds (bulk.removeFromLeft (108));
+    area.removeFromTop (8);
     status.setBounds (area.removeFromBottom (30));
     table.setBounds (area);
 }
@@ -107,6 +131,8 @@ void MicroTunePage::refresh()
     const auto latest = processor.getLocalTuningInfo();
     if (latest.revision == displayedRevision) return;
     shown = latest;
+    undoButton.setEnabled (shown.canUndo);
+    redoButton.setEnabled (shown.canRedo);
     displayedRevision = shown.revision;
     if (! nameEditor.hasKeyboardFocus (true)) nameEditor.setText (shown.document.name, false);
     target.setSelectedId (shown.document.targetTable + 1, juce::dontSendNotification);
@@ -167,6 +193,34 @@ void MicroTunePage::editCents (int key, const juce::String& input)
     }
     processor.replaceLocalTuningDocument (document);
     // Refresh on the timer, after the edited label's callback has returned.
+}
+
+void MicroTunePage::selectedRowsChanged (int)
+{
+    const auto count = table.getNumSelectedRows();
+    selectionHint.setText (juce::String (count) + " selected - Shift/Command-click Key or Note to select.", juce::dontSendNotification);
+    for (auto* button : { &setButton, &addButton, &resetButton }) button->setEnabled (count > 0);
+}
+
+void MicroTunePage::bulkEdit (bsii::microtuning::BulkEdit operation)
+{
+    const auto text = bulkCents.getText().trim();
+    char* end = nullptr;
+    const auto* start = text.toRawUTF8();
+    const auto cents = operation == bsii::microtuning::BulkEdit::reset ? 0.0 : std::strtod (start, &end);
+    std::vector<int> keys;
+    const auto selected = table.getSelectedRows();
+    for (int i = 0; i < selected.size(); ++i) keys.push_back (selected[i]);
+    auto document = processor.getLocalTuningInfo().document;
+    if ((operation != bsii::microtuning::BulkEdit::reset && (text.isEmpty() || end == start || *end != 0))
+        || ! bsii::microtuning::editNotes (document.table, keys, operation, cents))
+    {
+        status.setText ("No notes changed. Select notes and keep every resulting pitch within 0-127.", juce::dontSendNotification);
+        status.setColour (juce::Label::textColourId, juce::Colours::orange);
+        return;
+    }
+    processor.replaceLocalTuningDocument (document);
+    refresh();
 }
 
 void MicroTunePage::commitName()

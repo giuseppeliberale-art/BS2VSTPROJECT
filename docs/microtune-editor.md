@@ -13,6 +13,20 @@ selects the synth's active table separately.
   is relative to that key's equal-tempered pitch, not cumulative. For example,
   +50 on key 69 gives A4 +50 cents. Invalid text or out-of-range pitches keep
   the previous value and show an error.
+- Select notes by clicking the Key or Note columns. Shift-click selects a range;
+  Command-click adds/removes individual notes. **Select All** selects all 128.
+- Enter signed cents beside **Select All**, then use **Set Offset** to replace
+  selected offsets relative to equal temperament, or **Add Cents** to transpose
+  their current pitches. **Reset Notes** returns only selected notes to equal
+  temperament. Each action is atomic: an invalid value or any out-of-range target
+  rejects the entire selection without clipping or partial edits.
+- **Undo / Redo** revert or reapply whole document changes, including bulk actions,
+  individual offsets, names, file targets, New and successful Load. A new edit after
+  undo discards the redo branch; unchanged values and rejected edits add no history.
+  The latest 64 changes are retained while the processor instance exists. History
+  survives closing the editor but is not saved in the DAW Set; restoring host state
+  begins a fresh history. Saving a file does not clear history. File-save status
+  compares the current content with the last successful save/load.
 - **Name** labels this working document; **File target** records table slot 0–8
   in the document only. Changing it does not select a table on the synth.
 - **Save Table...** writes a local JSON table file. **Load Table...** reads the
@@ -81,3 +95,23 @@ installed, strict signatures verified and Apple AU validation passed. Public
 preview assets were not replaced. File chooser dialog interaction and actual DAW
 acceptance of this new page remain manual checks; tested file methods are the same
 ones invoked by those callbacks.
+
+## Undo and bulk-edit increment — 19 October 2026
+
+Added local document history and atomic note selection operations. No tuning-table
+transmission, Scala import or automation parameters were added. Hardware acceptance
+is not required for these local operations; DAW acceptance of the updated page is
+still a manual check.
+
+Validation for this increment: standalone/AU/VST3 builds passed; all nine offline
+test groups passed in `validation-results/20261019-165539-5836/`. Native editor
+checks passed with zero failures, covering UI bulk actions, atomic rejection,
+undo/redo, saved-content status, history capacity and branch handling, metadata
+history, editor recreation, host-state history reset and zero MIDI output.
+Existing native processor automation checks also passed. Final page renders in
+`validation-results/tuning-history-editor-final/` were visually inspected; the
+minimum-size viewport reaches notes and status by scrolling. Ableton was checked
+closed before installation; prior bundles were backed up under `installed-before/`,
+and installed AU/VST3 signatures and Apple AU validation passed. Actual DAW use of
+these new controls remains a manual acceptance check. Public preview assets remain
+unchanged.

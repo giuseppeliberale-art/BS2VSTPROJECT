@@ -174,3 +174,11 @@ fixture provides a reproducible reference; reports retain evidence hashes and
 separate inferred candidates from hardware claims. See [research toolkit](research-toolkit.md).
 The suite now has nine registered test groups. This increment changes no plugin
 runtime code and adds no tuning-editor or hardware-transfer features.
+
+### Local tuning history and bulk editing — 19 October 2026
+
+MicroTune now has Undo/Redo (64 document changes per processor instance) and
+selection-based Set Offset, Add Cents and Reset Notes. Invalid operations reject
+the entire selection. History survives editor recreation and resets on host state
+restore; the current document remains embedded in the Set. Scala import and
+hardware table transfer remain pending. See [editor use](microtune-editor.md).

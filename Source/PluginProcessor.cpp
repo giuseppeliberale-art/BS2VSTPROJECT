@@ -634,7 +634,10 @@ juce::AudioProcessorEditor* BSIIControlAudioProcessor::createEditor()
 BSIIControlAudioProcessor::LocalTuningInfo BSIIControlAudioProcessor::getLocalTuningInfo() const
 {
     const juce::ScopedLock lock (localTuningLock);
-    return localTuning;
+    auto info = localTuning;
+    info.canUndo = ! localTuningPast.empty();
+    info.canRedo = ! localTuningFuture.empty();
+    return info;
 }
 
 bool BSIIControlAudioProcessor::replaceLocalTuningDocument (const bsii::microtuning::Document& document, bool unsavedFile)
@@ -643,8 +646,16 @@ bool BSIIControlAudioProcessor::replaceLocalTuningDocument (const bsii::microtun
     if (! text || text->getNumBytesAsUTF8() > 65536) return false;
     {
         const juce::ScopedLock lock (localTuningLock);
-        localTuning.document = document;
-        localTuning.unsavedFile = unsavedFile;
+        const auto current = bsii::microtuning::serialise (localTuning.document);
+        if (! unsavedFile) localTuningSavedDocument = *text;
+        if (current != text)
+        {
+            if (localTuningPast.size() == 64) localTuningPast.erase (localTuningPast.begin());
+            localTuningPast.push_back (localTuning.document);
+            localTuningFuture.clear();
+            localTuning.document = document;
+        }
+        localTuning.unsavedFile = *text != localTuningSavedDocument;
         ++localTuning.revision;
     }
     updateHostDisplay (ChangeDetails{}.withNonParameterStateChanged (true));
@@ -654,8 +665,29 @@ bool BSIIControlAudioProcessor::replaceLocalTuningDocument (const bsii::microtun
 void BSIIControlAudioProcessor::markLocalTuningFileSaved()
 {
     const juce::ScopedLock lock (localTuningLock);
+    localTuningSavedDocument = bsii::microtuning::serialise (localTuning.document).value();
     localTuning.unsavedFile = false;
     ++localTuning.revision;
+}
+
+bool BSIIControlAudioProcessor::undoLocalTuning() { return travelLocalTuningHistory (true); }
+bool BSIIControlAudioProcessor::redoLocalTuning() { return travelLocalTuningHistory (false); }
+
+bool BSIIControlAudioProcessor::travelLocalTuningHistory (bool undo)
+{
+    {
+        const juce::ScopedLock lock (localTuningLock);
+        auto& from = undo ? localTuningPast : localTuningFuture;
+        auto& to = undo ? localTuningFuture : localTuningPast;
+        if (from.empty()) return false;
+        to.push_back (localTuning.document);
+        localTuning.document = from.back();
+        from.pop_back();
+        localTuning.unsavedFile = bsii::microtuning::serialise (localTuning.document).value() != localTuningSavedDocument;
+        ++localTuning.revision;
+    }
+    updateHostDisplay (ChangeDetails{}.withNonParameterStateChanged (true));
+    return true;
 }
 
 void BSIIControlAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
@@ -692,6 +724,9 @@ void BSIIControlAudioProcessor::setStateInformation (const void* data, int sizeI
         const juce::ScopedLock lock (localTuningLock);
         localTuning.document = document.value_or (bsii::microtuning::Document {});
         localTuning.unsavedFile = document.has_value();
+        localTuningPast.clear();
+        localTuningFuture.clear();
+        localTuningSavedDocument = document ? juce::String {} : bsii::microtuning::serialise (localTuning.document).value();
         ++localTuning.revision;
     }
     if (static_cast<bool> (state.getProperty ("bsiiConnectionSaved", false)))

@@ -55,6 +55,22 @@ bool edit (juce::TableListBox& table, int key, const juce::String& text)
     pump();
     return true;
 }
+template <typename T, typename Predicate>
+T* findComponent (juce::Component& parent, Predicate predicate)
+{
+    if (auto* match = dynamic_cast<T*> (&parent); match && predicate (*match)) return match;
+    for (auto* child : parent.getChildren())
+        if (auto* match = findComponent<T> (*child, predicate)) return match;
+    return nullptr;
+}
+bool click (juce::Component& page, const juce::String& text)
+{
+    auto* button = findComponent<juce::TextButton> (page, [&] (auto& b) { return b.getButtonText() == text; });
+    if (! button || ! button->isEnabled()) return false;
+    button->triggerClick(); pump();
+    return true;
+}
+
 bool picture (juce::Component& component, const juce::File& path)
 {
     const auto image = component.createComponentSnapshot (component.getLocalBounds());
@@ -97,6 +113,35 @@ int main (int argc, char** argv)
     if (! page || ! table) return 1;
     check (edit (*table,69,"+50"), "editable cents cell");
     check (processor.getLocalTuningInfo().document.table.pitch (69) == 69.5, "UI edits actual working table");
+    check (click (*page,"Undo") && processor.getLocalTuningInfo().document.table.pitch (69) == 69,
+           "UI undo restores single note");
+    check (click (*page,"Redo") && processor.getLocalTuningInfo().document.table.pitch (69) == 69.5,
+           "UI redo reapplies note");
+    auto* bulk = findComponent<juce::TextEditor> (*page, [] (auto& e) { return e.getComponentID() == "bulkCents"; });
+    check (bulk != nullptr, "bulk cents input available");
+    if (bulk)
+    {
+        table->deselectAllRows(); table->selectRangeOfRows (60,61); bulk->setText ("25",false);
+        check (click (*page,"Set Offset") && processor.getLocalTuningInfo().document.table.pitch (60) == 60.25
+               && processor.getLocalTuningInfo().document.table.pitch (61) == 61.25, "bulk set from actual selection");
+        check (click (*page,"Add Cents") && processor.getLocalTuningInfo().document.table.pitch (60) == 60.5,
+               "bulk add uses current pitch");
+        check (click (*page,"Undo") && processor.getLocalTuningInfo().document.table.pitch (60) == 60.25
+               && processor.getLocalTuningInfo().document.table.pitch (61) == 61.25, "whole bulk operation is one undo");
+        check (click (*page,"Redo") && processor.getLocalTuningInfo().document.table.pitch (61) == 61.5,
+               "whole bulk operation redoes");
+        check (click (*page,"Reset Notes") && processor.getLocalTuningInfo().document.table.pitch (60) == 60,
+               "bulk reset from UI");
+        table->deselectAllRows(); table->selectRow (0); table->selectRow (60,false,false); bulk->setText ("-50",false);
+        const auto before = processor.getLocalTuningInfo().revision;
+        check (click (*page,"Set Offset") && processor.getLocalTuningInfo().revision == before
+               && processor.getLocalTuningInfo().document.table.pitch (60) == 60, "invalid bulk edit is atomic and adds no history");
+        bulk->setText ("not a number",false);
+        check (click (*page,"Add Cents") && processor.getLocalTuningInfo().revision == before, "invalid bulk text rejected");
+        check (click (*page,"Select All") && table->getNumSelectedRows() == 128, "all notes selectable");
+        table->deselectAllRows();
+        bulk->setText ("0",false);
+    }
     check (edit (*table,69,"not a number") && processor.getLocalTuningInfo().document.table.pitch (69) == 69.5,
            "invalid text keeps table");
     check (edit (*table,127,"+50") && processor.getLocalTuningInfo().document.table.pitch (127) == 127,
@@ -105,6 +150,8 @@ int main (int argc, char** argv)
            "negative offset from UI");
     const auto savedFile = report.getChildFile ("working.json");
     check (page->saveDocumentFile (savedFile) && ! processor.getLocalTuningInfo().unsavedFile, "save local document");
+    check (processor.undoLocalTuning() && processor.getLocalTuningInfo().unsavedFile, "undo after save marks changed content unsaved");
+    check (processor.redoLocalTuning() && ! processor.getLocalTuningInfo().unsavedFile, "redo to saved document restores clean file status");
     check (edit (*table,69,"0") && processor.getLocalTuningInfo().document.table.pitch (69) == 69, "independent second edit");
     check (page->loadDocumentFile (savedFile) && processor.getLocalTuningInfo().document.table.pitch (69) == 69.5,
            "load local document");
@@ -126,7 +173,7 @@ int main (int argc, char** argv)
     editor->setSize (760,600); pump();
     check (picture (*editor,report.getChildFile ("microtune-small.png")), "minimum-size page render");
     for (auto* child : page->getChildren())
-        if (auto* viewport = dynamic_cast<juce::Viewport*> (child)) viewport->setViewPosition (0,120);
+        if (auto* viewport = dynamic_cast<juce::Viewport*> (child)) viewport->setViewPosition (0,10000);
     pump();
     check (picture (*editor,report.getChildFile ("microtune-small-notes.png")), "minimum-size notes reachable by scrolling");
     {
@@ -143,8 +190,10 @@ int main (int argc, char** argv)
     table = page ? findTable (*page) : nullptr;
     check (table && processor.getLocalTuningInfo().document.table.pitch (60) == 59.5,
            "working table survives editor recreation");
+    check (processor.getLocalTuningInfo().canUndo, "history survives editor recreation");
     processor.setStateInformation (originalState.getData(), static_cast<int> (originalState.getSize())); pump();
     check (processor.getLocalTuningInfo().document.table.pitch (69) == 69, "restore identity document");
+    check (! processor.getLocalTuningInfo().canUndo && ! processor.getLocalTuningInfo().canRedo, "host restore starts fresh history");
     processor.setStateInformation (state.getData(), static_cast<int> (state.getSize())); pump();
     check (processor.getLocalTuningInfo().document.table.pitch (69) == 69.5
            && ! processor.getParameters().state.hasProperty ("bsiiLocalTuningDocument"), "restore strips metadata from APVTS");
@@ -159,6 +208,27 @@ int main (int argc, char** argv)
         juce::AudioProcessor::copyXmlToBinary (*xml, malformed);
         processor.setStateInformation (malformed.getData(), static_cast<int> (malformed.getSize())); pump();
         check (processor.getLocalTuningInfo().document.table.pitch (69) == 69, "old session without metadata loads");
+    }
+    {
+        BSIIControlAudioProcessor history;
+        auto document = history.getLocalTuningInfo().document;
+        for (int i = 1; i <= 70; ++i)
+        {
+            document.table.setCents (60, i);
+            history.replaceLocalTuningDocument (document);
+        }
+        int count = 0;
+        while (history.undoLocalTuning()) ++count;
+        check (count == 64, "history bounded to latest 64 changes");
+        check (history.redoLocalTuning(), "redo available after undo");
+        document = history.getLocalTuningInfo().document;
+        history.replaceLocalTuningDocument (document);
+        check (history.getLocalTuningInfo().canRedo, "no-op does not discard redo");
+        document.name = "New branch";
+        history.replaceLocalTuningDocument (document);
+        check (! history.getLocalTuningInfo().canRedo, "new document edit discards redo branch");
+        check (history.undoLocalTuning() && history.getLocalTuningInfo().document.name != "New branch",
+               "metadata changes included in history");
     }
     check (processor.getParameters().getParameter ("paraphonic")->getParameterIndex() == 94
            && static_cast<juce::AudioProcessor&> (processor).getParameters().size() == 95, "existing automation layout retained");

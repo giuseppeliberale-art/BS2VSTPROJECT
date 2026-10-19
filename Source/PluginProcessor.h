@@ -67,11 +67,14 @@ public:
     {
         bsii::microtuning::Document document;
         bool unsavedFile = false;
+        bool canUndo = false, canRedo = false;
         uint64_t revision = 0;
     };
     LocalTuningInfo getLocalTuningInfo() const;
     bool replaceLocalTuningDocument (const bsii::microtuning::Document&, bool unsavedFile = true);
     void markLocalTuningFileSaved();
+    bool undoLocalTuning();
+    bool redoLocalTuning();
 
     // Reception/import/recall updates parameters without transmitting them.
     // Thread-local scopes leave concurrent automation on other threads enabled.
@@ -146,6 +149,9 @@ private:
     juce::AudioProcessorValueTreeState apvts;
     mutable juce::CriticalSection localTuningLock;
     LocalTuningInfo localTuning;
+    std::vector<bsii::microtuning::Document> localTuningPast, localTuningFuture;
+    juce::String localTuningSavedDocument = bsii::microtuning::serialise (bsii::microtuning::Document {}).value();
+    bool travelLocalTuningHistory (bool undo);
     std::unique_ptr<juce::MidiOutput> midiOutput;
     mutable juce::CriticalSection connectionLock;
     juce::String savedOutputIdentifier, savedOutputName;

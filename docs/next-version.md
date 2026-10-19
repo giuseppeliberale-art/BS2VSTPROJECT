@@ -206,3 +206,12 @@ closed, prior plugins were backed up and updated AU/VST3 installed; strict
 signatures and Apple AU validation passed. Report:
 `validation-results/20261019-114143-34549/`. Real DAW UI acceptance remains pending;
 no public prerelease assets were replaced.
+
+### Local tuning undo and bulk edits — 19 October 2026
+
+Added Undo/Redo for the last 64 local document changes, plus selected-note Set
+Offset, Add Cents and Reset Notes. A bulk action validates the entire selection
+before applying and undoes in one step. Save/load content determines the local
+file dirty indicator. Closing the editor keeps history; host state restore clears
+history while restoring the working document. No automation parameter indices or
+hardware tuning-transfer behavior changed.

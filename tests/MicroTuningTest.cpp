@@ -53,6 +53,27 @@ int main()
         check (! mt::encodePitch (invalid), "invalid pitch rejected rather than clipped");
     check (! mt::decodePitch ({69,128,0}) && ! mt::decodePitch ({127,127,127}), "invalid/reserved bytes rejected");
 
+    {
+        mt::Table bulk;
+        const std::array<int, 2> keys { 60, 61 };
+        check (mt::editNotes (bulk, keys, mt::BulkEdit::setOffset, 25)
+               && bulk.pitch (60) == 60.25 && bulk.pitch (61) == 61.25 && bulk.pitch (69) == 69,
+               "bulk absolute offsets affect selected notes only");
+        check (mt::editNotes (bulk, keys, mt::BulkEdit::addCents, -50)
+               && bulk.pitch (60) == 59.75 && bulk.pitch (61) == 60.75, "bulk additive cents retain existing offsets");
+        const std::array<int, 3> boundary { 60, 0, 61 };
+        check (! mt::editNotes (bulk, boundary, mt::BulkEdit::setOffset, -50)
+               && bulk.pitch (60) == 59.75 && bulk.pitch (61) == 60.75, "boundary failure rolls back entire operation");
+        check (! mt::editNotes (bulk, {}, mt::BulkEdit::reset)
+               && ! mt::editNotes (bulk, keys, mt::BulkEdit::addCents, std::numeric_limits<double>::quiet_NaN()),
+               "empty selection and nonfinite bulk value rejected");
+        const std::array<int, 2> invalid { 60, 128 };
+        check (! mt::editNotes (bulk, invalid, mt::BulkEdit::reset) && bulk.pitch (60) == 59.75,
+               "invalid key rolls back earlier valid edit");
+        check (mt::editNotes (bulk, keys, mt::BulkEdit::reset) && bulk.pitch (60) == 60 && bulk.pitch (61) == 61,
+               "reset selected notes to equal temperament");
+    }
+
     mt::Table table;
     bool identity = true;
     for (int key = 0; key < 128; ++key) identity &= table.pitch (key) == static_cast<double> (key);
