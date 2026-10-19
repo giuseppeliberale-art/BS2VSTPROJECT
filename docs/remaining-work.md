@@ -75,8 +75,12 @@ Evidence: [recall](project-sound-recall.md), [global controls](global-control-re
 - [ ] **MicroTune hardware table workflow:** an [offline table editor and SysEx
   exporter](microtune-offline.md), plus a [local editor page](microtune-editor.md),
   are implemented. Actual hardware transfer, readback/restoration, persistent save
-  and Scala import remain pending;
-  table selection is already implemented and hardware-tested.
+  remain pending; table selection is already implemented and hardware-tested.
+- [ ] **Tuning imports:** investigate the Surge tuning library for `.scl`/`.kbm`
+  and a separate `.tun` importer for u-he compatibility. Define reference pitch,
+  unmapped keys and out-of-range notes in a preview before applying one undoable
+  local edit. See [import research](tuning-import-research.md). Library browsing,
+  scale generators and MTS-file import remain later work; no importer is installed.
 - [ ] **Patch-bank management:** full-bank backup/import and any stored-slot
   writing need explicit design and validation. Current transfers target the
   temporary sound; no new stored-preset overwrite workflow is implemented.
