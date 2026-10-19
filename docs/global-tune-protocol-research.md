@@ -35,3 +35,12 @@ and -50 were identical. Evidence is retained under
 `tests/global-tune-fixtures/`, with the full experiment recorded in
 [global-control-research.md](global-control-research.md). User confirmed
 manual restoration to zero afterward. No plugin implementation was changed.
+
+## Paired-data follow-up — 20 October 2026
+
+A scoped NRPN 64:6 MSB/LSB 127/127 probe displayed +50 rather than candidate -1.
+Subsequent manual negative stepping behaved unexpectedly (user reported
+0 -> -1 -> 49). Paired zero restored the displayed 0 twice, but normal manual
+range and acoustic tuning were not re-established. Probing stopped; the exact
+sequence and limitations are in [global-control research](global-control-research.md).
+Do not implement or repeat this candidate as verified signed receive support.

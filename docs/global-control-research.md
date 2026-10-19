@@ -320,3 +320,43 @@ hardware changes. External Instrument was separately confirmed on channel 1.
 This adds manual acceptance of unsolicited hardware-origin channel following.
 See project-sound-recall.md for the matched-channel USB reconnect result and
 its limits. No new synth measurements were made on 19 October.
+
+## Paired-data Global Tune probe and recovery — 20 October 2026
+
+Do not repeat this probe as routine testing. The user reported unexpected manual
+negative-step behavior after it; the cause is unresolved, and no negative Global
+Tune receive support was established. No plugin control was added.
+
+Starting conditions: user reported Tune 0, exited the function, confirmed channel
+1 for hardware/plugin, and Ableton playback was requested stopped. The temporary
+CoreMIDI sender required exactly one Bass Station destination and dispatched:
+
+`B0 63 40; B0 62 06; B0 06 7F; B0 26 7F; B0 63 7F; B0 62 7F` (hex).
+
+This selected NRPN 64:6, sent Data Entry MSB/LSB 127/127, then nulled NRPN.
+A possible signed 14-bit -1 was the hypothesis, not a supported BSII encoding.
+The user reopened Tune without editing and observed +50. On attempting manual
+restoration they reported the lowest reachable value was 49.
+
+The sender then dispatched the same sequence with both data bytes zero:
+`B0 63 40; B0 62 06; B0 06 00; B0 26 00; B0 63 7F; B0 62 7F`.
+After exiting/reopening Tune without editing, the user confirmed display 0.
+A requested manual range check then produced this user-reported sequence:
+0 -> -1 -> 49, followed by inability to return to zero manually. This was not
+captured as an outgoing MIDI trace and is not an established wrap/clamp algorithm.
+Further reproduction was stopped. A second zero-pair dispatch and exit/reopen
+again produced user-confirmed 0; no further Patch/Value edits were requested.
+
+Final state: display 0, manually confirmed. Normal negative adjustment range,
+actual frequency, internal state and persistence across reboot are NOT verified.
+No audio was connected. Zero-pair dispatch restored the displayed value but did
+not establish a complete functional repair. Do not claim firmware corruption,
+a specific arithmetic bug, or proof that the LSB is ignored from these reports.
+No tuning-table data, preset write or persistent-save command was sent.
+
+The temporary probe source/executable were removed after recording their exact
+messages here. Do not reintroduce the negative candidate without a separate
+recovery/diagnosis plan. Further investigation should establish normal manual
+behavior in an isolated fresh session first, and seek Novation guidance rather
+than expanding speculative sends. A synth firmware regression test is unavailable
+in this repository; local unit tests cannot reproduce this hardware symptom.
