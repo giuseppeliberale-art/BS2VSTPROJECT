@@ -4,6 +4,7 @@
 #include <array>
 #include <atomic>
 #include "BSIIMidi.h"
+#include "BSIITuningDocument.h"
 #include "BSIIHardwareSysExInput.h"
 
 class BSIIControlAudioProcessor : public juce::AudioProcessor,
@@ -60,6 +61,17 @@ public:
     ProjectRecallInfo getProjectRecallInfo() const;
     bool configureProjectRecall (RecallMode, int program);
     bool captureProjectSound(); // Fresh edit-buffer request; does not send a sound.
+
+    // Local table work only; never queued as MIDI or applied by patch recall.
+    struct LocalTuningInfo
+    {
+        bsii::microtuning::Document document;
+        bool unsavedFile = false;
+        uint64_t revision = 0;
+    };
+    LocalTuningInfo getLocalTuningInfo() const;
+    bool replaceLocalTuningDocument (const bsii::microtuning::Document&, bool unsavedFile = true);
+    void markLocalTuningFileSaved();
 
     // Reception/import/recall updates parameters without transmitting them.
     // Thread-local scopes leave concurrent automation on other threads enabled.
@@ -132,6 +144,8 @@ private:
     void publishNRPN (int channel, int nrpnMSB, int nrpnLSB, int value);
 
     juce::AudioProcessorValueTreeState apvts;
+    mutable juce::CriticalSection localTuningLock;
+    LocalTuningInfo localTuning;
     std::unique_ptr<juce::MidiOutput> midiOutput;
     mutable juce::CriticalSection connectionLock;
     juce::String savedOutputIdentifier, savedOutputName;

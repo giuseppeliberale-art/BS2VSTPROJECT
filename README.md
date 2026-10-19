@@ -32,6 +32,8 @@ version labels still show earlier numbers.
 
 - **95 automatable controls** across Osc 1, Osc 2, Mixer, Filter, LFO/Glide,
   Amp Env, Mod Env, FX/Performance, Arp/Seq and Global pages.
+- **Local MicroTune editor:** edit all 128 notes, load/save table files and retain
+  a working copy in the DAW Set. No hardware table transmission or save yet.
 - **Hardware MIDI channel setup:** the Global page can request a synth channel
   change and follow its confirmation. DAW note routing remains separate.
 - **Live MIDI in both directions:** app edits send CC/NRPN messages, and supported
@@ -200,9 +202,9 @@ standalone app and regression tools, prints a short result and saves full logs
 under the ignored `validation-results/` folder. App signing and live hardware
 checks are separate.
 
-An [offline MicroTune file editor](docs/microtune-offline.md) can create, edit and
-export tuning tables without a synth. It does not yet add plugin UI or hardware
-transfer/save integration.
+The [MicroTune tab](docs/microtune-editor.md) edits and saves local tables without
+a synth. The [offline file tool](docs/microtune-offline.md) also exports SysEx.
+Hardware table transfer/save integration remains pending.
 
 For passive hardware MIDI recording and short reports:
 

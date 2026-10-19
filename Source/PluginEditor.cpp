@@ -515,6 +515,8 @@ void BSIIControlAudioProcessorEditor::buildPages()
         tabs.addTab (pageDef.first, juce::Colours::transparentBlack, page.get(), false);
         pages.push_back (std::move (page));
     }
+    microTunePage = std::make_unique<MicroTunePage> (processor);
+    tabs.addTab ("MicroTune", juce::Colours::transparentBlack, microTunePage.get(), false);
 }
 
 void BSIIControlAudioProcessorEditor::paint (juce::Graphics& g)

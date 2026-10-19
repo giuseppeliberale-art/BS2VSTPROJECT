@@ -6,6 +6,7 @@
 #include <vector>
 #include "PluginProcessor.h"
 #include "BSIIPresetSync.h"
+#include "BSIIMicroTunePage.h"
 
 class ParameterControl : public juce::Component
 {
@@ -148,6 +149,7 @@ private:
     juce::TextButton importSysExButton { juce::String::fromUTF8 ("Import .syx → Editor") };
     juce::TabbedComponent tabs { juce::TabbedButtonBar::TabsAtTop };
 
+    std::unique_ptr<MicroTunePage> microTunePage;
     std::unique_ptr<HardwareChannelControl> hardwareChannelControl;
     std::vector<std::unique_ptr<ParameterControl>> parameterControls;
     std::vector<std::unique_ptr<ChoiceControl>> choiceControls;

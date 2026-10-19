@@ -1,0 +1,83 @@
+# MicroTune editor page
+
+Added 19 October 2026, using the existing offline table model and file format.
+The **MicroTune** tab edits a local working table. It does not read, send or save
+hardware tuning tables. The existing FX + Perf MicroTune Table parameter still
+selects the synth's active table separately.
+
+## Use
+
+- Scroll through all 128 MIDI keys. The table shows key number, note name,
+  offset in cents and calculated target frequency (A4 = 440 Hz).
+- Double-click an **Offset (cents)** cell and enter a signed number. Each offset
+  is relative to that key's equal-tempered pitch, not cumulative. For example,
+  +50 on key 69 gives A4 +50 cents. Invalid text or out-of-range pitches keep
+  the previous value and show an error.
+- **Name** labels this working document; **File target** records table slot 0–8
+  in the document only. Changing it does not select a table on the synth.
+- **Save Table...** writes a local JSON table file. **Load Table...** reads the
+  same versioned format, with all 128 notes required. It does not load `.syx`,
+  `.bsiistate` or Scala files. Invalid files leave the current table intact.
+- **New Table** creates equal temperament while retaining the chosen file target.
+  New/Load asks before replacing edits not yet saved to a local table file.
+
+No synth is required for these operations. The existing offline file tool can
+export this JSON format to SysEx; see [offline tool instructions](microtune-offline.md).
+There is no hardware Send or Save Tables action on this page.
+
+## Working state and DAW projects
+
+The processor owns the working document, so closing and reopening the editor
+does not discard it. Saving a DAW Set also embeds the document separately from
+APVTS parameters. Reopening the Set restores it silently and marks it as needing
+a separate local file copy; it does not load the table into the synth. File-save
+status and a working document in a DAW Set are distinct.
+
+Old Sets without the new metadata start with equal temperament. Invalid/oversized
+session table metadata also resets this working document to that default. The
+current file loader rejects invalid contents instead of replacing valid work.
+The UI synchronises if a host restores state while the editor remains open.
+
+Get Patch, live MIDI, ordinary snapshots, Send All and project-sound recall do not
+replace or transmit this working table. A captured hardware patch records the
+selected table ID, not its complete tuning contents. Merely keeping a local table
+inside the Set does not change that hardware-recall limitation.
+
+Document edits notify the host that non-parameter state changed; they are not
+95 new automation lanes. The existing **95 parameters and indices** are unchanged.
+No MIDI transmission or persistent-save command is connected to these actions.
+
+## Bounds and presentation
+
+Absolute target pitches are currently restricted to MIDI-note coordinates 0–127.
+Thus negative offsets on key 0 and positive offsets on key 127 are rejected.
+This conservative application bound is not a measured BSII hardware frequency
+limit. Calculated target Hz is not an audio measurement and does not include
+other oscillator offsets or Global Tune.
+
+The note list scrolls. At small plugin window sizes, the whole page can scroll
+vertically as well; resize the editor larger to show more rows and status.
+This is a functional development UI; the final visual redesign remains deferred.
+
+## Verification
+
+The standalone build and all eight offline groups passed. Native editor tests
+exercise actual editable cells, positive/negative and invalid input, local file
+round trips, failed loads/saves, editor recreation, existing/new/old/malformed
+DAW state and stable host parameter indices. A private virtual MIDI sink asserts
+zero output across these operations. Native test renders cover normal size and
+minimum size, including scrolling to the note list. No physical synth is used.
+
+Report: `validation-results/20261019-114143-34549/`. Final standalone/AU/VST3
+builds passed; all eight offline groups passed again. The native MicroTune editor
+test passed, including a fresh processor restore and normal/minimum-size renders.
+Existing native processor automation/connection and direct SysEx tests passed.
+Renders were visually inspected; page scrolling exposes the note list at minimum
+size and the status fits at the normal size. Native checks sent no physical MIDI.
+
+Ableton was confirmed closed before installation. Previous AU/VST3 bundles were
+backed up under the report's `installed-before/`; new copies were locally signed,
+installed, strict signatures verified and Apple AU validation passed. Public
+preview assets were not replaced. File chooser dialog interaction and actual DAW
+acceptance of this new page remain manual checks; tested file methods are the same
+ones invoked by those callbacks.

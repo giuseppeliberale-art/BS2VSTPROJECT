@@ -189,3 +189,20 @@ The existing 95 host parameters and current plugin behavior are unchanged.
 All eight offline groups and the actual CLI file workflow pass. See
 [microtune-offline.md](microtune-offline.md) for application pitch bounds and
 hardware acceptance still required.
+
+## Local MicroTune editor page — 19 October 2026
+
+Added a MicroTune tab with all 128 notes, editable cents offsets, calculated target
+Hz, document name/target metadata and New/Load/Save local table actions. The
+working document belongs to the processor and restores silently with DAW state;
+existing 95 automatable parameter indices are unchanged. Patch snapshots, Get
+Patch, Send All and sound recall do not consume it. No hardware table send or
+persistent save is enabled. See [page usage and checks](microtune-editor.md).
+
+Local-page validation/install: final standalone/AU/VST3 builds, all eight offline
+groups, native MicroTune UI/state/file/zero-MIDI checks, existing processor and
+direct SysEx regressions passed. Normal/minimum-size renders inspected. With Live
+closed, prior plugins were backed up and updated AU/VST3 installed; strict
+signatures and Apple AU validation passed. Report:
+`validation-results/20261019-114143-34549/`. Real DAW UI acceptance remains pending;
+no public prerelease assets were replaced.

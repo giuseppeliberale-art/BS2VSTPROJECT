@@ -73,8 +73,9 @@ Evidence: [recall](project-sound-recall.md), [global controls](global-control-re
 - [ ] **Arp MIDI routing:** investigate the hardware Function + Latch toggle
   between external MIDI-to-Arp and Arp-to-MIDI; no verified remote command.
 - [ ] **MicroTune hardware table workflow:** an [offline table editor and SysEx
-  exporter](microtune-offline.md) is now implemented and tested. Plugin UI, actual
-  transfer, readback/restoration, persistent save and Scala import remain pending;
+  exporter](microtune-offline.md), plus a [local editor page](microtune-editor.md),
+  are implemented. Actual hardware transfer, readback/restoration, persistent save
+  and Scala import remain pending;
   table selection is already implemented and hardware-tested.
 - [ ] **Patch-bank management:** full-bank backup/import and any stored-slot
   writing need explicit design and validation. Current transfers target the
@@ -156,3 +157,11 @@ export tool. Host parameters, MIDI device behavior and installed plugins are
 unchanged. `./tools/validate.sh` now builds these targets and passes **eight**
 CTest groups. The earlier seven-group report above remains historical evidence.
 See [tool usage, limits and validation](microtune-offline.md).
+
+### Local MicroTune page — 19 October 2026
+
+Added note editing and local file load/save in a MicroTune tab. A separate working
+document survives editor recreation and DAW-state save/restore, silently. The
+hardware-selected table, patch/snapshot paths and 95 automation parameters remain
+separate. See [page instructions and limits](microtune-editor.md). Hardware table
+transfer/save is still pending, and the public preview is not automatically updated.

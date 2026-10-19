@@ -631,9 +631,38 @@ juce::AudioProcessorEditor* BSIIControlAudioProcessor::createEditor()
     return new BSIIControlAudioProcessorEditor (*this);
 }
 
+BSIIControlAudioProcessor::LocalTuningInfo BSIIControlAudioProcessor::getLocalTuningInfo() const
+{
+    const juce::ScopedLock lock (localTuningLock);
+    return localTuning;
+}
+
+bool BSIIControlAudioProcessor::replaceLocalTuningDocument (const bsii::microtuning::Document& document, bool unsavedFile)
+{
+    const auto text = bsii::microtuning::serialise (document);
+    if (! text || text->getNumBytesAsUTF8() > 65536) return false;
+    {
+        const juce::ScopedLock lock (localTuningLock);
+        localTuning.document = document;
+        localTuning.unsavedFile = unsavedFile;
+        ++localTuning.revision;
+    }
+    updateHostDisplay (ChangeDetails{}.withNonParameterStateChanged (true));
+    return true;
+}
+
+void BSIIControlAudioProcessor::markLocalTuningFileSaved()
+{
+    const juce::ScopedLock lock (localTuningLock);
+    localTuning.unsavedFile = false;
+    ++localTuning.revision;
+}
+
 void BSIIControlAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
     auto state = apvts.copyState();
+    if (const auto document = bsii::microtuning::serialise (getLocalTuningInfo().document))
+        state.setProperty ("bsiiLocalTuningDocument", *document, nullptr);
     {
         const juce::ScopedLock lock (connectionLock);
         state.setProperty ("bsiiConnectionSaved", connectionSaved, nullptr);
@@ -656,6 +685,15 @@ void BSIIControlAudioProcessor::setStateInformation (const void* data, int sizeI
     if (! state.isValid() || ! state.hasType (apvts.state.getType())) return;
     ScopedMidiSilence silence (*this);
     clearPendingMidi();
+    {
+        const auto text = state.getProperty ("bsiiLocalTuningDocument").toString();
+        const auto document = text.getNumBytesAsUTF8() <= 65536
+            ? bsii::microtuning::parseDocument (text) : std::nullopt;
+        const juce::ScopedLock lock (localTuningLock);
+        localTuning.document = document.value_or (bsii::microtuning::Document {});
+        localTuning.unsavedFile = document.has_value();
+        ++localTuning.revision;
+    }
     if (static_cast<bool> (state.getProperty ("bsiiConnectionSaved", false)))
     {
         const juce::ScopedLock lock (connectionLock);
@@ -688,7 +726,7 @@ void BSIIControlAudioProcessor::setStateInformation (const void* data, int sizeI
     }
     // Connection metadata belongs to host sessions, not portable patch snapshots.
     for (const auto* property : { "bsiiConnectionSaved", "bsiiMidiOutputId", "bsiiMidiOutputName",
-                                 "bsiiMidiChannel", "bsiiLiveRxEnabled", "bsiiRecallMode", "bsiiRecallProgram", "bsiiProjectSound" })
+                                 "bsiiMidiChannel", "bsiiLiveRxEnabled", "bsiiRecallMode", "bsiiRecallProgram", "bsiiProjectSound", "bsiiLocalTuningDocument" })
         state.removeProperty (property, nullptr);
     apvts.replaceState (state);
 }

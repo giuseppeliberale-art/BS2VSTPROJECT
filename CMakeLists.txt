@@ -38,6 +38,8 @@ target_sources(BSIIControl PRIVATE
     Source/PluginProcessor.h
     Source/PluginEditor.cpp
     Source/PluginEditor.h
+    Source/BSIIMicroTunePage.cpp
+    Source/BSIIMicroTunePage.h
     Source/BSIIMidi.h
     Source/BSIIPatchDecoder.h
 )
@@ -102,6 +104,16 @@ if(BSII_BUILD_TESTS)
         target_compile_definitions(BSIIProcessorAutomationTest PRIVATE
             $<TARGET_PROPERTY:BSIIControl,COMPILE_DEFINITIONS>)
         target_link_libraries(BSIIProcessorAutomationTest PRIVATE BSIIControl)
+
+        # GUI/state/file checks with a private virtual MIDI sink; no physical I/O.
+        add_executable(BSIIMicroTuneEditorTest tests/MicroTuneEditorTest.cpp)
+        target_include_directories(BSIIMicroTuneEditorTest PRIVATE Source
+            "${CMAKE_CURRENT_BINARY_DIR}/BSIIControl_artefacts/JuceLibraryCode"
+            $<TARGET_PROPERTY:BSIIControl,INCLUDE_DIRECTORIES>)
+        target_compile_features(BSIIMicroTuneEditorTest PRIVATE cxx_std_20)
+        target_compile_definitions(BSIIMicroTuneEditorTest PRIVATE
+            $<TARGET_PROPERTY:BSIIControl,COMPILE_DEFINITIONS>)
+        target_link_libraries(BSIIMicroTuneEditorTest PRIVATE BSIIControl)
 
     endif()
 

@@ -1,10 +1,12 @@
 # Offline MicroTune table editor
 
+For the plugin page now using this model, see [MicroTune editor](microtune-editor.md).
+
 Implemented 19 October 2026. This is a local file tool and reusable table/codec
 module. It does not open MIDI ports, change the connected synth, save hardware
-tuning tables, or add controls to the plugin window. Hardware transfer and pitch
-verification are pending. Existing 95 host parameters and their indices are
-unchanged; the installed AU/VST3 and public preview are unchanged.
+tuning tables, or control the plugin window. Hardware transfer and pitch
+verification are pending. The plugin page is a later increment described in the
+link above; the offline tool itself adds no host parameters.
 
 ## What it can do
 

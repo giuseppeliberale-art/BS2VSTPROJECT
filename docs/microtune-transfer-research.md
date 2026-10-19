@@ -115,3 +115,7 @@ All eight offline groups and the CLI workflow checks pass. The application range
 is deliberately restricted to absolute MIDI pitches 0–127 while reserved/wider
 MTS bounds remain unverified. No plugin UI, transport, save or hardware-readback
 integration has been added. The proposed hardware plan above remains pending.
+
+The subsequent [local editor page](microtune-editor.md) adds note editing and
+file load/save inside the plugin, plus silent DAW working-document persistence.
+It still has no hardware tuning-data send, readback or persistent-save action.

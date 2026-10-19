@@ -115,3 +115,11 @@ recall automatically discovers a mismatched startup channel. The “Restored”
 status was not an acknowledgement from the instrument in the failed run.
 Captured-sound USB reconnect, Off-mode reconnect and post-reconnect automation
 remain separate acceptance checks. No code change was made for these results.
+
+## Local MicroTune document scope — 19 October 2026
+
+The MicroTune page's local working document is now embedded separately in DAW
+state, but is never transmitted by stored-preset or captured-sound recall. A patch
+can restore a selected table ID without restoring that table's 128 pitch values.
+The user must not treat a local document in the Set as automatic hardware tuning
+backup/recall. See [MicroTune editor](microtune-editor.md).
