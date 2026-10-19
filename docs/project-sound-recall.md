@@ -137,3 +137,40 @@ virtual-MIDI recall/automation regression passed. Local log:
 `validation-results/recall-status-wording/processor-automation.log`. No new tests
 were added for these label-only changes; broader tests and plugin rebuild/install
 were not repeated.
+
+## Hardware reconnect checks — 20 October 2026
+
+User-operated Ableton test with the installed plugin and one connected BSII.
+No audio was routed; evidence is returned patch data, not listening. No tuning
+note-change or persistent-save command was sent. The user had power-cycled and
+selected tuning table 0 before switching to this recall test.
+
+- Captured-sound: user stopped playback, set Cutoff 100, captured the project
+  sound, selected Captured sound and saved the Set. A fresh baseline request
+  returned Cutoff 100. User then set Cutoff 20 without recapturing, closed the
+  editor, disconnected USB for five seconds, reconnected and waited ten seconds.
+  Returned patch was byte-identical to the baseline: all 154 bytes and decoded
+  fields matched. This confirms captured-patch restoration with the editor closed
+  in this scenario; it does not count outbound recall messages.
+- Off: user selected Off, saved, set Cutoff 20, closed the editor and repeated the
+  reconnect. Returned Cutoff was 255 rather than captured 100; the other decoded
+  fields matched. Thus the captured sound was not restored in this check. The
+  requested pre-disconnect 20 was not independently sampled, and this does not
+  establish why startup returned 255 or prove absence of every outbound message.
+- Automation after the Off-mode reconnect: with the editor left closed, the user
+  started existing Cutoff automation. Six hardware patch readbacks about 0.75 s
+  apart returned 68, 193, 85, 92, 132, 158. This confirms hardware Cutoff updates
+  resumed in this scenario. No sample-accurate curve comparison or acoustic result
+  is claimed; automation immediately after captured-mode reconnect remains a
+  separate untested combination.
+
+Local ignored evidence:
+- Baseline: `midi-lab-results/20261020-033631-backup-64e88f/baseline.syx`
+- Captured reconnect: `midi-lab-results/20261020-033716-backup-f46f05/baseline.syx`
+- Exact comparison: `midi-lab-results/20261020-033722-compare-b61faf/comparison.json`
+- Off reconnect: `midi-lab-results/20261020-033903-backup-0de79e/baseline.syx`
+- Off comparison: `midi-lab-results/20261020-033910-compare-0a1b6d/comparison.json`
+- Automation: `midi-lab-results/20261020-034326-post-reconnect-automation/readings.json`
+
+Recall was last saved Off. Existing native regression evidence remains separate
+from these observations. No runtime code or installed bundles changed here.

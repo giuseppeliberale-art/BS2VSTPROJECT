@@ -48,7 +48,7 @@ parameter in a way that shifts the existing Paraphonic parameter at index 94.
 | Input Gain | Full emitted raw range; targeted incoming endpoints; hosted checks and patch isolation | No calibrated dB display, global query or power-cycle persistence test |
 | Hardware MIDI Channel | Remote 1-to-2-to-1 and incoming Cutoff on 2; hardware-origin selector following with Live RX on | Other channels and remote-change persistence across power-off not hardware-verified |
 | Presets, direct live input, automation and saved connection | Targeted Ableton VST3 and native regression checks, including editor-closed output and Set reopen | Other DAWs/AU host use and multiple devices/instances not broadly tested |
-| Project sound recall | Stored preset and captured sound on Set reopen; stored-preset USB reconnect with editor closed and matched channel | Captured-sound/Off USB reconnect and post-reconnect automation still pending |
+| Project sound recall | Set reopen, stored/captured USB reconnect; captured patch byte-identical with editor closed; Off did not restore capture; changing Cutoff readbacks during automation after Off reconnect | Automation immediately after captured-mode reconnect, other channels/devices and acoustic checks remain |
 
 Evidence: [recall](project-sound-recall.md), [global controls](global-control-research.md),
 [Arp/Seq](arp-seq-research.md), [LFO sync](lfo-sync-research.md),
@@ -109,8 +109,10 @@ power cycling; a successful SysEx reply does not prove channel matching.
 1. [ ] Verify the final channel-1 Set save; use a fresh backup for any unsaved sound.
 2. [ ] Finish mod-wheel filter UI/send/receive/Get Patch checks, then listen to
    both assignments on a simple patch. These are implemented, not missing routes.
-3. [ ] Captured-sound USB reconnect with editor closed; inspect returned patch
-   fields and listen. Check that Off does not recall and automation resumes.
+3. [x] Captured-sound USB reconnect matched all 154 patch bytes with editor closed;
+   Off did not restore the capture; Cutoff automation updated hardware after Off
+   reconnect (20 October 2026). Listening and automation immediately after
+   captured-mode reconnect remain untested; see the recall evidence.
 4. [ ] Investigate remote MIDI-channel power-cycle persistence separately from
    immediate channel following; use a restorable starting configuration.
 5. [ ] Run focused Global Tune and Local Control probes only after reviewing

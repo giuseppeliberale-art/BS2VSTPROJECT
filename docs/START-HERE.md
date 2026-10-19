@@ -33,6 +33,14 @@ from the old chat. Verify the current checkout and validation status first.
   claiming hardware restoration. It awaits the next plugin installation. The
   full nine-group validation above predates this fix; do not treat its fingerprint
   as current. See `docs/project-sound-recall.md` for focused verification.
+- Hardware reconnect checks on 20 October: captured sound returned byte-identical
+  with the editor closed; Off did not restore that capture; hardware Cutoff changed
+  during automation after Off reconnect. Audio was not connected. Recall was last
+  saved Off. See `docs/project-sound-recall.md` for evidence and limits.
+- Tuning transfer testing was deferred: the user needs tables 1–8 preserved and
+  had no audio routing for pitch measurement. Table 0 was authorized for a later
+  test and selected after power-cycle, but no tuning data was sent. Resume pitch
+  measurements only once audio/tuner is available; hardware backup is unresolved.
 - Public prerelease `v0.8.2-preview.20261018` is an OLDER binary release.
   A source push does not replace its downloads. Publish new binaries only when
   requested and clearly state their compatibility and validation scope.
