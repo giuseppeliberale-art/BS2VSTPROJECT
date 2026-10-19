@@ -50,6 +50,7 @@ ScalaImportPanel::ScalaImportPanel (BSIIControlAudioProcessor& p) : processor (p
     table.getHeader().addColumn ("Result",5,230);
     table.getHeader().setStretchToFitActive (true);
     table.setColour (juce::ListBox::backgroundColourId,juce::Colour (0xff202326));
+    setOpaque (true);
     setSize (740,620);
     invalidate();
 }
@@ -58,7 +59,7 @@ void ScalaImportPanel::resized()
 {
     auto a = getLocalBounds().reduced (14);
     auto buttons = a.removeFromTop (30);
-    scaleButton.setBounds (buttons.removeFromLeft (135)); buttons.removeFromLeft (8);
+    scaleButton.setBounds (buttons.removeFromLeft (164)); buttons.removeFromLeft (8);
     mappingButton.setBounds (buttons.removeFromLeft (135)); buttons.removeFromLeft (8);
     clearMapping.setBounds (buttons.removeFromLeft (85)); buttons.removeFromLeft (8);
     previewButton.setBounds (buttons.removeFromLeft (100));
@@ -82,19 +83,26 @@ juce::String ScalaImportPanel::referenceSettings() const
 void ScalaImportPanel::invalidate()
 {
     preview.reset(); table.updateContent(); table.repaint(); applyButton.setEnabled (false);
-    for (auto* editor : { &rootNote, &referenceNote, &referenceHz }) editor->setEnabled (! mappingText);
-    files.setText ("Scale: " + (scaleName.isEmpty() ? "not chosen" : scaleName)
-        + "   |   Mapping: " + (mappingText ? mappingName : "no KBM"),juce::dontSendNotification);
+    for (auto* editor : { &rootNote, &referenceNote, &referenceHz }) editor->setEnabled (! mappingText && ! tunInput);
+    mappingButton.setEnabled (! tunInput); clearMapping.setEnabled (! tunInput);
+    referenceHint.setText (tunInput ? "TUN uses the file's base frequency and note values; manual reference and KBM do not apply."
+        : "Without KBM: scale start key / reference key / reference Hz",juce::dontSendNotification);
+    files.setText ("Source: " + (scaleName.isEmpty() ? "not chosen" : scaleName)
+        + (tunInput ? "   |   Numeric TUN" : "   |   Mapping: " + (mappingText ? mappingName : "no KBM")),juce::dontSendNotification);
     message ("Press Preview to review all 128 notes before applying.");
 }
 bool ScalaImportPanel::loadScaleFile (const juce::File& file)
 {
     invalidate(); const auto text = read (file);
     if (! text) { scaleText.clear(); scaleName.clear(); message ("Could not read scale (maximum 64 KiB). Current table kept."); return false; }
+    keepUnavailable.setToggleState (false,juce::dontSendNotification);
+    tunInput = file.hasFileExtension ("tun");
+    if (tunInput) { mappingText.reset(); mappingName.clear(); }
     scaleText = *text; scaleName = file.getFileName(); invalidate(); return true;
 }
 bool ScalaImportPanel::loadMappingFile (const juce::File& file)
 {
+    if (tunInput) return false;
     invalidate(); const auto text = read (file);
     if (! text) { message ("Could not read KBM (maximum 64 KiB). Previous file selection kept; preview again."); return false; }
     mappingText = *text; mappingName = file.getFileName(); invalidate(); return true;
@@ -106,19 +114,21 @@ void ScalaImportPanel::rebuildPreview()
     mt::scala::Options options;
     try
     {
-        if (! mappingText)
+        if (! mappingText && ! tunInput)
         {
             options.scaleStart = mt::scala::integer (rootNote.getText().trim().toStdString(),0,127);
             options.referenceNote = mt::scala::integer (referenceNote.getText().trim().toStdString(),0,127);
             options.referenceHz = mt::scala::number (referenceHz.getText().trim().toStdString());
         }
-        preview = mt::scala::parse (scaleText,mappingText,options);
+        preview = tunInput ? mt::tun::parse (scaleText,scaleName.upToLastOccurrenceOf (".",false,false).toStdString())
+                           : mt::scala::parse (scaleText,mappingText,options);
     }
     catch (const std::exception& e) { preview.emplace(); preview->error = e.what(); }
     if (! preview->error.empty()) message ("Import error: " + juce::String (preview->error));
     else message (juce::String (preview->available) + " notes available; " + juce::String (128 - preview->available)
-        + " unavailable. Scale start " + juce::String (preview->scaleStart) + "; reference key "
-        + juce::String (preview->referenceNote) + " = " + juce::String (preview->referenceHz,6) + " Hz.\n"
+        + (tunInput ? " unavailable. Numeric TUN; base reference " + juce::String (preview->referenceHz,9) + " Hz.\n"
+            : " unavailable. Scale start " + juce::String (preview->scaleStart) + "; reference key "
+                + juce::String (preview->referenceNote) + " = " + juce::String (preview->referenceHz,6) + " Hz.\n")
         + "Applying replaces available pitches and the table name; the file target stays unchanged.");
     table.updateContent(); table.repaint(); updateApply();
 }
@@ -156,8 +166,8 @@ void ScalaImportPanel::paintCell (juce::Graphics& g, int row, int column, int w,
 }
 void ScalaImportPanel::chooseFile (bool mapping)
 {
-    chooser = std::make_unique<juce::FileChooser> (mapping ? "Choose Scala keyboard mapping" : "Choose Scala scale",
-        juce::File {},mapping ? "*.kbm" : "*.scl");
+    chooser = std::make_unique<juce::FileChooser> (mapping ? "Choose Scala keyboard mapping" : "Choose Scala scale or numeric TUN table",
+        juce::File {},mapping ? "*.kbm" : "*.scl;*.tun");
     const juce::Component::SafePointer<ScalaImportPanel> safe (this);
     chooser->launchAsync (juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
         [safe,mapping] (const juce::FileChooser& choice)

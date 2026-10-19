@@ -114,3 +114,7 @@ The first [local Scala importer](scala-import.md) is now implemented using the
 pinned headers above. It includes preview, explicit reference fields, KBM bounds
 and skip handling, unavailable-note preservation by explicit choice, and one-step
 undo. This does not implement TUN, ASCL, MTS-file import or hardware transfer.
+
+Numeric TUN v0/v1 support subsequently added: [format details](tun-import.md).
+Formula-based TUN v2 and mapping sections remain unsupported; no second library
+was needed for this bounded numeric adapter.

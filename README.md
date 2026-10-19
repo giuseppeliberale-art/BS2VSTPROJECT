@@ -33,7 +33,7 @@ version labels still show earlier numbers.
 - **95 automatable controls** across Osc 1, Osc 2, Mixer, Filter, LFO/Glide,
   Amp Env, Mod Env, FX/Performance, Arp/Seq and Global pages.
 - **Local MicroTune editor:** edit all 128 notes, undo/redo changes, edit selections together,
-  preview/import Scala `.scl`/`.kbm` files, load/save local table files and retain
+  preview/import Scala `.scl`/`.kbm` and numeric `.tun` files, load/save local table files and retain
   a working copy in the DAW Set. No hardware table transmission or save yet.
 - **Hardware MIDI channel setup:** the Global page can request a synth channel
   change and follow its confirmation. DAW note routing remains separate.
@@ -233,3 +233,5 @@ For compact validation status and offline capture inference, see the
 [research toolkit](docs/research-toolkit.md).
 
 Scala import workflow and supported limits: [local import guide](docs/scala-import.md).
+
+Numeric TUN import, including u-he export layout: [supported formats](docs/tun-import.md).

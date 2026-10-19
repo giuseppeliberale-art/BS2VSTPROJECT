@@ -39,7 +39,7 @@ private:
     juce::Label heading, hint, nameLabel, targetLabel, status;
     juce::TextEditor nameEditor;
     juce::ComboBox target;
-    juce::TextButton newButton { "New Table" }, loadButton { "Load Table..." }, saveButton { "Save Table..." }, importButton { "Import Scala..." };
+    juce::TextButton newButton { "New Table" }, loadButton { "Load Table..." }, saveButton { "Save Table..." }, importButton { "Import Tuning..." };
     juce::TextButton undoButton { "Undo" }, redoButton { "Redo" }, allButton { "Select All" },
         setButton { "Set Offset" }, addButton { "Add Cents" }, resetButton { "Reset Notes" };
     juce::TextEditor bulkCents;

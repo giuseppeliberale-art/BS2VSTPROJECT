@@ -1,5 +1,6 @@
 #include "BSIITuningDocument.h"
 #include "BSIIScalaImport.h"
+#include "BSIITunImport.h"
 #include <iostream>
 #include <limits>
 #include <set>
@@ -68,6 +69,58 @@ int main()
     }
 
     // Independent expected bytes copied from Novation's published examples.
+    {
+        namespace ti = mt::tun;
+        namespace sc = mt::scala;
+        // Author-generated fixtures: the current u-he exporter writes this numeric layout.
+        std::string exported = "; AnaMark section\n[Exact Tuning]\n";
+        for (int key = 0; key < 128; ++key) exported += "note " + std::to_string (key) + "=" + std::to_string (key*100.0) + "\n";
+        const auto equal = ti::parse (exported,"File label");
+        check (equal.valid() && equal.available == 128 && equal.name == "File label", "u-he numeric layout imports all128 notes");
+        bool identity = true;
+        for (int key = 0; key < 128; ++key) identity &= std::abs (equal.notes[key].pitch - key) < 1.0e-9;
+        check (identity && std::abs (equal.notes[69].hz - 440) < 1.0e-9, "standard TUN reference has no octave offset");
+        const auto changed = ti::parse (exported + "note 69=6950.0000\n");
+        check (std::abs (changed.notes[69].pitch - 69.5) < 1.0e-9 && changed.notes[70].pitch == 70,
+               "last numeric assignment wins without affecting neighbours");
+        const auto period = ti::parse ("[Exact Tuning]\nnote 4=412.5\nnote 12=1200\n");
+        check (period.available == 128 && std::abs (period.notes[4].pitch-4.125)<1.0e-9
+               && std::abs (period.notes[16].pitch-16.125)<1.0e-9 && period.notes[127].pitch==127,
+               "documented periodic Exact Tuning completion and defaults");
+        const auto priority = ti::parse ("[Tuning]\nnote 69=7100\n" + exported);
+        const auto reversed = ti::parse (exported + "[Tuning]\nnote 69=7100\n");
+        check (priority.notes[69].pitch==69 && reversed.notes[69].pitch==69, "Exact Tuning priority independent of section order");
+        check (ti::parse ("[Tuning]\nnote 69 = ignored compatibility text\n"+exported).available==128,
+               "ignored lower-priority compatibility section is not interpreted");
+        check (! ti::parse ("[Exact Tuning]\nnote 69 : 7000\n").valid(), "malformed known assignment rejected");
+        const auto legacy = ti::parse ("[Tuning]\nNote 69 = +6950\n");
+        check (legacy.available==128 && legacy.notes[69].pitch==69.5 && legacy.notes[60].pitch==60,
+               "legacy integer cents and missing-note defaults");
+        const auto base = ti::parse ("[EXACT TUNING]\nBaseFreq=16.3515978312874146672\n");
+        check (base.available==116 && std::abs (base.notes[69].hz-880)<1.0e-8,
+               "file BaseFreq changes actual pitches and flags out-of-range notes");
+        check (ti::parse ("[Info]\nName=\"Named; table\"\n"+exported).name=="Named; table", "quoted semicolon kept in TUN name");
+        std::string crlf; for (char c : exported) crlf += c=='\n' ? "\r\n" : std::string(1,c);
+        check (ti::parse (crlf).available==128, "TUN CRLF input");
+        auto nulLines=exported; for (auto& c : nulLines) if (c=='\n') c='\0';
+        check (ti::parse (nulLines).available==128, "TUN NUL-delimited input");
+        for (const auto& bad : { "[Functional Tuning]\nnote 0=\"formula\"\n", "[Mapping]\n", "[Scale Begin]\nFormatVersion=200\n",
+                               "[Exact Tuning]\nnote 69=nan\n", "[Exact Tuning]\nBaseFreq=0\n", "[Exact Tuning]\nnote 0=50\n",
+                               "[Tuning]\nnote 69=6900.5\n", "[Exact Tuning]\nnote 128=0\n", "[Exact Tuning]\nnote 1 extra=0\n",
+                               "[Exact Tuning]\n[Exact Tuning]\n" })
+            check (! ti::parse (bad).valid(), "unsupported or malformed TUN cannot silently fall back");
+        check (! ti::parse (exported+"[Functional Tuning]\nnote 0=\"formula\"\n").valid()
+               && ! ti::parse (exported+"[Mapping]\n").valid(), "higher-priority TUN data blocks numeric fallback");
+        check (! ti::parse ("garbage").valid() && ! ti::parse (std::string(65537,'a')).valid(), "missing or oversized TUN rejected");
+        const auto unknown = ti::parse ("[Unknown]\nnot = parsed ?!\n" + exported);
+        check (unknown.available==128, "unknown metadata section ignored");
+        mt::Document before; before.targetTable=6;
+        check (! sc::apply(base,before,false), "TUN outside pitches require explicit keep policy");
+        const auto applied=sc::apply(base,before,true);
+        check (applied && applied->targetTable==6 && applied->table.pitch(127)==127
+               && std::abs(*applied->table.pitch(69)-81)<1.0e-9, "TUN reuses atomic preview application and retains destination");
+    }
+
     golden (0, { {69, 71.0} },
             {0xf0,0x7f,0,8,2,0,1,0x45,0x47,0,0,0xf7}, "documented A4 to B4");
     golden (1, { {69, 69.5} },

@@ -224,3 +224,11 @@ explicit keep-current policy is required for incomplete mappings. Destination
 slot metadata, MIDI routing and automation parameter indices remain unchanged.
 A pinned MIT-licensed Surge tuning-library dependency is vendored with notices
 included in macOS bundles. TUN and hardware tuning transfer remain pending.
+
+### Numeric TUN import — 19 October 2026
+
+The shared Import Tuning dialog now accepts numeric TUN v0/v1 data, including the
+current u-he generator layout. The file controls its base reference; KBM/manual
+reference fields are disabled. Imported pitches share preview, explicit preservation,
+one-step undo and native JSON saving. Formula/mapping sections cannot silently
+fall back to numeric compatibility data. No new hardware action or host parameter.

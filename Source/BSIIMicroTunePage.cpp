@@ -321,7 +321,7 @@ void MicroTunePage::chooseScala()
     if (importDialog) { importDialog->toFront (true); return; }
     juce::DialogWindow::LaunchOptions options;
     options.content.setOwned (new ScalaImportPanel (processor));
-    options.dialogTitle = "Import Scala - local preview";
+    options.dialogTitle = "Import Tuning - local preview";
     options.dialogBackgroundColour = juce::Colour (0xff202326);
     options.escapeKeyTriggersCloseButton = true;
     options.useNativeTitleBar = true;

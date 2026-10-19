@@ -78,8 +78,9 @@ Evidence: [recall](project-sound-recall.md), [global controls](global-control-re
   remain pending; table selection is already implemented and hardware-tested.
 - [ ] **Remaining tuning imports:** [Scala `.scl`/`.kbm` import](scala-import.md)
   now has local preview, explicit reference/mapping and unavailable-note handling,
-  and one-step undo. `.tun` import for u-he compatibility is next. Library browsing,
-  scale generators and MTS-file import remain later work. See
+  and one-step undo. [Numeric `.tun` import](tun-import.md), including the current
+  u-he export layout, is also implemented. Full formula-based TUN v2, library
+  browsing, scale generators and MTS-file import remain later work. See
   [import research](tuning-import-research.md).
 - [ ] **Patch-bank management:** full-bank backup/import and any stored-slot
   writing need explicit design and validation. Current transfers target the

@@ -273,6 +273,41 @@ int main (int argc, char** argv)
         panel.rebuildPreview();
         check (panel.applyPreview() && std::abs (*processor.getLocalTuningInfo().document.table.pitch (69) - 69) < 1.0e-9,
                "KBM import uses file reference frequency");
+        const auto tunFile = report.getChildFile ("own-table.tun");
+        juce::String tunText = "; independent numeric export fixture\n[Exact Tuning]\n";
+        for (int key = 0; key < 128; ++key) tunText += "note " + juce::String (key) + "=" + juce::String (key*100.0-31.7667,4) + "\n";
+        tunFile.replaceWithText (tunText);
+        check (panel.loadScaleFile (tunFile) && hz && ! hz->isEnabled() && keep && ! keep->getToggleState(),
+               "TUN selection disables manual reference and resets preservation policy");
+        check (! panel.loadMappingFile (mapping), "KBM cannot be combined with TUN");
+        const auto beforeTun = processor.getLocalTuningInfo();
+        panel.rebuildPreview();
+        check (! panel.applyPreview() && processor.getLocalTuningInfo().revision == beforeTun.revision,
+               "TUN preview blocks unavailable pitches by default");
+        check (picture (panel,report.getChildFile ("tun-preview.png")), "TUN preview render");
+        if (keep)
+        {
+            keep->setToggleState (true,juce::dontSendNotification); panel.rebuildPreview();
+            check (click (panel,"Apply to Local Table")
+                   && processor.getLocalTuningInfo().document.table.pitch (0)==beforeTun.document.table.pitch (0)
+                   && std::abs (*processor.getLocalTuningInfo().document.table.pitch (69) - 68.682333) < 1.0e-9,
+                   "TUN apply preserves unavailable notes and exact file pitches");
+            check (processor.undoLocalTuning()
+                   && processor.getLocalTuningInfo().document.table.pitch (69)==beforeTun.document.table.pitch (69),
+                   "TUN import undoes in one step");
+            check (processor.redoLocalTuning(), "TUN import redoes");
+            const auto savedTun = report.getChildFile ("imported-tun.json");
+            check (page->saveDocumentFile (savedTun), "imported TUN saves as native JSON");
+            const auto roundTrip = bsii::microtuning::parseDocument (savedTun.loadFileAsString());
+            check (roundTrip && roundTrip->table.pitch (69)==processor.getLocalTuningInfo().document.table.pitch (69),
+                   "TUN-to-JSON round trip retains pitch");
+        }
+        tunFile.replaceWithText (tunText+"[Functional Tuning]\nnote 0=\"formula\"\n");
+        check (panel.loadScaleFile (tunFile), "TUN selection still requires parsing");
+        const auto beforeUnsupported = processor.getLocalTuningInfo().revision;
+        panel.rebuildPreview();
+        check (! panel.applyPreview() && processor.getLocalTuningInfo().revision==beforeUnsupported,
+               "unsupported TUN cannot replace document with fallback data");
         const auto bad = report.getChildFile ("bad-scale.scl"); bad.replaceWithText ("bad");
         check (panel.loadScaleFile (bad), "malformed selection still requires parse");
         const auto revision = processor.getLocalTuningInfo().revision;
@@ -282,11 +317,11 @@ int main (int argc, char** argv)
     check (processor.getParameters().getParameter ("paraphonic")->getParameterIndex() == 94
            && static_cast<juce::AudioProcessor&> (processor).getParameters().size() == 95, "existing automation layout retained");
     check (listener.parameters == 0, "Scala imports do not change automation parameters");
-    check (click (*page,"Import Scala..."), "MicroTune opens actual import dialog");
+    check (click (*page,"Import Tuning..."), "MicroTune opens actual import dialog");
     juce::Component::SafePointer<juce::DialogWindow> importWindow;
     for (int i = 0; i < juce::Desktop::getInstance().getNumComponents(); ++i)
         if (auto* dialog = dynamic_cast<juce::DialogWindow*> (juce::Desktop::getInstance().getComponent (i));
-            dialog && dialog->getName() == "Import Scala - local preview") importWindow = dialog;
+            dialog && dialog->getName() == "Import Tuning - local preview") importWindow = dialog;
     check (importWindow != nullptr, "import dialog present");
     editor.reset(); pump();
     check (importWindow == nullptr, "closing editor destroys import session safely");

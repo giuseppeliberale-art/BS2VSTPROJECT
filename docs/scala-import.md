@@ -5,7 +5,7 @@ use it. It does not send tuning data or save hardware tuning slots.
 
 ## Use
 
-1. In MicroTune choose **Import Scala...**, then **Choose .scl...**.
+1. In MicroTune choose **Import Tuning...**, then **Choose .scl...**.
 2. Optionally choose a `.kbm` keyboard mapping. It supplies its own scale start,
    reference key/frequency and mapping, so the manual reference fields are disabled.
    **No KBM** restores the manual controls.
@@ -36,7 +36,7 @@ import session. A successful import is local unsaved work until saved.
   or complete keyboard mapping; the explicit controls supply those.
 - `.kbm`: optional key mapping, reference pitch, keyboard bounds and `x` skipped
   entries. Skipped keys and keys outside the declared range are flagged separately.
-- The importer accepts files up to 64 KiB each, with 1–1024 scale steps or 0–1024
+- The Scala importer accepts files up to 64 KiB each, with 1–1024 scale steps or 0–1024
   keyboard-map entries. Ratio numerator/denominator must be positive integers up
   to 2147483647. Cents magnitude is limited to 120000 and the final period must
   be positive. KBM start/reference/range keys must be 0–127, formal octave and
@@ -56,10 +56,12 @@ import session. A successful import is local unsaved work until saved.
   version-1 JSON, and source files are never modified. Name comes from the scale
   description (up to 128 characters), with a fallback for empty descriptions.
 
-The editor's normal Load Table still reads BSII MicroTune JSON. The separate
+The same dialog also accepts [numeric TUN files](tun-import.md), including the
+current u-he export layout. The editor's normal Load Table still reads BSII
+MicroTune JSON. The separate
 command-line file tool still reads/writes that JSON and exports documented
-note-change SysEx. Neither now imports TUN, `.mid`, `.syx` or Ableton `.ascl`.
-TUN compatibility with u-he remains explicitly pending.
+note-change SysEx. The command-line tool does not import TUN. Neither workflow imports `.mid`,
+`.syx` or Ableton `.ascl` files. Formula-based TUN v2 is not supported.
 
 ## Dependency and validation
 
