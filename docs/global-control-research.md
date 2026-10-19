@@ -360,3 +360,32 @@ recovery/diagnosis plan. Further investigation should establish normal manual
 behavior in an isolated fresh session first, and seek Novation guidance rather
 than expanding speculative sends. A synth firmware regression test is unavailable
 in this repository; local unit tests cannot reproduce this hardware symptom.
+
+## Ableton input-route isolation — 20 October 2026
+
+The later observations supersede treating the manual-adjustment symptom as an
+established standalone hardware fault. User reported that Tune operated normally
+with Ableton closed and restored Tune 0 manually. After disconnecting USB, opening
+an empty Ableton Set without plugins/External Instrument, and reconnecting USB,
+the requested manual 0 -> +1 -> 0 check worked normally. In the original Set,
+changing the BS2 track to MIDI From = No Input also made the requested manual Tune
+check work at the correct values. No additional diagnostic MIDI was sent.
+
+These controlled differences strongly implicate a MIDI echo through that track's
+input/device/output route. This is consistent with the independently measured
+asymmetry: a hardware Tune +1 emits raw 65, while remotely receiving 65 displayed
++50 in earlier tests. Returning the outgoing message can therefore change Tune
+unexpectedly. The exact outbound echo was not captured during this isolation;
+its specific device/path remains an inference, not a traced packet-level result.
+Neither firmware corruption nor a permanent change to the manual range is
+established. The paired-data probe did not establish a negative receive encoding.
+
+Working configuration: MIDI From = No Input on the original BS2 track. This
+blocks keyboard/CC input through that host track; MIDI clips and parameter
+output can still be tested separately. The plugin's existing direct hardware RX
+is a separate path; no code was changed. If hardware MIDI recording is needed,
+use a separate input track without a return route to the synth, and verify that
+configuration before recommending it as accepted. Do not re-enable the previous
+input/output loop or send more speculative Tune probes to diagnose this symptom.
+The final requested resting state is Tune 0 and Function/Exit; a complete range
+sweep and acoustic frequency measurement were not performed in this isolation.

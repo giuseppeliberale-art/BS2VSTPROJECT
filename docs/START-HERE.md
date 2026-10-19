@@ -41,12 +41,15 @@ from the old chat. Verify the current checkout and validation status first.
   had no audio routing for pitch measurement. Table 0 was authorized for a later
   test and selected after power-cycle, but no tuning data was sent. Resume pitch
   measurements only once audio/tuner is available; hardware backup is unresolved.
-- Global Tune warning (20 October): paired-data NRPN testing failed to produce
-  a negative value; manual stepping was then reported as 0 -> -1 -> 49. Testing
-  stopped. The user confirmed display 0 after a second paired-zero recovery, but
-  normal manual range/acoustic tuning are unverified. Do not repeat the probe or
-  mark Global Tune supported. Read `docs/global-control-research.md` before any
-  further Tune work. The temporary sender was removed; no tuning tables were sent.
+- Global Tune isolation (20 October): the paired-data candidate did not establish
+  negative receive support. Later manual-adjustment problems disappeared with
+  Ableton closed, an empty Set, and the original Set's BS2 track set to MIDI From
+  = No Input. This strongly implicates host-track MIDI echo interacting with
+  asymmetric Tune send/receive encoding, not a proven persistent firmware fault.
+  Keep that host input route disabled; the last requested resting Tune value is 0.
+  No new probe commands were sent during isolation; the temporary sender was
+  removed. Read `docs/global-control-research.md` before further work. Hardware
+  recording needs a separate route that does not return these messages to BS2.
 - Public prerelease `v0.8.2-preview.20261018` is an OLDER binary release.
   A source push does not replace its downloads. Publish new binaries only when
   requested and clearly state their compatibility and validation scope.

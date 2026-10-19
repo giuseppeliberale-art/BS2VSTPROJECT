@@ -62,9 +62,11 @@ Evidence: [recall](project-sound-recall.md), [global controls](global-control-re
   Hardware emits NRPN 64:6 with offset values, but replaying raw 14 produced
   +14 rather than -50. Standard RPN 0:1 is only an unverified candidate, not
   established BSII support. Keep a control unimplemented until receive works.
-  A 20 October paired-data probe also failed and was followed by unexpected
-  manual negative stepping. Display was returned to 0; normal adjustment range
-  remains unverified. Stop speculative sends and review the global-control log.
+  A 20 October paired-data probe failed. Later unexpected manual stepping was
+  isolated to the original Ableton track input route: closed Live, an empty Set,
+  and MIDI From = No Input each allowed normal manual adjustment. Track MIDI
+  echo is strongly implicated; keep that loop disabled and review the log.
+  Negative receive support remains unresolved; do not resume speculative sends.
 - [ ] **Local Control:** establish reliable Off and On reception/readback.
   CC122 Off was reported; attempts at On did not confirm success. A manual
   toggle emitted no messages in two captures. No plugin control yet.

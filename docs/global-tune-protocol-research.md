@@ -44,3 +44,10 @@ Subsequent manual negative stepping behaved unexpectedly (user reported
 range and acoustic tuning were not re-established. Probing stopped; the exact
 sequence and limitations are in [global-control research](global-control-research.md).
 Do not implement or repeat this candidate as verified signed receive support.
+
+The subsequent Ableton isolation in global-control-research.md found normal
+manual adjustment with Live closed, with an empty Set, and in the original Set
+when its BS2 track used MIDI From = No Input. The restricted-adjustment symptom
+strongly implicates track MIDI echo rather than a proven standalone hardware
+fault. Outgoing/incoming Tune encoding asymmetry makes such an echo hazardous;
+no negative receive mapping has been established.
