@@ -94,3 +94,14 @@ Official4.14 PDF and extracted text are cached under ignored `docs/vendor-cache/
 `bsii-4.14.pdf`, `bsii-4.14.txt`, `next-phase-excerpts.txt`. PDF pages7 (patches),
 18–19 (arp/seq) and24 (MIDI list) are indexed in `docs/local-reference.md`.
 Vendor files stay local; only this index and project notes enter Git.
+
+## Offline status and capture analysis
+
+```sh
+python3 tools/midi-lab/lab.py status
+python3 tools/midi-lab/lab.py status --json
+python3 tools/midi-lab/lab.py analyse-sweep tests/glide-divergence-fixtures
+```
+
+These commands do not open MIDI devices. See the [research toolkit](research-toolkit.md)
+for validation scope, manifest format and inference limits.

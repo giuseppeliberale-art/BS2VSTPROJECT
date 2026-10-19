@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 1,
+  "id": "glideDivergence",
+  "stateDomain": "edit-buffer",
+  "firmware": "4.14",
+  "baseline": "before.syx",
+  "restored": "after.syx",
+  "comparisonField": "glideDivergence",
+  "expectedRange": [
+    0,
+    15
+  ],
+  "samples": [
+    {
+      "file": "glide-divergence-0.syx",
+      "value": 0
+    },
+    {
+      "file": "glide-divergence-1.syx",
+      "value": 1
+    },
+    {
+      "file": "glide-divergence-2.syx",
+      "value": 2
+    },
+    {
+      "file": "glide-divergence-3.syx",
+      "value": 3
+    },
+    {
+      "file": "glide-divergence-4.syx",
+      "value": 4
+    },
+    {
+      "file": "glide-divergence-5.syx",
+      "value": 5
+    },
+    {
+      "file": "glide-divergence-6.syx",
+      "value": 6
+    },
+    {
+      "file": "glide-divergence-7.syx",
+      "value": 7
+    },
+    {
+      "file": "glide-divergence-8.syx",
+      "value": 8
+    },
+    {
+      "file": "glide-divergence-9.syx",
+      "value": 9
+    },
+    {
+      "file": "glide-divergence-10.syx",
+      "value": 10
+    },
+    {
+      "file": "glide-divergence-11.syx",
+      "value": 11
+    },
+    {
+      "file": "glide-divergence-12.syx",
+      "value": 12
+    },
+    {
+      "file": "glide-divergence-13.syx",
+      "value": 13
+    },
+    {
+      "file": "glide-divergence-14.syx",
+      "value": 14
+    },
+    {
+      "file": "glide-divergence-15.syx",
+      "value": 15
+    }
+  ]
+}

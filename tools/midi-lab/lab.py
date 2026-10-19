@@ -2,6 +2,7 @@
 """Local BSII evidence recorder. No MIDI output unless backup/restore/sweep is chosen."""
 from __future__ import annotations
 import argparse
+import importlib.util
 import csv
 from collections import Counter
 from datetime import datetime
@@ -176,6 +177,13 @@ def execute(args, log=None):
         subprocess.run(list(map(str, args)), cwd=ROOT, check=True)
 
 
+def offline_tools():
+    spec = importlib.util.spec_from_file_location('bsii_offline', Path(__file__).with_name('offline.py'))
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def bridge():
     binary = CACHE / 'Bridge'
     source = Path(__file__).with_name('Bridge.swift')
@@ -187,7 +195,16 @@ def bridge():
 
 def inspector():
     binary = ROOT / 'build' / 'Release' / 'BSIIPatchInspect'
-    inputs = list((ROOT/'Source').glob('*.h')) + [Path(__file__).with_name('PatchInspect.cpp')]
+    # Only actual local include dependencies affect this binary, not unrelated UI headers.
+    inputs = set()
+    def dependencies(path):
+        if path in inputs: return
+        inputs.add(path)
+        for name in re.findall(r'^#include \"([^\"]+)\"',path.read_text(),re.M):
+            candidates = [path.parent/name, ROOT/'Source'/name]
+            for candidate in candidates:
+                if candidate.is_file(): dependencies(candidate); break
+    dependencies(Path(__file__).with_name('PatchInspect.cpp'))
     if not binary.exists() or any(p.stat().st_mtime > binary.stat().st_mtime for p in inputs):
         raise RuntimeError('Run ./tools/validate.sh or lab.py prepare to build/update the actual patch decoder')
     return binary
@@ -357,8 +374,23 @@ def main():
     diff.add_argument('before', type=Path); diff.add_argument('after', type=Path)
     active = commands.add_parser('sweep', help='explicit: sends test values, backs up/restores current sound')
     active.add_argument('control', help='existing sampler name, e.g. bend-amount')
+    status_cmd = commands.add_parser('status', help='offline: concise current-source coverage and validation report')
+    status_cmd.add_argument('--json', action='store_true')
+    analysis = commands.add_parser('analyse-sweep', help='offline: analyse labelled edit-buffer captures; never sends MIDI')
+    analysis.add_argument('directory',type=Path)
     args = parser.parse_args()
     if args.command is None: args = parser.parse_args(['record'])
+    if args.command == 'status':
+        offline = offline_tools()
+        report = offline.status(ROOT,registry())
+        print(json.dumps(report,indent=2) if args.json else offline.status_text(report)); return
+    if args.command == 'analyse-sweep':
+        offline = offline_tools()
+        report = offline.analyse_sweep(args.directory,inspector())
+        directory = run_dir('analyse-sweep')
+        (directory/'report.json').write_text(json.dumps(report,indent=2)+'\n')
+        (directory/'report.md').write_text(offline.sweep_text(report))
+        print(offline.sweep_text(report)); print(f'Report: {directory / "report.md"}'); return
     if args.command == 'prepare':
         CACHE.mkdir(parents=True, exist_ok=True)
         bridge()

@@ -1,0 +1,151 @@
+"""Offline research-report regression checks; no MIDI transport."""
+import importlib.util
+import json
+import os
+from pathlib import Path
+import shutil
+import tempfile
+import unittest
+from unittest.mock import patch
+
+ROOT=Path(__file__).resolve().parents[1]
+spec=importlib.util.spec_from_file_location('offline',ROOT/'tools/midi-lab/offline.py')
+offline=importlib.util.module_from_spec(spec); spec.loader.exec_module(offline)
+
+class ResearchToolsTests(unittest.TestCase):
+    def synthetic(self):
+        result=[]
+        for value in range(16):
+            data=bytearray(154)
+            data[20]=((value&1)<<6)
+            data[21]=(((value>>1)&1)^1)|(((value>>2)&1)<<5)
+            data[27]=((value>>3)&1)<<2
+            result.append((value,bytes(data)))
+        return result
+
+    def test_split_and_inverted_mapping_with_held_out_values(self):
+        result=offline.infer_bits(self.synthetic())['candidate']
+        self.assertTrue(result['fitsAllSamples'])
+        self.assertEqual((result['matches'],result['heldOutSamples'],result['heldOutMatches']),(16,4,4))
+        self.assertEqual([(p['byte'],p['bit'],p['inverted']) for p in result['bits']],[(20,6,False),(21,0,True),(21,5,False),(27,2,False)])
+
+    def test_ambiguous_alias_does_not_produce_unique_candidate(self):
+        samples=[]
+        for value,data in self.synthetic():
+            raw=bytearray(data);raw[30]=(value&1);samples.append((value,bytes(raw)))
+        result=offline.infer_bits(samples)
+        self.assertIsNone(result['candidate'])
+        self.assertEqual(len(result['bitCandidates'][0]['options']),2)
+
+    def test_held_out_failure_is_not_reported_as_fit(self):
+        samples=self.synthetic();value,raw=samples[-1];raw=bytearray(raw);raw[27]^=4;samples[-1]=(value,bytes(raw))
+        result=offline.infer_bits(samples)['candidate']
+        self.assertIsNotNone(result)
+        self.assertFalse(result['fitsAllSamples'])
+        self.assertEqual(result['heldOutMatches'],3)
+
+    def test_constant_values_do_not_establish_mapping(self):
+        self.assertIsNone(offline.infer_bits([(0,bytes(154)),(0,bytes(154))])['candidate'])
+
+    def root(self,path):
+        (path/'Source').mkdir();(path/'tests').mkdir();(path/'tools').mkdir()
+        (path/'CMakeLists.txt').write_text('project(test)')
+        (path/'Source/test.cpp').write_text('original')
+        return path
+
+    def report(self,root):
+        report=root/'validation-results/run';report.mkdir(parents=True)
+        offline.validation_event(root,report,'start')
+        for stage in ['Configure','Build standalone and regression tests','Regression tests']:
+            offline.validation_event(root,report,'stage',stage,'passed')
+        (report/'tests.log').write_text('100% tests passed, 0 tests failed out of 9')
+        offline.validation_event(root,report,'finish')
+        return report/'validation.json'
+
+    def fake_git(self,root,*args): return 'abc123' if args[0]=='rev-parse' else ''
+
+    def test_status_matches_current_inputs_and_ignores_docs_only_changes(self):
+        with tempfile.TemporaryDirectory() as tmp,patch.object(offline,'git',side_effect=self.fake_git):
+            root=self.root(Path(tmp));self.report(root)
+            self.assertEqual(offline.status(root,[])['validation']['status'],'passed')
+            (root/'README.md').write_text('documentation')
+            self.assertEqual(offline.status(root,[])['validation']['status'],'passed')
+            (root/'Source/test.cpp').write_text('new code')
+            self.assertEqual(offline.status(root,[])['validation']['status'],'stale')
+
+    def test_short_ctest_summary_records_counts(self):
+        with tempfile.TemporaryDirectory() as tmp,patch.object(offline,'git',side_effect=self.fake_git):
+            root=self.root(Path(tmp));path=self.report(root)
+            (path.parent/'tests.log').write_text('100% tests passed out of 9')
+            offline.validation_event(root,path.parent,'finish')
+            self.assertEqual(offline.status(root,[])['validation']['status'],'passed')
+            self.assertEqual(json.loads(path.read_text())['tests']['passed'],9)
+
+    def test_changed_inputs_during_validation_cannot_pass(self):
+        with tempfile.TemporaryDirectory() as tmp,patch.object(offline,'git',side_effect=self.fake_git):
+            root=self.root(Path(tmp));path=self.report(root)
+            report=json.loads(path.read_text());report['initialFingerprint']='old';path.write_text(json.dumps(report))
+            self.assertEqual(offline.status(root,[])['validation']['status'],'stale')
+
+    def test_failed_incomplete_and_malformed_reports(self):
+        with tempfile.TemporaryDirectory() as tmp,patch.object(offline,'git',side_effect=self.fake_git):
+            root=self.root(Path(tmp));path=self.report(root);original=json.loads(path.read_text())
+            for changes,expected in [({'complete':False},'incomplete'),({'stages':{'Configure':'failed'}},'failed'),({'stages':{}},'unverified'),({'tests':None},'unverified')]:
+                path.write_text(json.dumps(dict(original,**changes)))
+                self.assertEqual(offline.status(root,[])['validation']['status'],expected)
+            path.write_text('[]');self.assertEqual(offline.status(root,[])['validation']['status'],'unverified')
+
+    def test_legacy_text_report_is_not_current_validation(self):
+        with tempfile.TemporaryDirectory() as tmp,patch.object(offline,'git',side_effect=self.fake_git):
+            root=self.root(Path(tmp));report=root/'validation-results/old';report.mkdir(parents=True)
+            (report/'summary.txt').write_text('100% tests passed')
+            self.assertEqual(offline.status(root,[])['validation']['status'],'unverified')
+
+    @unittest.skipUnless(os.environ.get('BSII_PATCH_INSPECT'),'Actual decoder supplied by CTest')
+    def test_glide_capture_proof_matches_actual_decoder(self):
+        result=offline.analyse_sweep(ROOT/'tests/glide-divergence-fixtures',os.environ['BSII_PATCH_INSPECT'])
+        self.assertEqual(result['verdict'],'CAPTURED_MAPPING_MATCH')
+        self.assertEqual(result['changedBytes'],[dict(byte=118,mask='0x3C')])
+        self.assertEqual(result['productionComparison']['matches'],16)
+        self.assertEqual(result['inference']['candidate']['heldOutMatches'],4)
+        self.assertTrue(result['restoration']['byteIdentical'])
+
+    @unittest.skipUnless(os.environ.get('BSII_PATCH_INSPECT'),'Actual decoder supplied by CTest')
+    def test_missing_captures_restoration_and_unrelated_changes_require_review(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            folder=Path(tmp)/'experiment';shutil.copytree(ROOT/'tests/glide-divergence-fixtures',folder)
+            manifest_path=folder/'experiment.json';manifest=json.loads(manifest_path.read_text())
+            original=manifest.copy();manifest['samples']=manifest['samples'][3:];manifest_path.write_text(json.dumps(manifest))
+            result=offline.analyse_sweep(folder,os.environ['BSII_PATCH_INSPECT'])
+            self.assertEqual(result['missingInputs'],[0,1,2]);self.assertEqual(result['verdict'],'REVIEW_REQUIRED')
+            manifest_path.write_text(json.dumps(original))
+            raw=bytearray((folder/'after.syx').read_bytes());raw[16]^=1;(folder/'after.syx').write_bytes(raw)
+            result=offline.analyse_sweep(folder,os.environ['BSII_PATCH_INSPECT'])
+            self.assertFalse(result['restoration']['byteIdentical']);self.assertEqual(result['verdict'],'REVIEW_REQUIRED')
+            raw=bytearray((folder/'glide-divergence-0.syx').read_bytes());raw[16]^=1;(folder/'glide-divergence-0.syx').write_bytes(raw)
+            result=offline.analyse_sweep(folder,os.environ['BSII_PATCH_INSPECT'])
+            self.assertTrue(result['unexpectedDecodedChanges']);self.assertEqual(result['verdict'],'REVIEW_REQUIRED')
+
+    @unittest.skipUnless(os.environ.get('BSII_PATCH_INSPECT'),'Actual decoder supplied by CTest')
+    def test_constant_unmapped_change_is_not_hidden_by_decoder(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            folder=Path(tmp)/'experiment';shutil.copytree(ROOT/'tests/glide-divergence-fixtures',folder)
+            for path in folder.glob('glide-divergence-*.syx'):
+                raw=bytearray(path.read_bytes());raw[120]^=1;path.write_bytes(raw)
+            result=offline.analyse_sweep(folder,os.environ['BSII_PATCH_INSPECT'])
+            self.assertEqual(result['verdict'],'REVIEW_REQUIRED')
+            self.assertEqual(result['unexplainedChangedBits'],[dict(byte=120,mask='0x01')])
+
+    def test_bad_domains_paths_duplicate_samples_and_framing_rejected_before_decoder(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            folder=Path(tmp)/'experiment';shutil.copytree(ROOT/'tests/glide-divergence-fixtures',folder)
+            manifest_path=folder/'experiment.json';original=json.loads(manifest_path.read_text())
+            for key,value in [('stateDomain','tuning-table'),('baseline','../outside.syx'),('restored','before.syx')]:
+                manifest_path.write_text(json.dumps(dict(original,**{key:value})))
+                with self.assertRaises(ValueError): offline.analyse_sweep(folder,'MUST_NOT_RUN')
+            manifest=json.loads(json.dumps(original));manifest['samples'][1]['file']=manifest['samples'][0]['file'];manifest_path.write_text(json.dumps(manifest))
+            with self.assertRaises(ValueError): offline.analyse_sweep(folder,'MUST_NOT_RUN')
+            manifest_path.write_text(json.dumps(original));(folder/'glide-divergence-0.syx').write_bytes(b'bad')
+            with self.assertRaises(ValueError): offline.analyse_sweep(folder,'MUST_NOT_RUN')
+
+if __name__=='__main__': unittest.main()

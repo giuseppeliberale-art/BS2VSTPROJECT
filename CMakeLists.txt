@@ -69,6 +69,8 @@ if(BSII_BUILD_TESTS)
     find_package(Python3 3.10 REQUIRED COMPONENTS Interpreter)
     add_test(NAME MidiLabTools COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/tests/MidiLabTest.py")
     set_tests_properties(MidiLabTools PROPERTIES ENVIRONMENT "BSII_PATCH_INSPECT=$<TARGET_FILE:BSIIPatchInspect>")
+    add_test(NAME ResearchTools COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/tests/ResearchToolsTest.py")
+    set_tests_properties(ResearchTools PROPERTIES ENVIRONMENT "BSII_PATCH_INSPECT=$<TARGET_FILE:BSIIPatchInspect>")
 
     add_executable(BSIIPatchInspect tools/midi-lab/PatchInspect.cpp)
     target_include_directories(BSIIPatchInspect PRIVATE tests Source)

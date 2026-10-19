@@ -12,14 +12,18 @@ printf 'BSII Control validation\nStarted: %s\nCommit: %s\n' "$(date -Iseconds)" 
 printf '\nWorking tree at start:\n' >> "$summary"
 git -C "$repo_dir" status --short >> "$summary" 2>/dev/null
 
+python3 "$repo_dir/tools/midi-lab/offline.py" start "$report_dir" || exit 1
+
 run_stage() {
     local label="$1" logfile="$2"
     shift 2
     printf '%s…\n' "$label"
     if "$@" > "$report_dir/$logfile" 2>&1; then
         printf 'PASS: %s\n' "$label" | tee -a "$summary"
+        python3 "$repo_dir/tools/midi-lab/offline.py" stage "$report_dir" --label "$label" --verdict passed || exit 1
     else
         local result=$?
+        python3 "$repo_dir/tools/midi-lab/offline.py" stage "$report_dir" --label "$label" --verdict failed || exit 1
         printf 'FAIL: %s (exit %s)\nLog: %s\n' "$label" "$result" "$report_dir/$logfile" | tee -a "$summary"
         tail -n 25 "$report_dir/$logfile"
         printf '\nReport: %s\n' "$summary"
@@ -46,4 +50,5 @@ run_stage 'Regression tests' tests.log ctest --test-dir "$build_dir" -C Release 
 printf '\n' >> "$summary"
 /usr/bin/grep -E 'tests passed|Total Test time' "$report_dir/tests.log" | tee -a "$summary"
 printf '\nScope: standalone build and offline regressions. Does not verify live hardware, sound, signing, AU or VST3 hosts.\n' >> "$summary"
+python3 "$repo_dir/tools/midi-lab/offline.py" finish "$report_dir" || exit 1
 printf '\nReport: %s\n' "$summary"

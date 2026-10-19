@@ -172,7 +172,7 @@ text to see the state.
 - Preset changes have been checked from the app and hardware. After app preset
   selection, all 76 editor values matched the saved hardware patch:
   [preset validation](docs/preset-validation.md).
-- The current offline suite has **eight registered test groups**, including
+- The current offline suite has **nine registered test groups**, including
   15 Python checks for the MIDI Lab tools.
 
 These checks establish specific MIDI, patch storage and editor behaviors. They do
@@ -227,3 +227,6 @@ before using modes that change the current sound.
 - [Manual test checklist](docs/manual-test-checklist.md)
 - [Official manual reference index](docs/local-reference.md)
 - [Implemented MIDI control definitions](Source/BSIIMidi.h)
+
+For compact validation status and offline capture inference, see the
+[research toolkit](docs/research-toolkit.md).

@@ -165,3 +165,12 @@ document survives editor recreation and DAW-state save/restore, silently. The
 hardware-selected table, patch/snapshot paths and 95 automation parameters remain
 separate. See [page instructions and limits](microtune-editor.md). Hardware table
 transfer/save is still pending, and the public preview is not automatically updated.
+
+### Offline research tools — 19 October 2026
+
+Added a compact `status` command with source-fingerprinted validation and an
+`analyse-sweep` command for existing edit-buffer captures. The Glide Divergence
+fixture provides a reproducible reference; reports retain evidence hashes and
+separate inferred candidates from hardware claims. See [research toolkit](research-toolkit.md).
+The suite now has nine registered test groups. This increment changes no plugin
+runtime code and adds no tuning-editor or hardware-transfer features.
