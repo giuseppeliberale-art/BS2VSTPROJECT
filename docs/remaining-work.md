@@ -3,6 +3,7 @@
 Updated 19 October 2026. Audited source at d20c653, the cached official firmware
 4.14 manual, retained fixtures, and the preceding session's user reports.
 This is the current task checklist; older status documents preserve chronology.
+For the latest handoff and pending installation checks, read [Start here](START-HERE.md).
 No synth was connected or measured for this audit. A mapped field is not proof
 of every UI path, acoustic result or parameter interaction.
 
@@ -79,8 +80,9 @@ Evidence: [recall](project-sound-recall.md), [global controls](global-control-re
 - [ ] **Remaining tuning imports:** [Scala `.scl`/`.kbm` import](scala-import.md)
   now has local preview, explicit reference/mapping and unavailable-note handling,
   and one-step undo. [Numeric `.tun` import](tun-import.md), including the current
-  u-he export layout, is also implemented. Full formula-based TUN v2, library
-  browsing, scale generators and MTS-file import remain later work. See
+  u-he export layout, is also implemented. [TUN v2 formula and keyboard mapping
+  import](tun-v2-import.md) is now supported. Library browsing, scale generators,
+  multi-scale file selection and MTS-file import remain later work. See
   [import research](tuning-import-research.md).
 - [ ] **Patch-bank management:** full-bank backup/import and any stored-slot
   writing need explicit design and validation. Current transfers target the

@@ -121,6 +121,71 @@ int main()
                && std::abs(*applied->table.pitch(69)-81)<1.0e-9, "TUN reuses atomic preview application and retains destination");
     }
 
+    {
+        namespace ti = mt::tun;
+        namespace sc = mt::scala;
+        const auto v2 = [] (const std::string& functions, const std::string& mapping = "", const std::string& compatibility = "")
+        {
+            return "[Scale Begin]\nFormat=\"AnaMark-TUN\"\nFormatVersion=200\n[Info]\nName=\"V2 verification\"\nID=\"V2_test\"\n"
+                + compatibility + "[Functional Tuning]\n" + functions
+                + (mapping.empty()?"":"[Mapping]\n"+mapping) + "[Scale End]\n";
+        };
+        const auto empty = ti::parse (v2(""));
+        check (empty.available==128 && empty.name=="V2 verification", "TUN v2 implicit equal temperament");
+        const auto example = ti::parse (v2("InitEqual=(0,8)\nnote 0=\"\"\nnote 1=\"*2 /3\"\nnote 2=\"#>-1 %1200 +-3\"\nnote 3=\"#=1\"\nnote 1=\"*3 /2\"\n"));
+        const auto f1 = 8*std::exp2(1.0/12);
+        check (example.valid() && std::abs(example.notes[1].hz-f1)<1e-10
+               && std::abs(example.notes[2].hz-(f1*4/3-3))<1e-10 && std::abs(example.notes[3].hz-f1*2/3)<1e-10,
+               "published functional example preserves sequential references");
+        const auto arithmetic=ti::parse(v2("note 69=\"#220 *3 /2 %1200 +10\"\nnote 70=\"#=69\"\nnote 71=\"#>-1 +>-2\"\n"));
+        check (arithmetic.valid() && arithmetic.notes[69].hz==670 && arithmetic.notes[70].hz==670
+               && arithmetic.notes[71].hz==1340, "all equation tokens and reference operands");
+        const auto duplicate=ti::parse(v2("note 69=\"#220 *2 *3 /2 /3 %1200 %0 +10 +20\"\n"));
+        check (duplicate.valid() && duplicate.notes[69].hz==240, "duplicate formula tokens use last value");
+        const auto loops=ti::parse(v2("note 3=\"*2 ~5\"\nnote 100=\"*3 ~-3\"\n"));
+        check (loops.valid() && std::abs(loops.notes[7].hz/(440*std::exp2((7-69)/12.0))-2)<1e-12
+               && std::abs(loops.notes[8].hz/(440*std::exp2((8-69)/12.0))-1)<1e-12
+               && std::abs(loops.notes[98].hz/(440*std::exp2((98-69)/12.0))-3)<1e-12,
+               "positive and negative formula loops have correct endpoints");
+        const auto periodic=ti::parse(v2("note 9=\"%22\"\nnote 12=\"#>-12 *2 ~999\"\n"));
+        check (periodic.available==128 && std::abs(periodic.notes[69].hz-440*std::exp2(22.0/1200))<1e-9
+               && std::abs(periodic.notes[68].pitch-68)<1e-9, "published periodic formula expands to last key");
+        const auto reverse=ti::parse(v2("note 127=\"#440 ~-999\"\n"));
+        check (reverse.available==128 && reverse.notes[0].hz==440 && reverse.notes[127].hz==440, "open backward loop is bounded and inclusive");
+        const auto ensured=ti::parse(v2("InitEqual=(69,432)\nnote 69=\"!440\"\n"));
+        check (ensured.available==128 && std::abs(ensured.notes[69].hz-440)<1e-9 && std::abs(ensured.notes[60].pitch-60)<1e-9,
+               "ensure-frequency shifts whole scale");
+        const auto reset=ti::parse(v2("note 69=\"*3\"\nInitEqual=(69,432)\n"));
+        check (reset.valid() && reset.notes[69].hz==432, "InitEqual resets earlier functional edits");
+        const auto priority=ti::parse(v2("", "", "[Exact Tuning]\nnote 69=not numeric compatibility data\n"));
+        check (priority.available==128 && std::abs(priority.notes[69].hz-440)<1e-9, "authoritative v2 ignores numeric compatibility data");
+        const auto mapped=ti::parse(v2("", "Keyboard 60=69\nKeyboard 127=200\nKeyboard 0=-1\n"));
+        check (mapped.valid() && mapped.notes[60].hz==440 && mapped.notes[127].status==sc::NoteStatus::unmapped
+               && mapped.notes[0].status==sc::NoteStatus::unmapped, "mapping is applied without boundary clamping");
+        const auto mapLoop=ti::parse(v2("", "LoopSize=12\nKeyboard 0=7\n"));
+        check (mapLoop.valid() && std::abs(mapLoop.notes[60].pitch-67)<1e-9, "keyboard mapping loop uses scale degree not input frequency");
+        const auto muted=ti::parse(v2("note 69=\"#0\"\nnote 70=\"#-1\"\n"));
+        check (muted.available==126 && muted.notes[69].status==sc::NoteStatus::muted && muted.notes[70].status==sc::NoteStatus::muted,
+               "nonpositive frequencies remain explicitly muted");
+        mt::Document before; before.table.setCents(69,20);
+        check (!sc::apply(muted,before,false), "muted v2 keys require explicit keep policy");
+        const auto kept=sc::apply(muted,before,true);
+        check (kept && kept->table.pitch(69)==before.table.pitch(69), "keep muted key retains audible current pitch");
+        for(const auto& bad : { "note 69=\"/0\"\n", "note 69=\"!0\"\n", "note 69=\"*2 !440\"\n", "note 0=\"#>-1\"\n",
+                               "note 127=\"#>1\"\n", "note 69=\"#=128\"\n", "note 69=\"#=-1\"\n", "note 128=\"#440\"\n",
+                               "note 69=\"#nan\"\n", "note 69=\"#inf\"\n", "note 69=\"/1e-300 *1e9\"\n", "note 69=\"*\"\n",
+                               "note 69=\"~99999999999999999999\"\n", "note 69=\"#1.0oops\"\n", "InitEqual=(69,0)\n", "InitEqual=(69junk,440)\n" })
+            check (!ti::parse(v2(bad)).valid(), "invalid formula/reference/math rejects entire v2 import");
+        check (!ti::parse("[Functional Tuning]\nnote 69=\"#440\"\n").valid(), "v2 needs its framing and declared version");
+        auto unclosed=v2("");unclosed.erase(unclosed.find("[Scale End]"));
+        check (!ti::parse(unclosed).valid(), "missing Scale End rejected");
+        check (!ti::parse(v2("")+v2("")).valid(), "multiple scale datasets rejected");
+        const auto escaped=ti::parse(v2("note 69=\"\\0x23440\"\n"));
+        check (escaped.valid() && escaped.notes[69].hz==440, "TUN hexadecimal escape decoded before formula evaluation");
+        const auto engineEscaped=ti::parse(v2("note 69=\"\\x023440\"\n"));
+        check (engineEscaped.valid() && engineEscaped.notes[69].hz==440, "AnaMark writer hexadecimal escape spelling supported");
+    }
+
     golden (0, { {69, 71.0} },
             {0xf0,0x7f,0,8,2,0,1,0x45,0x47,0,0,0xf7}, "documented A4 to B4");
     golden (1, { {69, 69.5} },

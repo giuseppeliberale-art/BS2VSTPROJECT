@@ -48,7 +48,7 @@ inline std::optional<std::string> label (const std::string& value)
     }
     return result;
 }
-inline scala::Preview parse (const std::string& input, const std::string& fallbackName = "Imported TUN table")
+inline scala::Preview parseNumeric (const std::string& input, const std::string& fallbackName = "Imported TUN table")
 {
     scala::Preview result;
     try
@@ -165,4 +165,30 @@ inline scala::Preview parse (const std::string& input, const std::string& fallba
     catch (const std::exception& error) { result.error = error.what(); }
     return result;
 }
+// V2 lives in a compiled adapter so third-party implementation details do not
+// spread into editor/processor translation units.
+scala::Preview parseV2 (const std::string&, const std::string&);
+inline scala::Preview parse (const std::string& input, const std::string& fallbackName = "Imported TUN table")
+{
+    if (input.empty() || input.size() > 65536) { scala::Preview failed; failed.error = "Use a nonempty TUN file up to 64 KiB."; return failed; }
+    std::string text = input;
+    for (auto& c : text) if (c == '\r' || c == '\0') c = '\n';
+    std::istringstream lines (text);
+    std::string section;
+    for (std::string row; std::getline (lines,row);)
+    {
+        row = scala::trim (uncomment (row));
+        if (row.size() >= 2 && row.front() == '[' && row.back() == ']')
+        {
+            section = lower (scala::trim (row.substr (1,row.size()-2)));
+            if (section == "functional tuning" || section == "mapping") return parseV2 (input,fallbackName);
+        }
+        const auto equal = row.find ('=');
+        if (section == "scale begin" && equal != std::string::npos
+            && lower (scala::trim (row.substr (0,equal))) == "formatversion"
+            && scala::trim (row.substr (equal+1)) == "200") return parseV2 (input,fallbackName);
+    }
+    return parseNumeric (input,fallbackName);
+}
+
 }

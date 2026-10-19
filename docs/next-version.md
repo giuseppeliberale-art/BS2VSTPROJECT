@@ -232,3 +232,12 @@ current u-he generator layout. The file controls its base reference; KBM/manual
 reference fields are disabled. Imported pitches share preview, explicit preservation,
 one-step undo and native JSON saving. Formula/mapping sections cannot silently
 fall back to numeric compatibility data. No new hardware action or host parameter.
+
+### TUN v2 formula and keyboard mapping import — 19 October 2026
+
+Added a bounded single-dataset TUN v2 adapter using the pinned MIT AnaMark formula
+engine. Supports the documented equation tokens, sequential references, loops,
+whole-scale retuning and keyboard mapping. Muted keys are explicit preview states;
+keeping them preserves current pitches rather than muting MIDI. Formula errors
+cannot fall back to numeric compatibility sections. JSON, undo and host parameter
+indices remain unchanged. Both third-party notices ship in the macOS bundles.

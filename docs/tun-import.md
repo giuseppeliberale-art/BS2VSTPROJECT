@@ -1,6 +1,6 @@
-# Numeric TUN import
+# TUN import
 
-19 October 2026. **MicroTune → Import Tuning...** accepts `.scl` or numeric `.tun`
+19 October 2026. **MicroTune → Import Tuning...** accepts `.scl` or `.tun`
 files. JSON remains the native Load Table / Save Table format. No hardware tuning
 transfer is added by this feature.
 
@@ -23,10 +23,10 @@ it in the DAW Set. The original file is never modified. Preview/cancel/file erro
 do not change the document or transmit MIDI. Reference/document staleness checks
 and dialog lifetime behave as in [Scala import](scala-import.md).
 
-## Supported subset
+## Numeric TUN v0/v1
 
-This is a numeric TUN v0/v1 reader, not a complete AnaMark v2 implementation.
-Supported musical data:
+The numeric reader remains available alongside [TUN v2 formula and mapping
+import](tun-v2-import.md). Supported numeric musical data:
 
 - `[Tuning]`: integer-cent note values using the standard TUN base reference.
 - `[Exact Tuning]`: numeric/scientific cent values and optional positive `BaseFreq`.
@@ -45,11 +45,10 @@ metadata/sections are ignored. Known note assignments must be well formed;
 duplicate note/base assignments use the last value. Repeated known sections or
 multiple-scale datasets are rejected.
 
-`[Functional Tuning]`, `[Mapping]`, a declared version other than 100, and multi-scale
-files are rejected rather than importing lower-priority compatibility data. No
-formula evaluation is performed. A valid AnaMark v2 file can therefore be rejected;
-export numeric TUN v1 for this importer. `.msf`, MIDI files and generic tuning SysEx
-import are outside this increment.
+Formula-based files are handled by the [separate TUN v2 adapter](tun-v2-import.md),
+which requires a single framed dataset declaring version 200. Formula errors do not
+fall back to compatibility data. Multiple-scale `.msf` files, ordinary MIDI files
+and generic tuning SysEx import remain outside this increment.
 
 Input limits: 64 KiB, note indices 0–127, finite cents within ±120000, BaseFreq
 0.000001–1000000000 Hz. Case-insensitive section/key names, comments, CR/LF/NUL

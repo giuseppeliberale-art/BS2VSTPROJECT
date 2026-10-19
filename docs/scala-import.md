@@ -61,7 +61,8 @@ current u-he export layout. The editor's normal Load Table still reads BSII
 MicroTune JSON. The separate
 command-line file tool still reads/writes that JSON and exports documented
 note-change SysEx. The command-line tool does not import TUN. Neither workflow imports `.mid`,
-`.syx` or Ableton `.ascl` files. Formula-based TUN v2 is not supported.
+`.syx` or Ableton `.ascl` files. TUN v2 formulas and mapping are supported through the same dialog; see
+[TUN v2 import](tun-v2-import.md).
 
 ## Dependency and validation
 

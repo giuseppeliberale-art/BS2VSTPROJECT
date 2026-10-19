@@ -11,6 +11,11 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(JUCE)
 
+add_library(BSIITunV2 STATIC Source/BSIITunV2.cpp Source/ThirdParty/anamark/TUN_StringTools.cpp)
+target_compile_features(BSIITunV2 PRIVATE cxx_std_20)
+target_link_libraries(BSIITunV2 PRIVATE juce::juce_core)
+set_target_properties(BSIITunV2 PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
 set(BSII_FORMATS VST3 Standalone)
 if(APPLE)
     list(APPEND BSII_FORMATS AU)
@@ -39,6 +44,9 @@ if(APPLE)
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
                 "${CMAKE_CURRENT_SOURCE_DIR}/Source/ThirdParty/tuning-library/LICENSE.md"
                 "$<TARGET_BUNDLE_DIR:BSIIControl_${format}>/Contents/Resources/ThirdParty-Tuning-LICENSE.txt"
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "${CMAKE_CURRENT_SOURCE_DIR}/Source/ThirdParty/anamark/LICENSE.md"
+                "$<TARGET_BUNDLE_DIR:BSIIControl_${format}>/Contents/Resources/ThirdParty-AnaMark-LICENSE.txt"
             VERBATIM)
     endforeach()
 endif()
@@ -67,6 +75,7 @@ target_compile_definitions(BSIIControl PUBLIC
 )
 
 target_link_libraries(BSIIControl PRIVATE
+    BSIITunV2
     juce::juce_audio_utils
     juce::juce_audio_devices
     juce::juce_audio_processors
@@ -100,7 +109,7 @@ if(BSII_BUILD_TESTS)
     add_executable(BSIIMicroTuningTest tests/MicroTuningTest.cpp)
     target_include_directories(BSIIMicroTuningTest PRIVATE Source)
     target_compile_features(BSIIMicroTuningTest PRIVATE cxx_std_20)
-    target_link_libraries(BSIIMicroTuningTest PRIVATE juce::juce_core)
+    target_link_libraries(BSIIMicroTuningTest PRIVATE juce::juce_core BSIITunV2)
     add_test(NAME MicroTuningOffline COMMAND BSIIMicroTuningTest)
 
     # Explicit native-port integration check; not part of offline CTest.

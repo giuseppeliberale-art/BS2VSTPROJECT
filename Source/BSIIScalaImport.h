@@ -7,7 +7,7 @@
 namespace bsii::microtuning::scala
 {
 struct Options { int scaleStart = 60, referenceNote = 69; double referenceHz = 440; };
-enum class NoteStatus { available, unmapped, outsideKeyboard, outsidePitchRange };
+enum class NoteStatus { available, unmapped, outsideKeyboard, outsidePitchRange, muted };
 struct Note { NoteStatus status = NoteStatus::unmapped; double pitch = 0, hz = 0; };
 struct Preview
 {
@@ -16,6 +16,7 @@ struct Preview
     double referenceHz = 440;
     std::array<Note,128> notes {};
     int available = 0;
+    std::string sourceInfo;
     bool valid() const { return error.empty() && available > 0; }
 };
 

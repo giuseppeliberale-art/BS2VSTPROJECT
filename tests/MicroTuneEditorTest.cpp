@@ -302,6 +302,42 @@ int main (int argc, char** argv)
             check (roundTrip && roundTrip->table.pitch (69)==processor.getLocalTuningInfo().document.table.pitch (69),
                    "TUN-to-JSON round trip retains pitch");
         }
+        const juce::String v2Prefix = "[Scale Begin]\nFormat=\"AnaMark-TUN\"\nFormatVersion=200\n[Info]\nName=\"Formula and mapping\"\nID=\"V2_test\"\n";
+        const auto v2Text = v2Prefix + "[Functional Tuning]\nInitEqual=(69,440)\nnote 69=\"%50\"\nnote 70=\"#0\"\n[Mapping]\nKeyboard 60=69\n[Scale End]\n";
+        tunFile.replaceWithText (v2Text);
+        check (panel.loadScaleFile (tunFile), "TUN v2 selection");
+        const auto beforeV2 = processor.getLocalTuningInfo();
+        panel.rebuildPreview();
+        check (!panel.applyPreview() && processor.getLocalTuningInfo().revision==beforeV2.revision,
+               "muted TUN v2 key requires explicit preservation");
+        if (auto* previewTable=findTable(panel)) previewTable->scrollToEnsureRowIsOnscreen(70);
+        pump();
+        check (picture(panel,report.getChildFile("tun-v2-preview.png")), "formula/mute preview render");
+        if (keep)
+        {
+            keep->setToggleState(true,juce::dontSendNotification);panel.rebuildPreview();
+            check (click(panel,"Apply to Local Table")
+                   && std::abs(*processor.getLocalTuningInfo().document.table.pitch(60)-69.5)<1e-9
+                   && processor.getLocalTuningInfo().document.table.pitch(70)==beforeV2.document.table.pitch(70),
+                   "v2 mapping applies formula pitch and retains muted key explicitly");
+            check (processor.undoLocalTuning() && processor.getLocalTuningInfo().document.table.pitch(60)==beforeV2.document.table.pitch(60),
+                   "v2 whole import undoes once");
+            check (processor.redoLocalTuning(), "v2 whole import redoes");
+            const auto fileV2=report.getChildFile("imported-v2.json");
+            check (page->saveDocumentFile(fileV2), "v2 flattened document saves as JSON");
+            const auto jsonV2=bsii::microtuning::parseDocument(fileV2.loadFileAsString());
+            check (jsonV2 && std::abs(*jsonV2->table.pitch(60)-69.5)<1e-9, "v2-to-JSON retains mapped pitch");
+            juce::MemoryBlock stateV2;processor.getStateInformation(stateV2);
+            BSIIControlAudioProcessor restoredV2;restoredV2.setStateInformation(stateV2.getData(),static_cast<int>(stateV2.getSize()));
+            check (std::abs(*restoredV2.getLocalTuningInfo().document.table.pitch(60)-69.5)<1e-9,
+                   "v2 flattened document survives host state restore");
+        }
+        tunFile.replaceWithText (v2Prefix+"[Exact Tuning]\nnote 69=7100\n[Functional Tuning]\nnote 69=\"/0\"\n[Scale End]\n");
+        check (panel.loadScaleFile(tunFile), "invalid v2 file selected for preview");
+        const auto invalidV2Revision=processor.getLocalTuningInfo().revision;
+        panel.rebuildPreview();
+        check (!panel.applyPreview() && processor.getLocalTuningInfo().revision==invalidV2Revision,
+               "invalid v2 formula rejects numeric compatibility fallback without document changes");
         tunFile.replaceWithText (tunText+"[Functional Tuning]\nnote 0=\"formula\"\n");
         check (panel.loadScaleFile (tunFile), "TUN selection still requires parsing");
         const auto beforeUnsupported = processor.getLocalTuningInfo().revision;

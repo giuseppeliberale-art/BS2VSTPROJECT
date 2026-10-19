@@ -8,8 +8,9 @@ juce::String reason (mt::scala::NoteStatus status)
     switch (status)
     {
         case mt::scala::NoteStatus::available: return "Import";
-        case mt::scala::NoteStatus::unmapped: return "Unmapped in KBM";
+        case mt::scala::NoteStatus::unmapped: return "Unmapped key";
         case mt::scala::NoteStatus::outsideKeyboard: return "Outside KBM range";
+        case mt::scala::NoteStatus::muted: return "Muted by tuning";
         case mt::scala::NoteStatus::outsidePitchRange: return "Pitch outside 0-127";
     }
     return {};
@@ -35,7 +36,7 @@ ScalaImportPanel::ScalaImportPanel (BSIIControlAudioProcessor& p) : processor (p
     for (auto* editor : { &rootNote, &referenceNote, &referenceHz }) editor->onTextChange = [this] { if (! preview || previewSettings != referenceSettings()) invalidate(); };
     referenceHint.setText ("Without KBM: scale start key / reference key / reference Hz",juce::dontSendNotification);
     files.setText ("Choose a Scala scale. Optional KBM supplies mapping and reference pitch.",juce::dontSendNotification);
-    policyHint.setText ("Unavailable notes stay audible if kept; this does not reproduce KBM muting. Nothing is sent to the synth.",juce::dontSendNotification);
+    policyHint.setText ("Keeping unavailable notes preserves their pitches; it does not mute them. Nothing is sent to the synth.",juce::dontSendNotification);
     scaleButton.onClick = [this] { chooseFile (false); };
     mappingButton.onClick = [this] { chooseFile (true); };
     clearMapping.onClick = [this] { mappingText.reset(); mappingName.clear(); invalidate(); };
@@ -85,10 +86,10 @@ void ScalaImportPanel::invalidate()
     preview.reset(); table.updateContent(); table.repaint(); applyButton.setEnabled (false);
     for (auto* editor : { &rootNote, &referenceNote, &referenceHz }) editor->setEnabled (! mappingText && ! tunInput);
     mappingButton.setEnabled (! tunInput); clearMapping.setEnabled (! tunInput);
-    referenceHint.setText (tunInput ? "TUN uses the file's base frequency and note values; manual reference and KBM do not apply."
+    referenceHint.setText (tunInput ? "TUN uses the file's pitch definitions and mapping; manual reference and KBM do not apply."
         : "Without KBM: scale start key / reference key / reference Hz",juce::dontSendNotification);
     files.setText ("Source: " + (scaleName.isEmpty() ? "not chosen" : scaleName)
-        + (tunInput ? "   |   Numeric TUN" : "   |   Mapping: " + (mappingText ? mappingName : "no KBM")),juce::dontSendNotification);
+        + (tunInput ? "   |   TUN" : "   |   Mapping: " + (mappingText ? mappingName : "no KBM")),juce::dontSendNotification);
     message ("Press Preview to review all 128 notes before applying.");
 }
 bool ScalaImportPanel::loadScaleFile (const juce::File& file)
@@ -126,7 +127,7 @@ void ScalaImportPanel::rebuildPreview()
     catch (const std::exception& e) { preview.emplace(); preview->error = e.what(); }
     if (! preview->error.empty()) message ("Import error: " + juce::String (preview->error));
     else message (juce::String (preview->available) + " notes available; " + juce::String (128 - preview->available)
-        + (tunInput ? " unavailable. Numeric TUN; base reference " + juce::String (preview->referenceHz,9) + " Hz.\n"
+        + (tunInput ? " unavailable. " + (preview->sourceInfo.empty() ? "Numeric TUN; base reference " + juce::String (preview->referenceHz,9) + " Hz." : juce::String (preview->sourceInfo)) + "\n"
             : " unavailable. Scale start " + juce::String (preview->scaleStart) + "; reference key "
                 + juce::String (preview->referenceNote) + " = " + juce::String (preview->referenceHz,6) + " Hz.\n")
         + "Applying replaces available pitches and the table name; the file target stays unchanged.");

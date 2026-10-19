@@ -116,5 +116,6 @@ and skip handling, unavailable-note preservation by explicit choice, and one-ste
 undo. This does not implement TUN, ASCL, MTS-file import or hardware transfer.
 
 Numeric TUN v0/v1 support subsequently added: [format details](tun-import.md).
-Formula-based TUN v2 and mapping sections remain unsupported; no second library
-was needed for this bounded numeric adapter.
+No second library was needed for that bounded numeric adapter. A subsequent
+[TUN v2 increment](tun-v2-import.md) uses the AnaMark formula-engine subset, with
+a documented locale-parsing patch and explicit handling of mapped/muted keys.
