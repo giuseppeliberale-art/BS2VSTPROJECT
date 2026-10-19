@@ -92,7 +92,8 @@ Evidence: [recall](project-sound-recall.md), [global controls](global-control-re
   import](tun-v2-import.md) is now supported. Library browsing, scale generators,
   multi-scale file selection and MTS-file import remain later work. See
   [import research](tuning-import-research.md).
-- [ ] **Patch-bank management:** full-bank backup/import and any stored-slot
+- [ ] **Patch-bank management:** [research and staged plan](patch-bank-research.md)
+  recorded; full-bank backup/import and any stored-slot
   writing need explicit design and validation. Current transfers target the
   temporary sound; no new stored-preset overwrite workflow is implemented.
 - [ ] **AFX, last synth feature area:** overlay-bank selection, protection,
@@ -147,7 +148,10 @@ input and reconnect tests cover specific paths, not all real-world failures.
   [MicroTune transfer plan](microtune-transfer-research.md). No documented sequence
   payload was found; tuning note-change/save commands provide a stronger codec
   candidate. Hardware acceptance remains pending.
-- [ ] Research patch-bank transfer protocols separately.
+- [x] Research patch-bank transfer protocols separately; see
+  [bank findings and staged plan](patch-bank-research.md). Manual/Components
+  workflows are documented; ordinary-bank wire framing/addressing remain
+  unverified. Offline stream inspection is the next implementation candidate.
 - [ ] Extend offline fixture checks when a new reproducible case warrants it.
 - [ ] Prepare release notes and a newer preview when requested. The public
   v0.8.2-preview.20261018 binaries remain the earlier 4993591/86-control build;

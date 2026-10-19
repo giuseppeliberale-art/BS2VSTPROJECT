@@ -63,13 +63,17 @@ from the old chat. Verify the current checkout and validation status first.
 1. Run `python3 -B tools/midi-lab/lab.py status` for compact, source-fingerprinted
    offline validation status. If stale, inspect the intervening changes and run
    relevant checks; use `./tools/validate.sh` when a full refresh is warranted.
-2. The TUN v2 build/install increment and manual Ableton preview/apply/undo/redo
+2. Patch-bank research is recorded in `docs/patch-bank-research.md`. The next
+   offline implementation candidate is a read-only SysEx stream inspector, before
+   a full-bank capture and addressing investigation. No bank-write commands are
+   established or authorized by that plan.
+3. The TUN v2 build/install increment and manual Ableton preview/apply/undo/redo
    check are complete. Manual DAW reopen persistence is not newly verified.
    Choose the next unfinished feature from remaining-work; hardware tasks need
    the synth.
-3. With the synth available, follow the ordered hardware checks in remaining-work.
+4. With the synth available, follow the ordered hardware checks in remaining-work.
    Without it, continue only work that can be meaningfully validated offline.
-4. For later installations, confirm Ableton has actually quit; never quit it for
+5. For later installations, confirm Ableton has actually quit; never quit it for
    the user. Ask for save and Cmd+Q if needed, back up the bundles and verify them.
 
 ## Remaining feature areas
