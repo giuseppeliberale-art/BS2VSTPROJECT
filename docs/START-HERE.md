@@ -50,6 +50,10 @@ from the old chat. Verify the current checkout and validation status first.
   No new probe commands were sent during isolation; the temporary sender was
   removed. Read `docs/global-control-research.md` before further work. Hardware
   recording needs a separate route that does not return these messages to BS2.
+- Local Control retest (20 October) with the host input route blocked: CC122=0
+  and 127 both left the menu showing On. No state transition or audible response
+  was established. Keep Local Control unimplemented pending a reliable test;
+  final display On, no Tune/table/preset commands sent in this retest.
 - Public prerelease `v0.8.2-preview.20261018` is an OLDER binary release.
   A source push does not replace its downloads. Publish new binaries only when
   requested and clearly state their compatibility and validation scope.

@@ -389,3 +389,25 @@ configuration before recommending it as accepted. Do not re-enable the previous
 input/output loop or send more speculative Tune probes to diagnose this symptom.
 The final requested resting state is Tune 0 and Function/Exit; a complete range
 sweep and acoustic frequency measurement were not performed in this isolation.
+
+## Local Control with host input blocked — 20 October 2026
+
+After the Tune routing isolation, playback was requested stopped and the BS2
+track remained MIDI From = No Input. The user opened Function + Local once and
+reported On, then exited and confirmed readiness. A scoped CoreMIDI probe sent
+exactly `B0 7A 00` (channel 1 CC122=0), with no Tune, patch or save commands.
+The user reopened Local without editing and reported On, not Off.
+
+The probe then sent `B0 7A 7F` (CC122=127, intended Local On). After exiting and
+reopening Local, the user again reported On. This matches the initial display but
+is not positive evidence of On reception because no state transition was seen.
+Off reception was not confirmed in this run. The earlier isolated Off report
+from 18 October remains historical evidence; it has not been reproduced under
+this blocked-input configuration. Do not silently promote either observation
+into a reliable implementation or an assertion that all CC122 reception is absent.
+
+No audio was connected; internal key-to-sound behavior was not checked. The menu
+may not be sufficient evidence of the functional receive behavior. No plugin
+Local Control parameter was added. Further acceptance requires a direct audible
+check with host echo blocked, or a documented reliable query/receive path.
+The final displayed setting was On; the temporary sender was removed.

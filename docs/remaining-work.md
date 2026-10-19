@@ -70,6 +70,9 @@ Evidence: [recall](project-sound-recall.md), [global controls](global-control-re
 - [ ] **Local Control:** establish reliable Off and On reception/readback.
   CC122 Off was reported; attempts at On did not confirm success. A manual
   toggle emitted no messages in two captures. No plugin control yet.
+  On 20 October with host MIDI From = No Input, CC122=0 and 127 both left
+  the Local menu showing On. No audible check was available; reception remains
+  unverified, and the unchanged On display is not proof of an On command.
 - [ ] **Sequence slots and contents:** verify selection in Play/Record,
   backup/restoration, notes/rests/ties and persistence before attempting step
   editing. Random-access sequence read/write support is not established.
