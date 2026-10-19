@@ -20,13 +20,14 @@ from the old chat. Verify the current checkout and validation status first.
 - Fresh offline validation passed all nine groups on 20 October 2026. Local report:
   `validation-results/20261020-030552-19210/summary.txt`. This covers the standalone
   build and offline regressions, not hardware or hosted acceptance.
-- The latest TUN v2 source has NOT been verified installed by this handoff.
-  Do not assume the installed plugins match the checkout. Finish build/install
-  verification before asking the user to test that version.
-- Native TUN v2 preview/apply, undo, JSON and host-state checks passed in the
-  preceding session; screenshot: `validation-results/tun-v2-editor/tun-v2-preview.png`
-  (local ignored artifact). Recheck any missing final test logs instead of
-  inferring a pass. Fresh offline status is available with the command below.
+- TUN v2 AU/VST3 builds and installation completed on 20 October 2026.
+  Both native test programs passed: MicroTune preview/apply/undo/JSON/host state
+  and processor automation/routing. Local evidence: `validation-results/tun-v2-final/`.
+  The preview screenshot was inspected. Both MIT notices match the vendored
+  licenses. Installed bundles passed strict local ad-hoc signature verification;
+  Apple AU validation passed. Prior bundles are in that report's `installed-before/`.
+  Fresh Ableton acceptance of this installed version and hardware tuning remain
+  separate checks. Public downloads were not replaced.
 - Public prerelease `v0.8.2-preview.20261018` is an OLDER binary release.
   A source push does not replace its downloads. Publish new binaries only when
   requested and clearly state their compatibility and validation scope.
@@ -35,13 +36,13 @@ from the old chat. Verify the current checkout and validation status first.
 
 1. Run `python3 -B tools/midi-lab/lab.py status` for compact, source-fingerprinted
    offline validation status. If stale, run `./tools/validate.sh` once.
-2. Finish TUN v2 AU/VST3/native automation verification as needed; confirm both
-   third-party MIT notices are bundled. Save the exact results in its guide.
-3. Before installing, check that Ableton has actually quit. Never quit it for the
-   user. If running, ask them to save and Cmd+Q. Back up installed bundles, install,
-   locally sign, verify, and run AU validation. Record results.
-4. With the synth available, follow the ordered hardware checks in remaining-work.
+2. The TUN v2 build/install increment is complete. Optionally reopen Ableton and
+   check Import Tuning with a known file; compare preview/apply/undo. This requires
+   no synth. No fresh hosted acceptance is claimed by the native tests.
+3. With the synth available, follow the ordered hardware checks in remaining-work.
    Without it, continue only work that can be meaningfully validated offline.
+4. For later installations, confirm Ableton has actually quit; never quit it for
+   the user. Ask for save and Cmd+Q if needed, back up the bundles and verify them.
 
 ## Remaining feature areas
 

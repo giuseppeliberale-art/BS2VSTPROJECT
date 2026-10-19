@@ -97,6 +97,16 @@ and acoustic accuracy remain separate acceptance work.
 
 A fresh `./tools/validate.sh` passed the standalone build and all nine offline
 CTest groups (3.39 seconds). Local report:
-`validation-results/20261020-030552-19210/summary.txt`. The latest AU/VST3
-installation and final native automation result remain to be verified; see
-[the handoff](START-HERE.md). Public release assets were not replaced.
+`validation-results/20261020-030552-19210/summary.txt`. AU/VST3 builds and both native test programs then passed. Native editor tests
+covered preview/apply, explicit preservation, undo/redo, JSON and host-state
+restoration with zero MIDI output; the generated preview was visually inspected.
+The processor automation/routing regression also passed. Logs and screenshot:
+`validation-results/tun-v2-final/` (local ignored evidence).
+
+With Ableton confirmed closed, both plugins were installed under the user's
+`Library/Audio/Plug-Ins` after backing up the previous bundles to that report's
+`installed-before/` directory. Both third-party MIT notices matched their source
+licenses, strict local ad-hoc signature verification passed, and
+`auval -v aumf Bs2C Gutz` succeeded. This is not Developer ID/notarization or fresh
+Ableton/hardware acceptance. See [the handoff](START-HERE.md) for next steps.
+Public release assets were not replaced.
