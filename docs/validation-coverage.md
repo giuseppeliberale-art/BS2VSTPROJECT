@@ -1,5 +1,8 @@
 # Validation coverage audit — 17 October 2026
 
+Historical 76-control audit. For the current 95-parameter inventory, evidence limits
+and remaining work, see [the 19 October checklist](remaining-work.md).
+
 Audited application source and committed captures at `d436925`; updated after the eight main oscillator waveform captures and mapping fix following `0d408be`, and the Coarse regression sweeps following `06d8d5c`, full Fine validation following `7240353`, and snapshot/Send All integration following `72e3fed`. This is a coverage inventory, not a new hardware test or a declaration that every UI path works. No synth settings were changed during this audit. The `v0.8.2` baseline tag remains on `91d1ffc`.
 
 ## Current result

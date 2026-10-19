@@ -1,5 +1,8 @@
 # Next version notes
 
+For current evidence and unfinished work, see [the 19 October checklist](remaining-work.md).
+Earlier entries below preserve implementation chronology.
+
 ## Deferred parameter gaps — overlay audit, 18 October 2026
 
 User requested retaining this list for later while completing manual LFO sync
@@ -17,7 +20,7 @@ hardware-verified merely because the manual mentions them.
 - [x] Glide divergence (`g:GlideDiv`): implemented; basic Ableton MIDI and Get Patch checks passed.
 - [x] Independent Sub Oscillator coarse and fine tuning: implemented; basic Ableton send/receive, paused RX and Get Patch checks passed; intermediate display rounding approximate.
 - [ ] Hardware Local Control.
-- [x] Hardware Global MIDI Channel: explicit Global-page command with confirmation; hosted acceptance pending. The top Channel selector remains communication-only.
+- [x] Hardware Global MIDI Channel: explicit Global-page command with confirmation; basic hosted command and hardware-origin following acceptance passed. Remote-change persistence across reboot remains unresolved. The top Channel selector alone does not set the synth channel.
 - [x] MicroTune table selection 0–8: MIDI send/receive and SysEx decoding implemented;
       basic hosted send/receive, paused RX and Get Patch acceptance passed. No tuning-table contents are edited or saved.
 - [ ] Global Tune receive encoding and tuning-table editing/transfer remain unresolved.
@@ -27,8 +30,9 @@ hardware-verified merely because the manual mentions them.
 
 Envelope retrigger, retrigger count and fixed duration already have app controls;
 their presence on the overlay does not imply a missing implementation. LFO
-Speed/Sync and all 35 divisions are now implemented, with manual hosted acceptance
-pending. Sequence-step editing and verified sequence-slot behavior remain separate
+Speed/Sync and all 35 divisions are now implemented; basic hosted mode/division,
+paused-RX Get Patch and one LFO1 division automation check passed. Audible clock
+accuracy remains untested. Sequence-step editing and verified sequence-slot behavior remain separate
 unfinished work. Final GUI redesign follows feature implementation.
 
 ## Live RX status wording

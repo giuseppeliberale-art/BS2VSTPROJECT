@@ -1,5 +1,8 @@
 # Project handover
 
+Current checklist: [coverage and remaining work, 19 October 2026](remaining-work.md).
+The entries below are chronological; later results supersede earlier pending notes.
+
 ## Latest checkpoint — 18 October 2026
 
 User stopped hardware testing to conserve remaining usage. Resume with the saved

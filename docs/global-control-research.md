@@ -303,3 +303,20 @@ complete the basic hosted 1-to-2-to-1 command and incoming-control check.
 Other channel values, unsolicited hardware channel changes, power-cycle
 persistence and DAW note-routing changes were not tested in this pass.
 Public preview assets were not replaced.
+
+### Hardware-origin channel following and power-cycle caveat
+
+Recorded 19 October 2026 from the preceding session's user observations.
+Following the remote 1-to-2-to-1 acceptance check, a USB power cycle exposed
+hardware channel 2 while the plugin remained on channel 1. Get Patch succeeded,
+but Program Change did not affect the hardware until the plugin channel was
+matched to 2. The reason the prior remote restoration to 1 did not persist is
+unresolved; remote channel changes must not be advertised as power-cycle
+persistent on this evidence.
+
+The user later manually selected hardware channel 1 with Live RX running and
+confirmed that both the plugin top Channel selector and Global selector followed
+hardware changes. External Instrument was separately confirmed on channel 1.
+This adds manual acceptance of unsolicited hardware-origin channel following.
+See project-sound-recall.md for the matched-channel USB reconnect result and
+its limits. No new synth measurements were made on 19 October.

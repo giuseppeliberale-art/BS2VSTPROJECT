@@ -18,8 +18,9 @@ instructions, known limitations and SHA-256 checksums.
 also builds AU and VST3. An early VST3 check in Ableton Live 12.4.6 on Apple
 Silicon passed loading, hardware patch reception, and host parameter edits with
 the editor closed; AU passed Apple validation. User testing also confirmed Cutoff
-and Resonance automation playback. Full hardware-state recall and wider
-compatibility still need testing.
+and Resonance automation playback, project sound recall on Set reopen, and stored-preset
+USB reconnect with the editor closed and matched channels. Captured-sound USB reconnect
+and wider compatibility still need testing.
 Hardware checks have used a Bass Station II reported as running firmware **4.14**.
 
 The `v0.8.2` tag preserves the original project baseline. `main` includes the later
@@ -47,9 +48,9 @@ version labels still show earlier numbers.
 
 The Arp/Seq page adds On, Latch, Octaves, Direction/Play/Record, Rhythm and Seq Retrig alongside Swing. Get Patch now reads all six controls from the captured SysEx fields. Send All includes them, except that it will not arm Record mode; select Record explicitly when needed. Their emitted encodings were captured from firmware 4.14, and selected live changes have been checked both ways in Ableton. Basic Play/Record mode changes have also been checked; sequence-content editing remains unverified. An initial reception hiccup did not reproduce after restarting Ableton, and its cause is unknown. See [Arp/Seq research and evidence](docs/arp-seq-research.md).
 
-The LFO page includes independent Speed/Sync selectors and all 35 clock divisions for both LFOs. Live MIDI routes and SysEx storage were verified against hardware captures for all values. These controls support automation, saved sessions and Get Patch; audible clock-sync and manual hosted checks remain pending. See [LFO sync evidence](docs/lfo-sync-research.md).
+The LFO page includes independent Speed/Sync selectors and all 35 clock divisions for both LFOs. Live MIDI routes and SysEx storage were verified against hardware captures for all values. These controls support automation, saved sessions and Get Patch; basic hosted mode/division, paused-RX Get Patch and one LFO1 division automation check passed. Audible clock accuracy remains untested. See [LFO sync evidence](docs/lfo-sync-research.md).
 
-This is a partial instrument editor. Sequence-step editing, verified sequence-slot selection, several modulation routes and newer firmware functions remain on the roadmap. **AFX mode is planned last.**
+This is a partial instrument editor. Sequence-step editing, verified sequence-slot contents, Global Tune, Local Control, tuning-table editing and bank management remain unfinished. **AFX mode is planned last.** See the [current coverage and remaining-work checklist](docs/remaining-work.md).
 
 ## Build on macOS
 
@@ -130,7 +131,7 @@ hardware sound, click **Capture Project Sound**, wait for success, choose Captur
 sound, then save your DAW Set. That capture stays fixed until you capture again.
 Recall runs once on session load/USB reconnection, including with the editor closed;
 it does not run on every Play or overwrite stored hardware presets. Wait for recall
-to finish before playback. Existing Sets default to Off. Stored-preset and captured-sound recall have passed manual Ableton checks; USB reconnect cases remain pending; see [recall behavior and checks](docs/project-sound-recall.md).
+to finish before playback. Existing Sets default to Off. Stored-preset and captured-sound recall have passed manual Ableton Set-reopen checks. Stored-preset USB reconnect also passed with the editor closed and matching hardware/plugin channels; captured-sound USB reconnect remains pending; see [recall behavior and checks](docs/project-sound-recall.md).
 
 ## Which save, load or transfer control should I use?
 
@@ -157,8 +158,11 @@ text to see the state.
 
 ## What has been tested?
 
-- All **82 controls** have captured patch/decoder coverage; the six Arp/Seq additions use 22 labelled hardware patches in `tests/arp-seq-fixtures/`. The retained
-  fixture set includes **96 files and 9,251 patch messages**.
+- The registry has **95 automatable controls**: **94 patch-mapped controls** and
+  the separate global Input Gain control. Retained fixtures and regression checks
+  cover the mapped fields; this does not establish every UI or audible behavior.
+  The original 76-control fixture set contains **96 files and 9,251 patch messages**;
+  newer feature fixtures live in separate directories. See the [current audit](docs/remaining-work.md).
 - Manual checks have exercised supported controls in both directions, with fixes
   and retests recorded in the [manual test review](docs/manual-test-review.md).
 - Snapshot round trips and combined Send All recalls have been checked against
@@ -210,7 +214,8 @@ before using modes that change the current sound.
 
 ## Project reference
 
-- [Current state and next work](docs/project-status.md)
+- [Current coverage and remaining work](docs/remaining-work.md)
+- [Chronological project handover](docs/project-status.md)
 - [Changes since the baseline](docs/next-version.md)
 - [Hardware validation evidence](docs/hardware-validation.md)
 - [Manual test checklist](docs/manual-test-checklist.md)

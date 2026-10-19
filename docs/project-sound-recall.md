@@ -9,7 +9,7 @@ refusal, missing capture, and timeout preserving the previous capture). Existing
 processor automation/connection/host-notification checks remain passing. Release
 Standalone/VST3/AU builds, installed signature verification and AU validation PASS.
 Updated VST3/AU installed after the user saved/closed Live; prior bundles retained
-in ignored `validation-results/20261017-project-recall/before/`. Stored-preset and captured-sound recall were subsequently confirmed by the user in Ableton. Cutoff automation was temporarily disabled to make the captured-sound check clear. USB power/reconnect remains unverified.
+in ignored `validation-results/20261017-project-recall/before/`. Stored-preset and captured-sound recall were subsequently confirmed by the user in Ableton. Cutoff automation was temporarily disabled to make the captured-sound check clear. Stored-preset USB power/reconnect was subsequently confirmed as described below; captured-sound USB reconnect remains unverified.
 
 ## Behavior
 
@@ -83,3 +83,35 @@ hardware preset overwrite is needed for these tests.
 Exact hardware readback, audio and reconnect cases must be recorded separately
 from local virtual-port test results. Do not call a stored preset overwritten or
 saved until the synth's explicit hardware save action has actually been used.
+
+## Stored-preset USB reconnect acceptance — recorded 19 October 2026
+
+User-reported test completed in the preceding session, with Ableton playback
+stopped and the plugin editor closed. USB removal powered the synth off.
+
+- Initial configuration: Stored preset, target preset 1, plugin channel 1.
+  After USB reconnect the hardware remained on preset 0, including after an
+  additional ten-second wait. Opening the editor showed preset 1 and the status
+  “Restored stored preset 1.” Load Preset, including after Refresh MIDI, did not
+  change the hardware. Get Patch still received and decoded a patch.
+- The user then opened the hardware MIDI Channel setting and observed channel 2.
+  Changing the plugin communication channel to 2 allowed Load Preset to select
+  hardware preset 1. This establishes a channel mismatch in the failed run;
+  SysEx reception alone did not establish channel matching.
+- With both synth and plugin on channel 2, the user saved the Set, closed only
+  the editor, disconnected USB for at least five seconds, then reconnected it.
+  After ten seconds the hardware displayed preset 1. Stored-preset recall on
+  USB power/reconnection therefore passed this matched-channel, editor-closed
+  scenario. This observation does not count transmitted recall messages or
+  verify post-reconnect automation/audio, exact startup timing, or every channel.
+- The user subsequently set hardware channel 1 manually. With Live RX running,
+  both the plugin's top Channel selector and Global channel selector followed.
+  Ableton External Instrument was confirmed on channel 1. A final Set save was
+  requested but not separately confirmed after this last channel change.
+
+Why the earlier remote channel-1 restoration did not survive power-off is
+unresolved. Do not claim that Set Synth Channel persists across reboot, or that
+recall automatically discovers a mismatched startup channel. The “Restored”
+status was not an acknowledgement from the instrument in the failed run.
+Captured-sound USB reconnect, Off-mode reconnect and post-reconnect automation
+remain separate acceptance checks. No code change was made for these results.
