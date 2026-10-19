@@ -93,5 +93,7 @@ MIDI output from the local import workflow. Host parameters remain at 95 with
 unchanged indices. Actual user-file-chooser and DAW acceptance remains manual.
 
 Installation was initially stopped before replacing either plugin because Live
-was running. Source validation does not imply an installed build or updated public
-release assets.
+was running. After the user saved and quit, process checks confirmed it was closed;
+AU/VST3 builds were installed with prior bundles retained under the final report's
+`installed-before/`. Installed signatures, bundled licence notices and Apple AU
+validation passed. Public preview release assets were not replaced.
