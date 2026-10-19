@@ -121,8 +121,12 @@ input and reconnect tests cover specific paths, not all real-world failures.
 ## Work possible without hardware
 
 - [x] Record the latest user-confirmed recall/channel results and audit counts.
-- [ ] Research sequence access, tuning-table and bank protocols against primary
-  sources; keep documented routes separate from observed behavior.
+- [x] Research sequence access and tuning-table protocols against primary
+  sources; see [sequence findings](sequence-access-research.md) and
+  [MicroTune transfer plan](microtune-transfer-research.md). No documented sequence
+  payload was found; tuning note-change/save commands provide a stronger codec
+  candidate. Hardware acceptance remains pending.
+- [ ] Research patch-bank transfer protocols separately.
 - [ ] Extend offline fixture checks when a new reproducible case warrants it.
 - [ ] Prepare release notes and a newer preview when requested. The public
   v0.8.2-preview.20261018 binaries remain the earlier 4993591/86-control build;
