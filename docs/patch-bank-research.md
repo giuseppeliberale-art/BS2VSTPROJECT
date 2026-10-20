@@ -121,3 +121,29 @@ Next: independently Get Bank in Components, download without Send, compare the
 export offline and document any ordering/header/payload differences. Do not use
 the ordinary Send .syx action to test this bank: stored-memory effects remain
 unverified. This bank export is not a backup of tuning-table contents or AFX.
+
+## Independent Components comparison — 20 October 2026
+
+The user supplied a Components bank export, `Downloads/components patch.syx`,
+following Get Bank/download instructions. The offline inspector reported 128
+complete messages, clean framing, no duplicate messages and 19,712 bytes. It was
+byte-for-byte identical to the SysEx-only manual All dump, including message
+order, headers and payloads. Both SHA256 hashes are:
+`675ee6c6bced2facd0b880a58b1bbe8bdfd2587237d774d78d5c61dc64a8a232`.
+
+A private copy (`components-bank.syx`) and `components-comparison.json` are retained
+beside the manual capture in the ignored evidence directory above. Neither user's
+bank content was published to GitHub. Original files were left unchanged. No MIDI
+was sent and no bank restoration/stored-slot writing was attempted. This confirms
+export equivalence for these two files on this device, not a universally verified
+write protocol or completeness of separate tuning/AFX/sequence stores.
+
+Procedure clarification: the user reported the Dump menu timed out before the
+listener was ready. They re-entered the function, selected aLL and triggered Dump
+while listening. Future instructions should select aLL after the listener is ready,
+or explicitly recheck it immediately before transmission. No recapture was needed.
+
+Next prerequisite before any restoration: harden the generic .syx sender so it
+cannot mistake these stored/bank-shaped messages for the validated edit-buffer
+command. A separate bank-write workflow still requires destination semantics,
+readback/restore design and explicitly authorized disposable-slot testing.
