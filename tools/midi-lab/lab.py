@@ -378,8 +378,19 @@ def main():
     status_cmd.add_argument('--json', action='store_true')
     analysis = commands.add_parser('analyse-sweep', help='offline: analyse labelled edit-buffer captures; never sends MIDI')
     analysis.add_argument('directory',type=Path)
+    stream = commands.add_parser('inspect-sysex', help='offline: inspect binary SysEx framing; never sends MIDI')
+    stream.add_argument('capture', type=Path)
+    stream.add_argument('--json', action='store_true')
     args = parser.parse_args()
     if args.command is None: args = parser.parse_args(['record'])
+    if args.command == 'inspect-sysex':
+        spec = importlib.util.spec_from_file_location('bsii_sysex_stream', Path(__file__).with_name('sysex_stream.py'))
+        stream_tools = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(stream_tools)
+        report = stream_tools.inspect_file(args.capture)
+        print(json.dumps(report, indent=2) if args.json else stream_tools.summary(report))
+        if not report['framingClean']: raise SystemExit(1)
+        return
     if args.command == 'status':
         offline = offline_tools()
         report = offline.status(ROOT,registry())

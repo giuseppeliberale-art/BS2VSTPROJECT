@@ -4,6 +4,8 @@ import json
 import os
 from pathlib import Path
 import shutil
+import subprocess
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -147,5 +149,75 @@ class ResearchToolsTests(unittest.TestCase):
             with self.assertRaises(ValueError): offline.analyse_sweep(folder,'MUST_NOT_RUN')
             manifest_path.write_text(json.dumps(original));(folder/'glide-divergence-0.syx').write_bytes(b'bad')
             with self.assertRaises(ValueError): offline.analyse_sweep(folder,'MUST_NOT_RUN')
+
+stream_spec=importlib.util.spec_from_file_location('sysex_stream',ROOT/'tools/midi-lab/sysex_stream.py')
+stream=importlib.util.module_from_spec(stream_spec);stream_spec.loader.exec_module(stream)
+
+class SysExStreamTests(unittest.TestCase):
+    def fixture(self):
+        return (ROOT/'tests/state-fixtures/baseline.syx').read_bytes()
+
+    def reconstructed(self,report):
+        result=bytearray()
+        for entry in report['segments']:
+            self.assertEqual(entry['offset'],len(result))
+            raw=bytes.fromhex(entry['rawHex'])
+            self.assertEqual(len(raw),entry['length'])
+            result.extend(raw)
+        return bytes(result)
+
+    def test_actual_patch_and_synthetic_128_stream_do_not_authorize_bank(self):
+        raw=self.fixture()*128
+        r=stream.inspect_bytes(raw)
+        self.assertTrue(r['framingClean'])
+        self.assertEqual((r['completeMessages'],r['duplicateMessages']),(128,127))
+        self.assertEqual(r['classifications'],{'bsii-edit-buffer-shape-candidate':128})
+        self.assertFalse(r['verifiedBank']);self.assertFalse(r['transmitEligible'])
+        self.assertEqual(r['segments'][-1]['duplicateOfSegment'],0)
+        self.assertEqual(self.reconstructed(r),raw)
+        changed=bytearray(self.fixture());changed[6]=1
+        self.assertEqual(stream.inspect_bytes(changed)['classifications'],{'bsii-unknown-command':1})
+
+    def test_unknown_and_realtime_preserve_exact_bytes_and_normalized_duplicates(self):
+        message=bytes.fromhex('F0 7D 01 F7')
+        raw=b'\xf8'+message+b'\xfa'+bytes.fromhex('F0 7D F8 01 FE F7')+b'\xfc'
+        r=stream.inspect_bytes(raw)
+        self.assertTrue(r['framingClean'])
+        self.assertEqual(r['completeMessages'],2)
+        self.assertEqual(r['duplicateMessages'],1)
+        self.assertEqual(r['segments'][3]['realtimeBytes'],2)
+        self.assertEqual(self.reconstructed(r),raw)
+
+    def test_malformed_stream_resynchronizes_without_dropping_bytes(self):
+        for raw,code in [(bytes.fromhex('F0 01'),'unterminated-sysex'),
+                         (bytes.fromhex('F0 01 F0 02 F7'),'nested-start'),
+                         (bytes.fromhex('F0 01 90 40 00 F0 02 F7'),'interrupted-sysex'),
+                         (bytes.fromhex('F7 40 F0 01 F7'),'outside-sysex-data')]:
+            with self.subTest(raw=raw):
+                r=stream.inspect_bytes(raw)
+                self.assertFalse(r['framingClean'])
+                self.assertIn(code,[x['code'] for x in r['issues']])
+                self.assertEqual(self.reconstructed(r),raw)
+
+    def test_limits_empty_non_sysex_and_midi_files(self):
+        for raw in [b'',b'x'*(stream.MAX_BYTES+1),b'MThd'+bytes(20),b'\xf0'* (stream.MAX_SEGMENTS+1)]:
+            with self.assertRaises(ValueError):stream.inspect_bytes(raw)
+        self.assertFalse(stream.inspect_bytes(b'\xf8')['framingClean'])
+        self.assertFalse(stream.inspect_bytes(b'hello')['framingClean'])
+
+    def test_cli_is_offline_does_not_modify_input_or_create_reports(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path=Path(tmp)/'capture.syx';path.write_bytes(self.fixture())
+            args=[sys.executable,'-B',str(ROOT/'tools/midi-lab/lab.py'),'inspect-sysex',str(path),'--json']
+            result=subprocess.run(args,capture_output=True,text=True,cwd=tmp)
+            self.assertEqual(result.returncode,0,result.stderr)
+            r=json.loads(result.stdout)
+            self.assertTrue(r['readOnly']);self.assertFalse(r['transmitEligible'])
+            self.assertEqual(path.read_bytes(),self.fixture())
+            self.assertEqual(list(Path(tmp).iterdir()),[path])
+            path.write_bytes(bytes.fromhex('F0 01'))
+            result=subprocess.run(args,capture_output=True,text=True,cwd=tmp)
+            self.assertEqual(result.returncode,1)
+            self.assertFalse(json.loads(result.stdout)['framingClean'])
 
 if __name__=='__main__': unittest.main()

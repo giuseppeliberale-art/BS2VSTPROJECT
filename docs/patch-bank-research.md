@@ -72,3 +72,13 @@ remain unknown, not proof that a protocol is unavailable.
 
 This is a research plan, not an implemented bank feature or permission to write
 hardware memory. Existing patch and recall paths were left unchanged.
+
+## Offline inspector implemented — 20 October 2026
+
+Stage 1 now has `lab.py inspect-sysex FILE [--json]`, a bounded read-only stream
+inspector. It preserves all bytes and hashes, identifies framing issues and
+normalized duplicates, and only labels the known edit-buffer shape as a candidate.
+Unknown commands remain unknown; all transmit eligibility stays false.
+[Usage and focused validation](research-toolkit.md#inspect-a-binary-sysex-stream).
+Next: passively capture a complete manual All dump, then compare its contents and
+structure with a Components export. No live bank capture or slot write was added.

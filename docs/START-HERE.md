@@ -63,10 +63,12 @@ from the old chat. Verify the current checkout and validation status first.
 1. Run `python3 -B tools/midi-lab/lab.py status` for compact, source-fingerprinted
    offline validation status. If stale, inspect the intervening changes and run
    relevant checks; use `./tools/validate.sh` when a full refresh is warranted.
-2. Patch-bank research is recorded in `docs/patch-bank-research.md`. The next
-   offline implementation candidate is a read-only SysEx stream inspector, before
-   a full-bank capture and addressing investigation. No bank-write commands are
-   established or authorized by that plan.
+2. The read-only SysEx stream inspector is implemented: `python3 -B
+   tools/midi-lab/lab.py inspect-sysex FILE [--json]`. See research-toolkit.md.
+   Focused MidiLabTools and ResearchTools CTest groups passed; the full validation
+   stamp predates this tool change. Next: a passive complete manual All dump,
+   offline inspection, and comparison with Components export. Bank addressing
+   and stored-slot writing remain unverified; no bank-write commands authorized.
 3. The TUN v2 build/install increment and manual Ableton preview/apply/undo/redo
    check are complete. Manual DAW reopen persistence is not newly verified.
    Choose the next unfinished feature from remaining-work; hardware tasks need
