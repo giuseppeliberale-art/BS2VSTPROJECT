@@ -66,9 +66,13 @@ from the old chat. Verify the current checkout and validation status first.
 2. The read-only SysEx stream inspector is implemented: `python3 -B
    tools/midi-lab/lab.py inspect-sysex FILE [--json]`. See research-toolkit.md.
    Focused MidiLabTools and ResearchTools CTest groups passed; the full validation
-   stamp predates this tool change. Next: a passive complete manual All dump,
-   offline inspection, and comparison with Components export. Bank addressing
-   and stored-slot writing remain unverified; no bank-write commands authorized.
+   stamp predates this tool change. A passive manual All dump then yielded 128
+   complete 154-byte messages, preserved locally in
+   `midi-lab-results/20261020-111111-record-9cb540/patch-bank.syx`. The original
+   stream and extraction hashes are recorded in patch-bank-research.md. User
+   patch contents stay ignored/private. Next: compare an independent Components
+   Get Bank/download export offline. Stored-slot writing/restoration remain
+   unverified; do not transmit this file with the generic Send .syx action.
 3. The TUN v2 build/install increment and manual Ableton preview/apply/undo/redo
    check are complete. Manual DAW reopen persistence is not newly verified.
    Choose the next unfinished feature from remaining-work; hardware tasks need

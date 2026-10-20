@@ -152,8 +152,9 @@ input and reconnect tests cover specific paths, not all real-world failures.
   [bank findings and staged plan](patch-bank-research.md). Manual/Components
   workflows are documented; ordinary-bank wire framing/addressing remain
   unverified. The [read-only stream inspector](research-toolkit.md#inspect-a-binary-sysex-stream)
-  is implemented and passed focused tests; a complete passive bank capture and
-  Components export comparison are next.
+  is implemented and passed focused tests. A manual All capture yielded 128
+  complete messages, preserved privately with hashes. Independent Components
+  export comparison is next; restoration/slot writes remain unverified.
 - [ ] Extend offline fixture checks when a new reproducible case warrants it.
 - [ ] Prepare release notes and a newer preview when requested. The public
   v0.8.2-preview.20261018 binaries remain the earlier 4993591/86-control build;

@@ -82,3 +82,42 @@ Unknown commands remain unknown; all transmit eligibility stays false.
 [Usage and focused validation](research-toolkit.md#inspect-a-binary-sysex-stream).
 Next: passively capture a complete manual All dump, then compare its contents and
 structure with a Components export. No live bank capture or slot write was added.
+
+## First passive hardware All capture — 20 October 2026
+
+The user saved/quit Ableton and manually selected aLL on Global: Dump, then
+triggered export while the passive CoreMIDI listener was running. The first
+attempt produced only one message (selection not confirmed); it is not a bank.
+The second attempt followed explicit user confirmation of aLL and yielded:
+
+- 128 complete SysEx messages, each 154 bytes: 19,712 SysEx bytes total.
+- Six leading channel-message bytes (a Note On/Off pair) in the original stream.
+  The inspector correctly flagged outside-SysEx data. These bytes were retained
+  in the original stream, with a separate clean SysEx-only extraction.
+- The 128 messages have the BSII prefix. Zero-based header byte 7 is 1, byte 8
+  progresses exactly 0 through 127, and bytes 6 and 9–12 are zero in this capture.
+  These are observed export-header values, not verified write commands/addresses.
+  All messages correctly remain classified bsii-unknown-command by the inspector.
+- Existing patch-field decoding accepted all 128 messages. This does not establish
+  that every field/unknown byte has been interpreted correctly or that restoration
+  is supported. No message was transmitted back, and no memory was overwritten.
+- Bank completeness is supported by the manual All procedure and observed
+  sequential 128-message export, but independent Components comparison and any
+  restoration/readback test remain pending. The generic inspector still reports
+  verifiedBank=false and transmitEligible=false.
+
+Private local evidence (ignored by Git; user patches are not published):
+`midi-lab-results/20261020-111111-record-9cb540/` contains packets.jsonl,
+received-stream.syx, stream-inspection.json, patch-bank.syx,
+patch-bank-inspection.json, bank-summary.json and individually split messages/.
+The initial single-message attempt is in `20261020-110928-record-960207/`.
+
+SHA256 of received-stream.syx (19,718 bytes):
+`22043a5dc1904f87f7a10b22c1a937e848bfcb50f2b5c55e165dd19d3933fca6`.
+SHA256 of patch-bank.syx (19,712 bytes):
+`675ee6c6bced2facd0b880a58b1bbe8bdfd2587237d774d78d5c61dc64a8a232`.
+
+Next: independently Get Bank in Components, download without Send, compare the
+export offline and document any ordering/header/payload differences. Do not use
+the ordinary Send .syx action to test this bank: stored-memory effects remain
+unverified. This bank export is not a backup of tuning-table contents or AFX.
