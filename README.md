@@ -146,6 +146,7 @@ to finish before playback. Existing Sets default to Off. Stored-preset and captu
 | **Send All → BSII** | Sends exposed editor controls through live MIDI, except that it never arms Record mode. This is not a full raw-patch transfer. |
 | **Import .syx → Editor** | Decodes a raw patch file into the editor without sending it to the synth. |
 | **Send .syx → BSII** | Sends one validated 154-byte temporary edit-buffer patch. Rejects banks, stored-patch commands, other SysEx and malformed/trailing data without sending. See [file-send limits](docs/edit-buffer-file-send.md). |
+| **Banks → Open Bank / Load Selected** | Browse a complete 128-patch bank locally; explicitly load one entry into the temporary buffer. No stored-preset write. See [bank browser](docs/bank-browser.md). |
 | **Arm Patch Capture** | Arms receipt of the next manual dump. Perform the dump on the hardware, then save the received message. |
 | **Save Last .syx…** | Saves the last received SysEx message unchanged. Use Get Patch or a manual capture first to obtain a fresh one. |
 

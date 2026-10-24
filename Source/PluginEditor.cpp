@@ -518,6 +518,13 @@ void BSIIControlAudioProcessorEditor::buildPages()
     }
     microTunePage = std::make_unique<MicroTunePage> (processor);
     tabs.addTab ("MicroTune", juce::Colours::transparentBlack, microTunePage.get(), false);
+    bankPage = std::make_unique<BankPage> (processor, [this](const juce::MemoryBlock& patch)
+    {
+        if (!sendEditBufferPatch(patch)) return false;
+        decodeSysExIntoEditor(patch,"selected bank entry",false);
+        return true;
+    });
+    tabs.addTab ("Banks", juce::Colours::transparentBlack, bankPage.get(), false);
 }
 
 void BSIIControlAudioProcessorEditor::paint (juce::Graphics& g)
@@ -974,6 +981,16 @@ bool BSIIControlAudioProcessorEditor::sendEditBufferFile (const juce::File& file
     }
     juce::MemoryBlock data;
     input.readIntoMemoryBlock (data, 155); // One extra byte detects trailing data; bound the read.
+    return sendEditBufferPatch(data);
+}
+
+bool BSIIControlAudioProcessorEditor::sendEditBufferPatch (const juce::MemoryBlock& data)
+{
+    if (midiOutput == nullptr)
+    {
+        statusLabel.setText ("Cannot send patch: no MIDI output is open.", juce::dontSendNotification);
+        return false;
+    }
     if (! bsii::isRecallPatch (data))
     {
         statusLabel.setText ("Not sent: requires one validated 154-byte edit-buffer patch. Bank, stored-patch and other commands are unsupported.",

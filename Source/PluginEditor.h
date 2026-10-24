@@ -7,6 +7,7 @@
 #include "PluginProcessor.h"
 #include "BSIIPresetSync.h"
 #include "BSIIMicroTunePage.h"
+#include "BSIIBankPage.h"
 
 class ParameterControl : public juce::Component
 {
@@ -99,6 +100,7 @@ public:
     void resized() override;
     // Selected-file send path; accepts only the validated temporary-patch command.
     bool sendEditBufferFile (const juce::File&);
+    bool sendEditBufferPatch (const juce::MemoryBlock&);
 
 private:
     void timerCallback() override;
@@ -152,6 +154,7 @@ private:
     juce::TabbedComponent tabs { juce::TabbedButtonBar::TabsAtTop };
 
     std::unique_ptr<MicroTunePage> microTunePage;
+    std::unique_ptr<BankPage> bankPage;
     std::unique_ptr<HardwareChannelControl> hardwareChannelControl;
     std::vector<std::unique_ptr<ParameterControl>> parameterControls;
     std::vector<std::unique_ptr<ChoiceControl>> choiceControls;

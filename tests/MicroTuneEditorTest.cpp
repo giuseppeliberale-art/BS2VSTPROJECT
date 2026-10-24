@@ -4,6 +4,7 @@
 #include "BSIIScalaImportPanel.h"
 #include "BSIIPatchState.h"
 #include <iostream>
+#include <cstring>
 
 namespace
 {
@@ -429,9 +430,66 @@ int main (int argc, char** argv)
         check (! sender->sendEditBufferFile (file) && processor.getKnownHardwareProgram() == 23,
                "missing output rejects without clearing preset identity");
     }
+    // Bank browsing and selection are silent; only the explicit load sends.
+    for (const auto& port : juce::MidiOutput::getAvailableDevices())
+        if (port.name==name) processor.hardwareMidiOutput()=juce::MidiOutput::openDevice(port.identifier);
+    BankPage* banks=nullptr;
+    for (auto* child : editor->getChildren())
+        if (auto* tabs=dynamic_cast<juce::TabbedComponent*>(child))
+        {
+            const auto index=tabs->getTabNames().indexOf("Banks");
+            if (index>=0) { tabs->setCurrentTabIndex(index); banks=dynamic_cast<BankPage*>(tabs->getTabContentComponent(index)); }
+        }
+    check(banks!=nullptr,"Banks page available");
+    if (banks)
+    {
+        auto* rows=findTable(*banks);
+        check(rows && rows->getNumRows()==0,"bank page starts empty");
+        juce::MemoryBlock fixture,bank;
+        check(juce::File::getCurrentWorkingDirectory().getChildFile("tests/state-fixtures/baseline.syx").loadFileAsData(fixture),"bank fixture loaded");
+        for (int i=127;i>=0;--i)
+        {
+            auto entry=fixture;auto* bytes=static_cast<juce::uint8*>(entry.getData());
+            bytes[7]=1;bytes[8]=static_cast<juce::uint8>(i);bytes[20]=static_cast<juce::uint8>(i);
+            std::fill(bytes+137,bytes+153,' ');
+            const auto label="Entry "+juce::String(i);
+            std::memcpy(bytes+137,label.toRawUTF8(),static_cast<size_t>(label.getNumBytesAsUTF8()));
+            bank.append(entry.getData(),entry.getSize());
+        }
+        const auto file=report.getChildFile("synthetic-bank.syx");
+        check(file.replaceWithData(bank.getData(),bank.getSize()),"synthetic bank saved");
+        const auto before=processor.getParameters().copyState();
+        const int count=capture.messages.load();processor.rememberHardwareProgram(23);
+        check(banks->loadBankFile(file),"actual page opens complete bank");
+        check(rows && rows->getNumRows()==128,"actual browser has all entries");
+        if(rows) rows->selectRow(11);
+        pump(300);
+        check(processor.getLocalBankSelection()==11 && processor.getLocalBank()->name(11)=="Entry 11","selection indexed by entry rather than file order");
+        check(capture.messages.load()==count && processor.getKnownHardwareProgram()==23
+              && before.isEquivalentTo(processor.getParameters().copyState()),"opening and selecting preserve MIDI, parameters and preset");
+        const auto saved=processor.getLocalBank();
+        const auto bad=report.getChildFile("bad-bank.syx");bad.replaceWithData(fixture.getData(),fixture.getSize());
+        check(!banks->loadBankFile(bad) && processor.getLocalBank()==saved && processor.getLocalBankSelection()==11,"invalid bank keeps previous bank and selection");
+        check(picture(*banks,report.getChildFile("bank-browser.png")),"bank browser rendered");
+        processor.hardwareMidiOutput().reset();
+        check(!banks->loadSelectedTemporary() && capture.messages.load()==count && processor.getKnownHardwareProgram()==23,"missing output prevents bank send");
+        for (const auto& port : juce::MidiOutput::getAvailableDevices())
+            if(port.name==name) processor.hardwareMidiOutput()=juce::MidiOutput::openDevice(port.identifier);
+        pump(300);
+        const auto expected=saved->temporaryPatch(11);
+        check(click(*banks,"Load Selected to BSII"),"actual explicit bank load button works");
+        pump(300);
+        check(capture.messages.load()==count+1 && capture.received(expected),"one converted patch sent exactly once with no CC echo");
+        check(processor.getKnownHardwareProgram()==-1 && listener.parameters==0,"temporary bank load clears preset without host automation gestures");
+        juce::MemoryBlock state;processor.getStateInformation(state);
+        BSIIControlAudioProcessor fresh;fresh.setStateInformation(state.getData(),static_cast<int>(state.getSize()));
+        check(!fresh.getLocalBank(),"bank workspace is not silently embedded/replayed by DAW state");
+        editor.reset();pump();editor.reset(processor.createEditor());pump();
+        check(processor.getLocalBank()==saved && processor.getLocalBankSelection()==11 && capture.messages.load()==count+1,"editor reopen keeps workspace without resending");
+    }
     processor.removeListener (&listener);
     editor.reset(); sink->stop();
-    std::cout << (failures == 0 ? "PASS" : "FAIL") << " MicroTune editor, local files, session restore, MIDI isolation and edit-buffer file gate ("
+    std::cout << (failures == 0 ? "PASS" : "FAIL") << " MicroTune editor, local files, session restore, MIDI isolation edit-buffer file gate and bank browser ("
               << failures << " failures)\n";
     return failures == 0 ? 0 : 1;
 }

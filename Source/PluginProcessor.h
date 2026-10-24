@@ -5,6 +5,7 @@
 #include <atomic>
 #include "BSIIMidi.h"
 #include "BSIITuningDocument.h"
+#include "BSIIPatchBank.h"
 #include "BSIIHardwareSysExInput.h"
 
 class BSIIControlAudioProcessor : public juce::AudioProcessor,
@@ -76,6 +77,14 @@ public:
     bool undoLocalTuning();
     bool redoLocalTuning();
 
+    // Message-thread-only browser workspace; survives editor closure, not Set state.
+    std::shared_ptr<const bsii::PatchBank> getLocalBank() const { return localBank; }
+    int getLocalBankSelection() const { return localBankSelection; }
+    void setLocalBank (std::shared_ptr<const bsii::PatchBank> bank)
+    { localBank = std::move(bank); localBankSelection = localBank ? 0 : -1; }
+    void selectLocalBankEntry (int index)
+    { if (localBank && juce::isPositiveAndBelow(index,128)) localBankSelection = index; }
+
     // Reception/import/recall updates parameters without transmitting them.
     // Thread-local scopes leave concurrent automation on other threads enabled.
     class ScopedMidiSilence
@@ -146,6 +155,8 @@ private:
     void receiveSysEx (const juce::MidiMessage&);
     void publishNRPN (int channel, int nrpnMSB, int nrpnLSB, int value);
 
+    std::shared_ptr<const bsii::PatchBank> localBank;
+    int localBankSelection = -1;
     juce::AudioProcessorValueTreeState apvts;
     mutable juce::CriticalSection localTuningLock;
     LocalTuningInfo localTuning;

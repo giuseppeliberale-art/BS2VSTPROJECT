@@ -3,6 +3,14 @@
 For current evidence and unfinished work, see [the 19 October checklist](remaining-work.md).
 Earlier entries below preserve implementation chronology.
 
+## Bank browser — 25 October 2026
+
+Banks now opens complete exports, lists entry numbers/names and explicitly loads
+one temporary patch through the validated sender. Browsing sends nothing. Local
+bank/selection survive editor closure but are not embedded or replayed with DAW
+state. Stored-slot/bank restoration remains unimplemented. See
+[workflow and validation](bank-browser.md).
+
 ## Edit-buffer file-send restriction — 25 October 2026
 
 Send .syx now accepts only the validated temporary-patch format; bank/stored

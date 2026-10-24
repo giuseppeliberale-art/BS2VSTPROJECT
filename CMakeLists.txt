@@ -60,6 +60,9 @@ target_sources(BSIIControl PRIVATE
     Source/PluginEditor.h
     Source/BSIIMicroTunePage.cpp
     Source/BSIIMicroTunePage.h
+    Source/BSIIPatchBank.h
+    Source/BSIIBankPage.cpp
+    Source/BSIIBankPage.h
     Source/BSIIScalaImportPanel.cpp
     Source/BSIIScalaImportPanel.h
     Source/BSIIMidi.h
@@ -111,6 +114,12 @@ if(BSII_BUILD_TESTS)
     target_compile_features(BSIIMicroTuningTest PRIVATE cxx_std_20)
     target_link_libraries(BSIIMicroTuningTest PRIVATE juce::juce_core BSIITunV2)
     add_test(NAME MicroTuningOffline COMMAND BSIIMicroTuningTest)
+
+    add_executable(BSIIPatchBankTest tests/PatchBankTest.cpp)
+    target_include_directories(BSIIPatchBankTest PRIVATE tests Source)
+    target_compile_features(BSIIPatchBankTest PRIVATE cxx_std_20)
+    target_link_libraries(BSIIPatchBankTest PRIVATE juce::juce_core)
+    add_test(NAME PatchBankOffline COMMAND BSIIPatchBankTest "${CMAKE_CURRENT_SOURCE_DIR}/tests/state-fixtures/baseline.syx")
 
     # Explicit native-port integration check; not part of offline CTest.
     add_executable(BSIIDirectSysExTest tests/DirectSysExTest.cpp)
