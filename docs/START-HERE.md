@@ -81,10 +81,17 @@ from the old chat. Verify the current checkout and validation status first.
    per-index differences; focused tests passed. Labelled hardware readbacks for
    0, 1, 11 and 127 now match their exported payloads; 11 and 127 each matched
    uniquely, whereas entries 0–9 share payloads. Details: patch-bank-research.md.
-   Next: offline selected-entry conversion/export into the known temporary-patch
-   format, with exact-byte/gate tests. No stored-slot write is authorized.
-   Hardware was last selected at 127; the starting temporary sound is preserved
-   in midi-lab-results/20261025-011530-backup-42e60e/baseline.syx, not restored.
+   Selected-entry extraction is now implemented: `lab.py extract-bank-entry
+   BANK INDEX NEW_FILE.syx [--json]`. Focused tests passed, including actual
+   production-gate checks. Extracted 0/1/11/127 match saved readbacks exactly.
+   A temporary entry-11 hardware send and full readback passed; a fresh starting
+   patch was then restored byte-identically. See bank-entry-extraction.md and
+   midi-lab-results/20261025-012517-bank-entry-temporary-roundtrip/summary.json.
+   The older pre-selection temporary sound remains separately preserved in
+   midi-lab-results/20261025-011530-backup-42e60e/baseline.syx (not reloaded).
+   No stored-slot write is authorized or implemented. Next is a deliberate
+   stored-slot restoration design/test with fresh bank backup and a specified
+   disposable destination, or a plugin bank-browser/temporary-load feature.
    The user confirmed the installed Ableton
    file chooser rejects the Components bank with the expected Not sent status.
    Stored-slot writing/restoration remain unverified; do not transmit the bank.

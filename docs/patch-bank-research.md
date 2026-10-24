@@ -212,3 +212,12 @@ add a stored-slot/bank transmitter based on this header comparison. An eventual
 hardware audition must preserve the active temporary sound first; an actual
 stored write still needs a fresh complete backup, specified destination and
 explicit authorization.
+
+## Conversion and temporary-transfer follow-up — 25 October 2026
+
+The [entry extractor](bank-entry-extraction.md) now preserves payloads and emits
+only the known temporary-patch format into a new file. Real extracted 0/1/11/127
+files matched the labelled readbacks exactly and passed the production send gate.
+One entry-11 temporary hardware transfer/readback and fresh-baseline restoration
+also passed byte-for-byte. The evidence path and test scope are documented in
+that guide. Stored-memory restore commands remain unimplemented and untested.

@@ -150,3 +150,25 @@ def bank_summary(report):
                   'Changed export indices: '+(', '.join(map(str, report['changedExportIndices'])) or 'none'),
                   f"Files byte-identical: {report['byteIdentical']}"]
     return '\n'.join(lines + [report['limitation']])
+
+
+def edit_buffer_entry(report, export_index):
+    """Preserve payload; convert only the observed export header to edit buffer."""
+    if type(export_index) is not int or not 0 <= export_index <= 127:
+        raise ValueError('Export index must be an integer from 0 to 127.')
+    entries = bank_entries(report)
+    original = bytes.fromhex(report['segments'][entries[export_index]['wireMessageIndex']]['rawHex'])
+    return original[:6] + bytes(7) + original[13:]
+
+
+def extract_bank_entry(path, export_index, output):
+    report = inspect_file(path)
+    data = edit_buffer_entry(report, export_index)
+    output = Path(output)
+    # Exclusive creation also rejects source aliases and existing/dangling symlinks.
+    with output.open('xb') as destination:
+        destination.write(data)
+    return dict(source=report['source'], sourceSha256=report['sha256'],
+                exportIndex=export_index, output=str(output.resolve()), bytes=len(data),
+                sha256=digest(data), target='temporary-edit-buffer',
+                midiSent=False, storedWrite=False, hardwareTransferVerified=False)

@@ -106,3 +106,13 @@ conversion/export and offline byte-exact/validation tests; hardware audition
 and any stored-slot write remain separate. The tool's write-addressing and
 transmission flags must remain false. No automatic memory-write workflow was
 established by comparing outgoing exports with edit-buffer responses.
+
+## Selected-entry extraction and temporary round trip — 25 October 2026
+
+[Offline extraction](bank-entry-extraction.md) is now implemented with exclusive
+output creation and unchanged payloads. Focused tests include the actual production
+send gate; four private real outputs exactly match saved hardware readbacks. A
+subsequent entry-11 edit-buffer transfer matched its full readback, then the fresh
+starting temporary patch was restored and matched independently. No stored slot
+was written. This advances temporary loading only; the stored-write authorization,
+addressing and fresh-bank verification prerequisites above remain in force.

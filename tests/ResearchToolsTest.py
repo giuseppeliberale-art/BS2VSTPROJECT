@@ -271,4 +271,71 @@ class BankReviewTests(unittest.TestCase):
             source.write_bytes(raw[:-1]);result=subprocess.run(args,capture_output=True,text=True,cwd=tmp)
             self.assertEqual(result.returncode,1);self.assertIn('ERROR:',result.stderr)
 
+class BankExtractionTests(unittest.TestCase):
+    def bank(self):
+        return BankReviewTests().bank()
+
+    def test_all_indices_preserve_exact_payload_and_recover_original_fixture(self):
+        entries=self.bank();report=stream.inspect_bytes(b''.join(reversed(entries)))
+        original=(ROOT/'tests/state-fixtures/baseline.syx').read_bytes()
+        for i in range(128):
+            converted=stream.edit_buffer_entry(report,i)
+            self.assertEqual(converted,original)
+            self.assertEqual(converted[13:],entries[i][13:])
+            self.assertEqual(converted[6:13],bytes(7))
+        for index in [-1,128,1.5,True,'1']:
+            with self.assertRaises(ValueError):stream.edit_buffer_entry(report,index)
+        with self.assertRaises(ValueError):stream.edit_buffer_entry(stream.inspect_bytes(entries[0]),0)
+
+    def test_distinct_payloads_remain_distinct_and_no_files_overwritten(self):
+        entries=self.bank()
+        for i in range(128):
+            raw=bytearray(entries[i]);raw[20]=i;entries[i]=bytes(raw)
+        with tempfile.TemporaryDirectory() as tmp:
+            source=Path(tmp)/'bank.syx';source.write_bytes(b''.join(entries))
+            output=Path(tmp)/'entry.syx';r=stream.extract_bank_entry(source,127,output)
+            self.assertEqual(output.read_bytes(),entries[127][:6]+bytes(7)+entries[127][13:])
+            self.assertFalse(r['midiSent']);self.assertFalse(r['storedWrite'])
+            for path in [output,source]:
+                before=path.read_bytes()
+                with self.assertRaises(FileExistsError):stream.extract_bank_entry(source,0,path)
+                self.assertEqual(path.read_bytes(),before)
+            alias=Path(tmp)/'alias.syx';alias.symlink_to(source)
+            with self.assertRaises(FileExistsError):stream.extract_bank_entry(source,0,alias)
+            bad=Path(tmp)/'bad.syx';bad.write_bytes(b'bad')
+            absent=Path(tmp)/'absent.syx'
+            with self.assertRaises(ValueError):stream.extract_bank_entry(bad,0,absent)
+            self.assertFalse(absent.exists())
+            self.assertEqual(source.read_bytes(),b''.join(entries))
+
+    @unittest.skipUnless(os.environ.get('BSII_PATCH_INSPECT'),'Actual production validator supplied by CTest')
+    def test_outputs_pass_actual_production_gate_but_bank_messages_do_not(self):
+        entries=self.bank();report=stream.inspect_bytes(b''.join(entries))
+        with tempfile.TemporaryDirectory() as tmp:
+            paths=[]
+            for index in [0,1,11,127]:
+                for name,data in [('stored',entries[index]),('edit',stream.edit_buffer_entry(report,index))]:
+                    path=Path(tmp)/f'{name}-{index}.syx';path.write_bytes(data);paths.append(str(path))
+            result=subprocess.run([os.environ['BSII_PATCH_INSPECT']]+paths,capture_output=True,text=True)
+            self.assertEqual(result.returncode,0,result.stderr)
+            records=[json.loads(line) for line in result.stdout.splitlines()]
+            self.assertEqual([r['editBufferEligible'] for r in records],[False,True]*4)
+            self.assertTrue(all(r['valid'] for r in records))
+
+    def test_cli_explicit_file_export_and_invalid_arguments(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            source=Path(tmp)/'bank.syx';raw=b''.join(self.bank());source.write_bytes(raw)
+            output=Path(tmp)/'patch.syx'
+            args=[sys.executable,'-B',str(ROOT/'tools/midi-lab/lab.py'),'extract-bank-entry',str(source),'11',str(output),'--json']
+            result=subprocess.run(args,capture_output=True,text=True,cwd=tmp)
+            self.assertEqual(result.returncode,0,result.stderr)
+            self.assertEqual(json.loads(result.stdout)['bytes'],154)
+            self.assertEqual(output.read_bytes(),(ROOT/'tests/state-fixtures/baseline.syx').read_bytes())
+            result=subprocess.run(args,capture_output=True,text=True,cwd=tmp)
+            self.assertEqual(result.returncode,1)
+            self.assertEqual(source.read_bytes(),raw)
+            args[-3]='128'
+            result=subprocess.run(args,capture_output=True,text=True,cwd=tmp)
+            self.assertNotEqual(result.returncode,0)
+
 if __name__=='__main__': unittest.main()

@@ -1,4 +1,5 @@
 #include "BSIIPatchFields.h"
+#include "BSIIProjectRecall.h"
 #include <iostream>
 int main(int argc, char** argv)
 {
@@ -13,6 +14,7 @@ int main(int argc, char** argv)
         auto object = std::make_unique<juce::DynamicObject>();
         object->setProperty("file", file.getFullPathName());
         object->setProperty("valid", decoded.valid);
+        object->setProperty("editBufferEligible", bsii::isRecallPatch(bytes));
         object->setProperty("error", decoded.error);
         auto fields = std::make_unique<juce::DynamicObject>();
         for (const auto& field : bsii::patchFields)

@@ -385,12 +385,21 @@ def main():
     bank.add_argument('capture', type=Path)
     bank.add_argument('--against', type=Path)
     bank.add_argument('--json', action='store_true')
+    extract = commands.add_parser('extract-bank-entry', help='offline: create one temporary-patch .syx from a bank; never sends MIDI')
+    extract.add_argument('capture', type=Path)
+    extract.add_argument('export_index', type=int)
+    extract.add_argument('output', type=Path)
+    extract.add_argument('--json', action='store_true')
     args = parser.parse_args()
     if args.command is None: args = parser.parse_args(['record'])
-    if args.command in ('inspect-sysex', 'review-bank'):
+    if args.command in ('inspect-sysex', 'review-bank', 'extract-bank-entry'):
         spec = importlib.util.spec_from_file_location('bsii_sysex_stream', Path(__file__).with_name('sysex_stream.py'))
         stream_tools = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(stream_tools)
+        if args.command == 'extract-bank-entry':
+            report = stream_tools.extract_bank_entry(args.capture, args.export_index, args.output)
+            print(json.dumps(report, indent=2) if args.json else f"Wrote {report['bytes']}-byte temporary patch: {report['output']}\nSHA256: {report['sha256']}\nNo MIDI sent; stored presets unchanged.")
+            return
         if args.command == 'review-bank':
             report = stream_tools.review_bank(args.capture, args.against)
             print(json.dumps(report, indent=2) if args.json else stream_tools.bank_summary(report))

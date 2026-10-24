@@ -119,6 +119,13 @@ index. It opens no MIDI ports and creates no output files. Preview does not
 establish write addresses or enable transmission. See
 [bank review, restoration design and tests](bank-restoration-plan.md).
 
+## Extract one bank entry without MIDI
+
+`python3 -B tools/midi-lab/lab.py extract-bank-entry BANK INDEX NEW_FILE.syx [--json]`
+creates one temporary-patch file from the strict export profile. Source bytes are
+preserved, existing output files are refused, and no MIDI is sent.
+See [extraction limits and hardware round-trip evidence](bank-entry-extraction.md).
+
 ## Deferred work
 
 Generic live experiment recipes and transport consolidation can follow after this
