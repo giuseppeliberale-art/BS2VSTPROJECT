@@ -78,9 +78,13 @@ from the old chat. Verify the current checkout and validation status first.
    builds, strict local signatures and AU validation passed. Next:
    the [restoration plan](bank-restoration-plan.md). `lab.py review-bank FILE
    [--against BACKUP] [--json]` now provides read-only strict export review and
-   per-index differences; focused tests passed. Next hardware evidence is a
-   labelled selected-preset/edit-buffer comparison, after preserving its current
-   sound. No stored writes or header conversions are authorized by the plan.
+   per-index differences; focused tests passed. Labelled hardware readbacks for
+   0, 1, 11 and 127 now match their exported payloads; 11 and 127 each matched
+   uniquely, whereas entries 0–9 share payloads. Details: patch-bank-research.md.
+   Next: offline selected-entry conversion/export into the known temporary-patch
+   format, with exact-byte/gate tests. No stored-slot write is authorized.
+   Hardware was last selected at 127; the starting temporary sound is preserved
+   in midi-lab-results/20261025-011530-backup-42e60e/baseline.syx, not restored.
    The user confirmed the installed Ableton
    file chooser rejects the Components bank with the expected Not sent status.
    Stored-slot writing/restoration remain unverified; do not transmit the bank.

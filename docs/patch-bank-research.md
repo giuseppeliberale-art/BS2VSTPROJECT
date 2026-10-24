@@ -165,3 +165,50 @@ The [bank review and restoration plan](bank-restoration-plan.md) adds a read-onl
 complete-profile validator, per-export-index comparison and explicit remaining
 hardware evidence/write prerequisites. Focused tool tests passed. It does not
 make the observed header a verified receive command or add a bank transmitter.
+
+## Labelled preset/readback comparisons — 25 October 2026
+
+The current temporary patch was preserved before manual selection in
+`midi-lab-results/20261025-011530-backup-42e60e/baseline.syx`. The user confirmed
+Ableton stopped, the BS2 track MIDI From = No Input, and the unrelated MIDI track
+No Output. The user then selected hardware presets 0, 1, 11 and 127, without
+editing controls; each was followed by a current-edit-buffer request.
+
+| Hardware selection | Export entry compared | Changed byte offsets (zero-based) | Bytes 13–152 |
+|---|---|---|---|
+| 0 | 0 | 7 | Identical |
+| 1 | 1 | 7, 8 | Identical |
+| 11 | 11 | 7, 8 | Identical |
+| 127 | 127 | 7, 8 | Identical |
+
+Exports had byte 7 = 1 and byte 8 = export index; fresh readbacks had both zero.
+The remaining header and terminator also matched. Thus clearing header bytes
+6–12 in each of these exported messages would reproduce the complete matching
+readback exactly. No converted message was sent during this check.
+
+Important ambiguity: entries 0–9 in the saved bank have identical payloads, so
+0/1 alone cannot establish numbering. An offline inventory found 117 distinct
+payloads overall. Preset 11's fresh payload matched only export index 11;
+preset 127's matched only index 127. These distinct comparisons support the
+selected/exported index correspondence at the tested values. They do not prove
+all receive destinations or a stored-write command. Existing decoder fields also
+matched for 0; full raw-payload comparison is the stronger evidence retained.
+
+Private comparison JSON/readbacks (not committed):
+- `midi-lab-results/20261025-011726-backup-4f6f61/` — preset 0
+- `midi-lab-results/20261025-011805-backup-1ff7d6/` — preset 1
+- `midi-lab-results/20261025-011858-backup-a3be53/` — preset 11
+- `midi-lab-results/20261025-011951-backup-3bbb0d/` — preset 127
+
+Each contains `baseline.syx` and `bank-entry-comparison.json`; unique-match
+indices are recorded for 11 and 127. No patch contents were uploaded, no stored
+slots were written, and no tuning-table data or global commands were sent.
+Hardware was last selected at preset 127; the starting temporary patch remains
+backed up but has not been restored. Audio was not required or checked.
+
+Next: implement and offline-test explicit selected-entry conversion/export into
+the validated temporary edit-buffer format using this bounded evidence. Do not
+add a stored-slot/bank transmitter based on this header comparison. An eventual
+hardware audition must preserve the active temporary sound first; an actual
+stored write still needs a fresh complete backup, specified destination and
+explicit authorization.

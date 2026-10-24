@@ -92,3 +92,17 @@ unchanged entries, byte-identical at the previously recorded SHA256. No runtime
 plugin code, installed bundles or hardware data changed in this increment.
 The full offline validation stamp predates these tool changes; no broad rebuild
 was needed for this bounded Python-tool change.
+
+## Read-only hardware evidence follow-up — 25 October 2026
+
+The user selected 0, 1, 11 and 127 and each fresh edit-buffer payload matched its
+exported entry exactly. Header byte 7 differed for 0; bytes 7/8 differed for the
+others. The 0/1 pair is ambiguous because export entries 0–9 share payloads, but
+11 and 127 each matched only their own export index among all 128 entries.
+See [capture details and limits](patch-bank-research.md#labelled-presetreadback-comparisons--25-october-2026).
+
+This completes initial labelled readback evidence. Next is selected-entry
+conversion/export and offline byte-exact/validation tests; hardware audition
+and any stored-slot write remain separate. The tool's write-addressing and
+transmission flags must remain false. No automatic memory-write workflow was
+established by comparing outgoing exports with edit-buffer responses.

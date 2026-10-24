@@ -96,7 +96,9 @@ Evidence: [recall](project-sound-recall.md), [global controls](global-control-re
   recorded; full-bank backup/import and any stored-slot
   writing need explicit design and validation. A [restoration plan and strict
   offline bank review](bank-restoration-plan.md) are now implemented/documented;
-  selected-preset/readback comparison and stored-write validation remain pending. Current transfers target the
+  selected-preset/readback comparison passed at 0/1 and uniquely at 11/127.
+  Offline selected-entry conversion/export and stored-write validation remain
+  pending; outgoing headers do not establish a stored-memory receive command. Current transfers target the
   temporary sound; no new stored-preset overwrite workflow is implemented.
 - [ ] **AFX, last synth feature area:** overlay-bank selection, protection,
   per-note data editing, transfer and explicit save/clear operations. The manual
