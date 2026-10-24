@@ -53,3 +53,11 @@ AU validation succeeded (`auval.log`). This also installs the previously pending
 recall dispatch wording change. Fresh manual Ableton acceptance and bank
 restoration remain separate work; public release downloads were not replaced.
 The full offline-suite fingerprint is older; only these relevant checks were run.
+
+## Manual Ableton rejection check — 25 October 2026
+
+The user selected the Components full-bank file through Send .syx in the
+installed plugin and confirmed the expected “Not sent: requires one validated
+154-byte edit-buffer patch” status. This establishes hosted UI rejection; no
+independent wire capture was taken in this manual check. Zero MIDI on rejection
+is covered by the native virtual-port regression above. No bank restore occurred.
