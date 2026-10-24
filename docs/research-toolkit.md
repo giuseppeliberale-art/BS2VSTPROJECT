@@ -111,6 +111,14 @@ A direct CLI check on tests/state-fixtures/baseline.syx reported one clean
 154-byte shape candidate. No full bank was captured or restored; no MIDI sent.
 No plugin build/install or broader validation was repeated for this tool-only change.
 
+## Review a BSII bank export
+
+`python3 -B tools/midi-lab/lab.py review-bank FILE [--against BACKUP] [--json]`
+validates the observed complete export profile and compares entries by export
+index. It opens no MIDI ports and creates no output files. Preview does not
+establish write addresses or enable transmission. See
+[bank review, restoration design and tests](bank-restoration-plan.md).
+
 ## Deferred work
 
 Generic live experiment recipes and transport consolidation can follow after this

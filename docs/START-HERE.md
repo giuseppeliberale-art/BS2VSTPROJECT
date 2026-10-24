@@ -76,7 +76,12 @@ from the old chat. Verify the current checkout and validation status first.
    native-tested and installed (25 October); see edit-buffer-file-send.md. It
    rejects banks/other commands without MIDI or preset-state changes. AU/VST3
    builds, strict local signatures and AU validation passed. Next:
-   separate restoration-path design. The user confirmed the installed Ableton
+   the [restoration plan](bank-restoration-plan.md). `lab.py review-bank FILE
+   [--against BACKUP] [--json]` now provides read-only strict export review and
+   per-index differences; focused tests passed. Next hardware evidence is a
+   labelled selected-preset/edit-buffer comparison, after preserving its current
+   sound. No stored writes or header conversions are authorized by the plan.
+   The user confirmed the installed Ableton
    file chooser rejects the Components bank with the expected Not sent status.
    Stored-slot writing/restoration remain unverified; do not transmit the bank.
 3. The TUN v2 build/install increment and manual Ableton preview/apply/undo/redo

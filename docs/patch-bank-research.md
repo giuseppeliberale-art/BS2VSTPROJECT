@@ -158,3 +158,10 @@ installation and Apple AU validation passed. See
 [file-send behavior and evidence](edit-buffer-file-send.md). This supersedes the
 historical unrestricted-sender source finding above. It adds no slot restoration
 or bank-writing feature and changes no observed bank header interpretation.
+
+## Strict export review and restoration design — 25 October 2026
+
+The [bank review and restoration plan](bank-restoration-plan.md) adds a read-only
+complete-profile validator, per-export-index comparison and explicit remaining
+hardware evidence/write prerequisites. Focused tool tests passed. It does not
+make the observed header a verified receive command or add a bank transmitter.

@@ -94,7 +94,9 @@ Evidence: [recall](project-sound-recall.md), [global controls](global-control-re
   [import research](tuning-import-research.md).
 - [ ] **Patch-bank management:** [research and staged plan](patch-bank-research.md)
   recorded; full-bank backup/import and any stored-slot
-  writing need explicit design and validation. Current transfers target the
+  writing need explicit design and validation. A [restoration plan and strict
+  offline bank review](bank-restoration-plan.md) are now implemented/documented;
+  selected-preset/readback comparison and stored-write validation remain pending. Current transfers target the
   temporary sound; no new stored-preset overwrite workflow is implemented.
 - [ ] **AFX, last synth feature area:** overlay-bank selection, protection,
   per-note data editing, transfer and explicit save/clear operations. The manual

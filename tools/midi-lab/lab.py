@@ -381,12 +381,20 @@ def main():
     stream = commands.add_parser('inspect-sysex', help='offline: inspect binary SysEx framing; never sends MIDI')
     stream.add_argument('capture', type=Path)
     stream.add_argument('--json', action='store_true')
+    bank = commands.add_parser('review-bank', help='offline: review/compare the observed BSII bank export profile; no MIDI')
+    bank.add_argument('capture', type=Path)
+    bank.add_argument('--against', type=Path)
+    bank.add_argument('--json', action='store_true')
     args = parser.parse_args()
     if args.command is None: args = parser.parse_args(['record'])
-    if args.command == 'inspect-sysex':
+    if args.command in ('inspect-sysex', 'review-bank'):
         spec = importlib.util.spec_from_file_location('bsii_sysex_stream', Path(__file__).with_name('sysex_stream.py'))
         stream_tools = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(stream_tools)
+        if args.command == 'review-bank':
+            report = stream_tools.review_bank(args.capture, args.against)
+            print(json.dumps(report, indent=2) if args.json else stream_tools.bank_summary(report))
+            return
         report = stream_tools.inspect_file(args.capture)
         print(json.dumps(report, indent=2) if args.json else stream_tools.summary(report))
         if not report['framingClean']: raise SystemExit(1)

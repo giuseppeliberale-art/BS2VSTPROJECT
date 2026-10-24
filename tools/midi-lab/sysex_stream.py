@@ -100,3 +100,53 @@ def summary(report):
     lines += [f"  {name}: {count}" for name, count in report['classifications'].items()]
     lines += [f"  byte {issue['offset']}: {issue['code']}" for issue in report['issues']]
     return '\n'.join(lines + [report['limitation']])
+
+
+def bank_entries(report):
+    """Recognize the observed export profile, not a verified write protocol."""
+    if (not report['framingClean'] or report['bytes'] != 128 * 154
+            or report['completeMessages'] != 128 or len(report['segments']) != 128):
+        raise ValueError('Requires a clean 128-message, 19712-byte BSII export; no outside or real-time bytes.')
+    entries = {}
+    for wire_index, segment in enumerate(report['segments']):
+        message = bytes.fromhex(segment['rawHex'])
+        if (len(message) != 154 or not message.startswith(BSII_PREFIX)
+                or message[6:8] != bytes([0, 1]) or message[9:13] != bytes(4)):
+            raise ValueError(f'Message {wire_index} does not match the observed BSII export header.')
+        index = message[8]
+        if index in entries:
+            raise ValueError(f'Duplicate export index {index}; bank is not complete.')
+        entries[index] = dict(exportIndex=index, wireMessageIndex=wire_index,
+                              messageSha256=digest(message), payloadSha256=digest(message[13:-1]))
+    if set(entries) != set(range(128)):
+        raise ValueError('Bank must contain every export index 0..127 exactly once.')
+    return entries
+
+
+def review_bank(path, against=None):
+    source = inspect_file(path)
+    entries = bank_entries(source)
+    result = dict(schemaVersion=1, readOnly=True, source=source['source'],
+                  sourceSha256=source['sha256'], bytes=source['bytes'], entries=128,
+                  observedExportProfile=True, writeAddressingVerified=False,
+                  transmitEligible=False, restorationVerified=False,
+                  patches=[entries[i] for i in range(128)],
+                  limitation='Export-index review only; no MIDI, restore commands or verified hardware destination mapping.')
+    if against is not None:
+        reference = inspect_file(against)
+        previous = bank_entries(reference)
+        changed = [i for i in range(128) if entries[i]['payloadSha256'] != previous[i]['payloadSha256']]
+        result.update(reference=reference['source'], referenceSha256=reference['sha256'],
+                      byteIdentical=source['sha256'] == reference['sha256'],
+                      changedExportIndices=changed, changedEntries=len(changed), unchangedEntries=128-len(changed))
+    return result
+
+
+def bank_summary(report):
+    lines = ['Read-only BSII export review: all 128 export indices present exactly once.',
+             f"Bytes: {report['bytes']}; SHA256: {report['sourceSha256']}"]
+    if 'changedEntries' in report:
+        lines += [f"Compared by export index: {report['changedEntries']} changed, {report['unchangedEntries']} unchanged.",
+                  'Changed export indices: '+(', '.join(map(str, report['changedExportIndices'])) or 'none'),
+                  f"Files byte-identical: {report['byteIdentical']}"]
+    return '\n'.join(lines + [report['limitation']])

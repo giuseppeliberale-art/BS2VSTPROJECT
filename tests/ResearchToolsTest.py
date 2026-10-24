@@ -220,4 +220,55 @@ class SysExStreamTests(unittest.TestCase):
             self.assertEqual(result.returncode,1)
             self.assertFalse(json.loads(result.stdout)['framingClean'])
 
+class BankReviewTests(unittest.TestCase):
+    def bank(self):
+        template=bytearray((ROOT/'tests/state-fixtures/baseline.syx').read_bytes())
+        template[7]=1
+        entries=[]
+        for i in range(128):
+            patch=bytearray(template);patch[8]=i;entries.append(bytes(patch))
+        return entries
+
+    def test_export_indices_order_independent_diff_and_no_write_eligibility(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            source=Path(tmp)/'source.syx';reference=Path(tmp)/'reference.syx'
+            entries=self.bank();reference.write_bytes(b''.join(entries))
+            source.write_bytes(b''.join(reversed(entries)))
+            r=stream.review_bank(source,reference)
+            self.assertEqual(r['changedEntries'],0);self.assertFalse(r['byteIdentical'])
+            self.assertEqual(r['patches'][0]['wireMessageIndex'],127)
+            self.assertFalse(r['transmitEligible']);self.assertFalse(r['writeAddressingVerified'])
+            changed=bytearray(entries[37]);changed[20]^=1;entries[37]=bytes(changed)
+            source.write_bytes(b''.join(entries));r=stream.review_bank(source,reference)
+            self.assertEqual(r['changedExportIndices'],[37]);self.assertEqual(r['unchangedEntries'],127)
+            source.write_bytes(reference.read_bytes());self.assertTrue(stream.review_bank(source,reference)['byteIdentical'])
+
+    def test_incomplete_duplicate_wrong_command_and_malformed_banks_rejected(self):
+        entries=self.bank()
+        cases=[b''.join(entries[:-1]),b''.join(entries+[entries[0]]),b''.join(entries[:-1]+[entries[0]])]
+        for offset,value in [(5,0x34),(6,1),(7,0),(9,1),(12,1),(20,0x80),(30,0xf0),(153,0)]:
+            altered=bytearray(entries[0]);altered[offset]=value
+            cases.append(bytes(altered)+b''.join(entries[1:]))
+        cases += [b'\xf8'+b''.join(entries),b''.join(entries)+b'\x00']
+        with tempfile.TemporaryDirectory() as tmp:
+            path=Path(tmp)/'bad.syx'
+            for raw in cases:
+                path.write_bytes(raw)
+                with self.subTest(prefix=raw[:14]),self.assertRaises(ValueError):stream.review_bank(path)
+            good=Path(tmp)/'good.syx';good.write_bytes(b''.join(entries))
+            with self.assertRaises(ValueError):stream.review_bank(good,path)
+
+    def test_cli_preview_never_modifies_files_or_creates_output(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            source=Path(tmp)/'source.syx';reference=Path(tmp)/'reference.syx'
+            raw=b''.join(self.bank());source.write_bytes(raw);reference.write_bytes(raw)
+            args=[sys.executable,'-B',str(ROOT/'tools/midi-lab/lab.py'),'review-bank',str(source),'--against',str(reference),'--json']
+            result=subprocess.run(args,capture_output=True,text=True,cwd=tmp)
+            self.assertEqual(result.returncode,0,result.stderr)
+            r=json.loads(result.stdout);self.assertTrue(r['byteIdentical']);self.assertFalse(r['transmitEligible'])
+            self.assertEqual(source.read_bytes(),raw);self.assertEqual(reference.read_bytes(),raw)
+            self.assertEqual(set(Path(tmp).iterdir()),{source,reference})
+            source.write_bytes(raw[:-1]);result=subprocess.run(args,capture_output=True,text=True,cwd=tmp)
+            self.assertEqual(result.returncode,1);self.assertIn('ERROR:',result.stderr)
+
 if __name__=='__main__': unittest.main()
