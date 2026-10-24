@@ -67,3 +67,13 @@ Local evidence: `validation-results/bank-browser/native-test.log` and
 actions are readable; a shorter editor uses the outer scrollbar for the footer.
 No fresh manual hosted acceptance or physical hardware load is claimed by these
 native results. Installation evidence follows when completed.
+
+## Installation completed — 25 October 2026
+
+After the user saved and quit Live, a process check confirmed it closed. Both
+AU/VST3 bundles were installed with prior versions backed up under
+`validation-results/bank-browser/installed-before/`. Both MIT notices matched
+their source files, strict local ad-hoc signatures passed and Apple AU validation
+succeeded. Logs: auval.log and installation.txt in that report directory.
+Manual hosted bank browsing/loading acceptance is next; public preview downloads
+were not replaced. No physical hardware send was performed for installation.

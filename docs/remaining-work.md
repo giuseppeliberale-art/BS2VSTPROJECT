@@ -102,8 +102,9 @@ Evidence: [recall](project-sound-recall.md), [global controls](global-control-re
   baseline restoration. Stored-write validation remains pending; outgoing
   headers do not establish a stored-memory receive command.
   The [Banks page](bank-browser.md) now opens/browses a bank silently and loads
-  one temporary patch explicitly. Model/native tests passed; installation and
-  manual hosted browser acceptance are tracked in its guide. Current transfers target the
+  one temporary patch explicitly. Model/native tests, AU/VST3 installation,
+  licence/signature checks and AU validation passed. Manual hosted browser
+  acceptance is next; see its guide. Current transfers target the
   temporary sound; no new stored-preset overwrite workflow is implemented.
 - [ ] **AFX, last synth feature area:** overlay-bank selection, protection,
   per-note data editing, transfer and explicit save/clear operations. The manual

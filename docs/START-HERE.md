@@ -93,8 +93,10 @@ from the old chat. Verify the current checkout and validation status first.
    explicitly load one temporary patch. It retains a local bank/selection across
    editor closure without embedding or replaying the bank in DAW state.
    The new PatchBankOffline model test and focused tool groups passed, as did
-   the expanded native editor test. See bank-browser.md. Installation is pending
-   the user's confirmed Live exit. No stored-slot write is authorized/implemented;
+   the expanded native editor test. AU/VST3 were installed after confirmed Live
+   exit; licence/signature checks and AU validation passed. See bank-browser.md.
+   Next: manual Ableton open/browse/explicit temporary-load acceptance.
+   No stored-slot write is authorized/implemented;
    that next stage needs a fresh bank backup and a specified disposable target.
    The user confirmed the installed Ableton
    file chooser rejects the Components bank with the expected Not sent status.
