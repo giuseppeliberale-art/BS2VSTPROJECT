@@ -16,7 +16,16 @@ void check (bool ok, const char* label)
 struct Capture : juce::MidiInputCallback
 {
     std::atomic<int> messages { 0 };
-    void handleIncomingMidiMessage (juce::MidiInput*, const juce::MidiMessage&) override { ++messages; }
+    juce::CriticalSection lock;
+    juce::MemoryBlock last;
+    void handleIncomingMidiMessage (juce::MidiInput*, const juce::MidiMessage& message) override
+    {
+        const juce::ScopedLock guard (lock);
+        last = juce::MemoryBlock (message.getRawData(), static_cast<size_t> (message.getRawDataSize()));
+        ++messages;
+    }
+    bool received (const juce::MemoryBlock& data)
+    { const juce::ScopedLock guard (lock); return last == data; }
 };
 struct Listener : juce::AudioProcessorListener
 {
@@ -363,9 +372,66 @@ int main (int argc, char** argv)
     check (importWindow == nullptr, "closing editor destroys import session safely");
     pump (300);
     check (capture.messages.load() == 0, "edit/load/save/restore emits no MIDI");
+    // Exercise the same selected-file send path as the actual file chooser,
+    // after completing the tuning-is-silent checks above. Output stays virtual.
+    editor.reset (processor.createEditor());
+    auto* sender = dynamic_cast<BSIIControlAudioProcessorEditor*> (editor.get());
+    check (sender != nullptr, "actual patch sender editor available");
+    if (sender)
+    {
+        juce::MemoryBlock patch;
+        check (juce::File::getCurrentWorkingDirectory().getChildFile ("tests/state-fixtures/baseline.syx").loadFileAsData (patch),
+               "retained edit-buffer fixture loaded");
+        const auto file = report.getChildFile ("send-test.syx");
+        processor.rememberHardwareProgram (23);
+        auto reject = [&] (const juce::MemoryBlock& data)
+        {
+            check (file.replaceWithData (data.getData(), data.getSize()), "rejected fixture written");
+            check (! sender->sendEditBufferFile (file), "invalid file rejected by actual sender");
+            check (processor.getKnownHardwareProgram() == 23, "rejection preserves known preset");
+        };
+        auto changed = patch;
+        static_cast<juce::uint8*> (changed.getData())[7] = 1;
+        reject (changed); // Stored/bank-shaped command, even for slot 0.
+        juce::MemoryBlock bank;
+        for (int i = 0; i < 128; ++i)
+        {
+            static_cast<juce::uint8*> (changed.getData())[8] = static_cast<juce::uint8> (i);
+            bank.append (changed.getData(), changed.getSize());
+        }
+        reject (bank); // Synthetic; never use private user banks as test fixtures.
+        for (int i = 6; i <= 12; ++i)
+        {
+            changed = patch; static_cast<juce::uint8*> (changed.getData())[i] = 1; reject (changed);
+        }
+        for (const auto bad : { 0x80, 0xf0, 0xf7 })
+        {
+            changed = patch; static_cast<juce::uint8*> (changed.getData())[20] = static_cast<juce::uint8> (bad); reject (changed);
+        }
+        changed = patch; static_cast<juce::uint8*> (changed.getData())[5] = 0x34; reject (changed);
+        reject (juce::MemoryBlock (patch.getData(),153));
+        changed = patch; const juce::uint8 extra = 0; changed.append (&extra,1); reject (changed);
+        changed = patch; changed.append (patch.getData(),patch.getSize()); reject (changed);
+        const juce::uint8 save[] {0xf0,0,0x20,0x29,0,0x33,0,0x48,0xf7};
+        reject (juce::MemoryBlock (save,sizeof(save)));
+        reject (juce::MemoryBlock());
+        check (! sender->sendEditBufferFile (report.getChildFile ("absent-file.syx")), "missing file rejected");
+        pump (300);
+        check (capture.messages.load() == 0, "all rejected files emit zero MIDI");
+        check (processor.getKnownHardwareProgram() == 23, "all rejection paths preserve preset identity");
+        check (file.replaceWithData (patch.getData(),patch.getSize()) && sender->sendEditBufferFile (file),
+               "validated single edit-buffer file accepted");
+        pump (300);
+        check (capture.messages.load() == 1 && capture.received (patch), "valid send emits exactly the original patch bytes once");
+        check (processor.getKnownHardwareProgram() == -1, "valid temporary patch clears preset identity");
+        processor.rememberHardwareProgram (23);
+        processor.hardwareMidiOutput().reset();
+        check (! sender->sendEditBufferFile (file) && processor.getKnownHardwareProgram() == 23,
+               "missing output rejects without clearing preset identity");
+    }
     processor.removeListener (&listener);
     editor.reset(); sink->stop();
-    std::cout << (failures == 0 ? "PASS" : "FAIL") << " MicroTune editor, local files, session restore and MIDI isolation ("
+    std::cout << (failures == 0 ? "PASS" : "FAIL") << " MicroTune editor, local files, session restore, MIDI isolation and edit-buffer file gate ("
               << failures << " failures)\n";
     return failures == 0 ? 0 : 1;
 }

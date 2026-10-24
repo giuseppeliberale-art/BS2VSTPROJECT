@@ -3,6 +3,7 @@
 #include "BSIIPatchDecoder.h"
 #include "BSIITuningDisplay.h"
 #include "BSIIPatchState.h"
+#include "BSIIProjectRecall.h"
 
 ParameterControl::ParameterControl (juce::AudioProcessorValueTreeState& state,
                                     const bsii::ParameterSpec& parameterSpec,
@@ -958,44 +959,47 @@ void BSIIControlAudioProcessorEditor::saveLastSysEx()
     });
 }
 
+bool BSIIControlAudioProcessorEditor::sendEditBufferFile (const juce::File& file)
+{
+    if (midiOutput == nullptr)
+    {
+        statusLabel.setText ("Cannot send patch: no MIDI output is open.", juce::dontSendNotification);
+        return false;
+    }
+    juce::FileInputStream input (file);
+    if (! input.openedOk())
+    {
+        statusLabel.setText ("Could not read patch file.", juce::dontSendNotification);
+        return false;
+    }
+    juce::MemoryBlock data;
+    input.readIntoMemoryBlock (data, 155); // One extra byte detects trailing data; bound the read.
+    if (! bsii::isRecallPatch (data))
+    {
+        statusLabel.setText ("Not sent: requires one validated 154-byte edit-buffer patch. Bank, stored-patch and other commands are unsupported.",
+                             juce::dontSendNotification);
+        return false;
+    }
+    forgetPreset();
+    midiOutput->sendMessageNow (juce::MidiMessage (data.getData(), static_cast<int> (data.getSize()), 0.0));
+    statusLabel.setText ("Sent temporary patch to BSII edit buffer. Hardware receipt not confirmed.", juce::dontSendNotification);
+    return true;
+}
+
 void BSIIControlAudioProcessorEditor::sendSysExFileToHardware()
 {
     if (midiOutput == nullptr)
     {
-        statusLabel.setText ("Cannot send SysEx: no MIDI output is open.", juce::dontSendNotification);
+        statusLabel.setText ("Cannot send patch: no MIDI output is open.", juce::dontSendNotification);
         return;
     }
-
     auto start = juce::File::getSpecialLocation (juce::File::userDocumentsDirectory);
-    fileChooser = std::make_unique<juce::FileChooser> ("Send a single Bass Station II .syx patch", start, "*.syx");
+    fileChooser = std::make_unique<juce::FileChooser> ("Send a validated Bass Station II edit-buffer patch", start, "*.syx");
     const auto flags = juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles;
     fileChooser->launchAsync (flags, [this] (const juce::FileChooser& chooser)
     {
         const auto file = chooser.getResult();
-        if (file != juce::File{})
-        {
-            juce::MemoryBlock data;
-            if (! file.loadFileAsData (data) || data.getSize() < 3)
-            {
-                statusLabel.setText ("Could not read SysEx file.", juce::dontSendNotification);
-                fileChooser.reset();
-                return;
-            }
-
-            const auto* bytes = static_cast<const uint8_t*> (data.getData());
-            if (bytes[0] != 0xF0 || bytes[data.getSize() - 1] != 0xF7)
-            {
-                statusLabel.setText ("This file is not one complete SysEx message (expected F0 ... F7).", juce::dontSendNotification);
-                fileChooser.reset();
-                return;
-            }
-
-            juce::MidiMessage message (data.getData(), static_cast<int> (data.getSize()), 0.0);
-            forgetPreset();
-            midiOutput->sendMessageNow (message);
-            statusLabel.setText ("Sent " + juce::String (static_cast<int> (data.getSize())) + "-byte SysEx message to Bass Station II edit buffer.",
-                                 juce::dontSendNotification);
-        }
+        if (file != juce::File{}) sendEditBufferFile (file);
         fileChooser.reset();
     });
 }

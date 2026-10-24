@@ -1,6 +1,6 @@
 # BSII Control — start here
 
-Updated 20 October 2026. This repository is the durable project record. Read this
+Updated 25 October 2026. This repository is the durable project record. Read this
 file and the linked checklist before continuing; do not reconstruct the project
 from the old chat. Verify the current checkout and validation status first.
 
@@ -29,10 +29,9 @@ from the old chat. Verify the current checkout and validation status first.
   The user subsequently confirmed TUN v2 preview, Apply, Undo and Redo in Ableton
   with the A4-plus-50-cents fixture. DAW reopen persistence and hardware tuning
   remain separate checks. Public downloads were not replaced.
-- A later source-only recall wording fix reports commands as sent rather than
-  claiming hardware restoration. It awaits the next plugin installation. The
-  full nine-group validation above predates this fix; do not treat its fingerprint
-  as current. See `docs/project-sound-recall.md` for focused verification.
+- The recall wording fix reports dispatch rather than verified restoration. It
+  is now installed with the 25 October sender update. The full nine-group stamp
+  above predates later source/tool edits; do not treat it as current.
 - Hardware reconnect checks on 20 October: captured sound returned byte-identical
   with the editor closed; Off did not restore that capture; hardware Cutoff changed
   during automation after Off reconnect. Audio was not connected. Recall was last
@@ -73,8 +72,11 @@ from the old chat. Verify the current checkout and validation status first.
    patch contents stay ignored/private. The user supplied an independent
    Components Get Bank/download export; it matched all 19,712 bytes exactly
    (128 messages). See components-comparison.json beside the capture and the
-   research note for hashes. Next prerequisite: restrict the generic .syx sender
-   to validated edit-buffer messages before any future restoration workflow.
+   research note for hashes. The .syx sender restriction is now implemented,
+   native-tested and installed (25 October); see edit-buffer-file-send.md. It
+   rejects banks/other commands without MIDI or preset-state changes. AU/VST3
+   builds, strict local signatures and AU validation passed. Next: optional
+   manual hosted file-rejection check, then design a separate restoration path.
    Stored-slot writing/restoration remain unverified; do not transmit the bank.
 3. The TUN v2 build/install increment and manual Ableton preview/apply/undo/redo
    check are complete. Manual DAW reopen persistence is not newly verified.

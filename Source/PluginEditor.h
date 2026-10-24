@@ -97,6 +97,8 @@ public:
     ~BSIIControlAudioProcessorEditor() override;
     void paint (juce::Graphics&) override;
     void resized() override;
+    // Selected-file send path; accepts only the validated temporary-patch command.
+    bool sendEditBufferFile (const juce::File&);
 
 private:
     void timerCallback() override;

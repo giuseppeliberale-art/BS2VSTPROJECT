@@ -3,6 +3,14 @@
 For current evidence and unfinished work, see [the 19 October checklist](remaining-work.md).
 Earlier entries below preserve implementation chronology.
 
+## Edit-buffer file-send restriction — 25 October 2026
+
+Send .syx now accepts only the validated temporary-patch format; bank/stored
+commands, other SysEx and malformed/trailing data are rejected without output
+or preset-identity changes. Native virtual-MIDI tests and AU/VST3 build/install
+checks passed. See [behavior and evidence](edit-buffer-file-send.md). No bank
+restoration feature or public binary release was added.
+
 ## Deferred parameter gaps — overlay audit, 18 October 2026
 
 User requested retaining this list for later while completing manual LFO sync

@@ -147,3 +147,14 @@ Next prerequisite before any restoration: harden the generic .syx sender so it
 cannot mistake these stored/bank-shaped messages for the validated edit-buffer
 command. A separate bank-write workflow still requires destination semantics,
 readback/restore design and explicitly authorized disposable-slot testing.
+
+## Edit-buffer sender restricted — 25 October 2026
+
+The former generic file sender now accepts only the strict known edit-buffer
+command, with a bounded file read. Banks, stored/bank-shaped single messages,
+other commands and malformed/trailing data are rejected without sending or
+changing preset identity. Native virtual-MIDI tests, builds, signature checks,
+installation and Apple AU validation passed. See
+[file-send behavior and evidence](edit-buffer-file-send.md). This supersedes the
+historical unrestricted-sender source finding above. It adds no slot restoration
+or bank-writing feature and changes no observed bank header interpretation.

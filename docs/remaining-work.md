@@ -133,7 +133,7 @@ power cycling; a successful SysEx reply does not prove channel matching.
 Recall UI wording clarified in source on 20 October 2026: stored-preset and
 captured-sound recall now report “Sent” and “Hardware not confirmed.” Dispatch
 is not a hardware acknowledgement; matching-channel readiness is not confirmed.
-This wording change awaits the next plugin installation.
+This wording change was installed with the 25 October sender update.
 
 Additional release checks: multiple plugin instances/devices; disconnect during
 capture/recall/automation; flat automation segments and hardware recording;
@@ -154,8 +154,9 @@ input and reconnect tests cover specific paths, not all real-world failures.
   unverified. The [read-only stream inspector](research-toolkit.md#inspect-a-binary-sysex-stream)
   is implemented and passed focused tests. A manual All capture yielded 128
   complete messages, preserved privately with hashes. An independent Components
-  export matched all 19,712 bytes exactly. Sender hardening is the next
-  prerequisite; restoration/slot writes remain unverified.
+  export matched all 19,712 bytes exactly. Sender hardening is now implemented
+  and installed with native virtual-MIDI rejection tests, AU/VST3 builds and AU
+  validation (25 October). Restoration/slot writes remain unverified.
 - [ ] Extend offline fixture checks when a new reproducible case warrants it.
 - [ ] Prepare release notes and a newer preview when requested. The public
   v0.8.2-preview.20261018 binaries remain the earlier 4993591/86-control build;
